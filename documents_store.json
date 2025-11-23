@@ -1,26 +1,5 @@
 {
-  "last_updated": "2025-11-23T10:55:57.638356",
-  "total_documents": 2,
-  "documents": [
-    {
-      "id": "1",
-      "name": "Absenteeism_small.csv",
-      "type": "csv",
-      "size": 769,
-      "uploaded_at": "2025-11-23T10:39:47.174308",
-      "status": "completed",
-      "facts_extracted": 168,
-      "agent_id": "doc_Absenteeism_small.csv"
-    },
-    {
-      "id": "2",
-      "name": "WA_Fn_small.csv",
-      "type": "csv",
-      "size": 8091,
-      "uploaded_at": "2025-11-23T10:55:57.638351",
-      "status": "completed",
-      "facts_extracted": 16145,
-      "agent_id": "doc_WA_Fn_small.csv"
-    }
-  ]
+  "last_updated": "2025-11-23T19:07:07.357152",
+  "total_documents": 0,
+  "documents": []
 }

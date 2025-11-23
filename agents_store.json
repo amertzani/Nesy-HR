@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-11-23T10:45:48.070463",
+  "last_updated": "2025-11-23T19:07:50.037538",
   "total_agents": 4,
   "agents": {
     "statistics_agent": {
@@ -7,7 +7,7 @@
       "name": "Statistics Agent",
       "type": "statistics",
       "status": "active",
-      "created_at": "2025-11-23T10:45:48.069999",
+      "created_at": "2025-11-23T19:07:50.037102",
       "metadata": {
         "description": "Performs statistical analysis of documents (especially CSV files)",
         "role": "statistical_analysis",
@@ -24,7 +24,7 @@
       "name": "Visualization Agent",
       "type": "visualization",
       "status": "active",
-      "created_at": "2025-11-23T10:45:48.070030",
+      "created_at": "2025-11-23T19:07:50.037134",
       "metadata": {
         "description": "Creates user-friendly graphs/charts from statistics",
         "role": "data_visualization",
@@ -41,7 +41,7 @@
       "name": "Knowledge Graph Agent",
       "type": "kg",
       "status": "active",
-      "created_at": "2025-11-23T10:45:48.070036",
+      "created_at": "2025-11-23T19:07:50.037138",
       "metadata": {
         "description": "Extracts facts/knowledge from documents for traceability",
         "role": "knowledge_extraction",

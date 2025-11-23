@@ -20,9 +20,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  ScatterChart,
-  Scatter,
-  ZAxis,
   AreaChart,
   Area,
   ComposedChart,
@@ -256,6 +253,161 @@ function DocumentStatisticsCard({ document }: { document: any }) {
             </div>
           </div>
 
+          {/* Correlation Analysis */}
+          {statsData.correlations && Object.keys(statsData.correlations).length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-3">Correlation Analysis</h3>
+              
+              {/* Strong Correlations List */}
+              {(() => {
+                const strongCorrs = getStrongCorrelations(statsData.correlations);
+                if (strongCorrs.length > 0) {
+                  return (
+                    <div className="mb-6">
+                      <h4 className="text-md font-medium mb-3">Strong Correlations (|r| &gt; 0.5)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {strongCorrs.slice(0, 10).map((corr, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 border rounded-lg bg-muted/30"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium">
+                                {corr.col1} ↔ {corr.col2}
+                              </span>
+                              <Badge
+                                variant={Math.abs(corr.value) > 0.7 ? "default" : "secondary"}
+                                className="ml-2"
+                              >
+                                {corr.value > 0 ? "+" : ""}{corr.value.toFixed(3)}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full ${
+                                    corr.value > 0 ? "bg-green-500" : "bg-red-500"
+                                  }`}
+                                  style={{
+                                    width: `${Math.abs(corr.value) * 100}%`,
+                                    marginLeft: corr.value < 0 ? "auto" : "0",
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {Math.abs(corr.value) > 0.7 ? "Strong" : "Moderate"}
+                                {corr.value > 0 ? " Positive" : " Negative"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Correlation Heatmap Table */}
+              <div className="overflow-x-auto">
+                <h4 className="text-md font-medium mb-3">Correlation Matrix</h4>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="p-2 text-left font-medium sticky left-0 bg-muted z-10 border-r">
+                          Variable
+                        </th>
+                        {Object.keys(statsData.correlations).slice(0, 10).map((col) => (
+                          <th
+                            key={col}
+                            className="p-2 text-center font-medium min-w-[80px]"
+                            title={col}
+                          >
+                            {col.length > 8 ? col.substring(0, 8) + "..." : col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.keys(statsData.correlations).slice(0, 10).map((col1, i) => (
+                        <tr key={col1} className="border-t hover:bg-muted/30">
+                          <td
+                            className="p-2 font-medium sticky left-0 bg-background z-10 border-r"
+                            title={col1}
+                          >
+                            {col1.length > 15 ? col1.substring(0, 15) + "..." : col1}
+                          </td>
+                      {Object.keys(statsData.correlations).slice(0, 10).map((col2, j) => {
+                            const corrValue = statsData.correlations[col1]?.[col2] ?? null;
+                            if (i === j) {
+                              return (
+                                <td key={col2} className="p-2 text-center bg-muted/50">
+                                  <span className="text-muted-foreground">—</span>
+                                </td>
+                              );
+                            }
+                            if (corrValue === null || corrValue === undefined) {
+                              return (
+                                <td key={col2} className="p-2 text-center">
+                                  <span className="text-muted-foreground">—</span>
+                                </td>
+                              );
+                            }
+                            const absValue = Math.abs(corrValue);
+                            const intensity = Math.min(absValue * 1.2, 1); // Scale for better visibility
+                            const bgColor = corrValue > 0 
+                              ? `rgba(34, 197, 94, ${intensity * 0.3})` // Green for positive
+                              : `rgba(239, 68, 68, ${intensity * 0.3})`; // Red for negative
+                            
+                            return (
+                              <td
+                                key={col2}
+                                className="p-2 text-center relative"
+                                style={{ backgroundColor: bgColor }}
+                                title={`${col1} ↔ ${col2}: ${corrValue.toFixed(3)}`}
+                              >
+                                <span
+                                  className={`font-medium ${
+                                    absValue > 0.7
+                                      ? "text-foreground font-bold"
+                                      : absValue > 0.5
+                                      ? "text-foreground"
+                                      : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {corrValue.toFixed(2)}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500/30 border border-green-500/50"></div>
+                    <span>Positive correlation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500/30 border border-red-500/50"></div>
+                    <span>Negative correlation</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-muted"></div>
+                    <span>No correlation (diagonal)</span>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Values range from -1 (perfect negative) to +1 (perfect positive). 
+                  Strong correlations (|r| &gt; 0.5) are highlighted.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Individual Column Statistics - One graph per column */}
           {statsData.descriptive_stats && (
             <div>
@@ -387,26 +539,6 @@ function DocumentStatisticsCard({ document }: { document: any }) {
             </div>
           )}
 
-          {/* Correlation Matrix */}
-          {statsData.correlations && Object.keys(statsData.correlations).length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Correlation Matrix</h3>
-              <ResponsiveContainer width="100%" height={400}>
-                <ScatterChart data={getCorrelationData(statsData.correlations)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" type="number" domain={[-1, 1]} />
-                  <YAxis dataKey="y" type="number" domain={[-1, 1]} />
-                  <ZAxis dataKey="value" range={[0, 1]} />
-                  <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter name="Correlations" data={getCorrelationData(statsData.correlations)} fill="#8884d8" />
-                </ScatterChart>
-              </ResponsiveContainer>
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>Strong correlations (|r| &gt; 0.5) indicate relationships between variables</p>
-              </div>
-            </div>
-          )}
-
           {/* Data Quality Summary */}
           {statsData.data_quality && (
             <div>
@@ -465,23 +597,27 @@ function getMissingValuesData(missingValues: Record<string, number>, totalRows: 
     .sort((a, b) => b.missing - a.missing);
 }
 
-function getCorrelationData(correlations: Record<string, Record<string, number>>) {
-  const data: Array<{ x: number; y: number; value: number; col1: string; col2: string }> = [];
+function getStrongCorrelations(correlations: Record<string, Record<string, number>>) {
+  const strongCorrs: Array<{ col1: string; col2: string; value: number }> = [];
   const cols = Object.keys(correlations);
   
   cols.forEach((col1, i) => {
     cols.forEach((col2, j) => {
-      if (i < j && correlations[col1][col2] !== undefined) {
-        data.push({
-          x: i,
-          y: j,
-          value: Math.abs(correlations[col1][col2]),
-          col1,
-          col2,
-        });
+      if (i < j && correlations[col1]?.[col2] !== undefined) {
+        const corrValue = correlations[col1][col2];
+        if (Math.abs(corrValue) > 0.5) {
+          strongCorrs.push({
+            col1,
+            col2,
+            value: corrValue,
+          });
+        }
       }
     });
   });
   
-  return data;
+  // Sort by absolute value descending
+  strongCorrs.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  
+  return strongCorrs;
 }
