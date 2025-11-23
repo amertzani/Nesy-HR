@@ -1,0 +1,73 @@
+{
+  "last_updated": "2025-11-23T10:45:48.070463",
+  "total_agents": 4,
+  "agents": {
+    "statistics_agent": {
+      "id": "statistics_agent",
+      "name": "Statistics Agent",
+      "type": "statistics",
+      "status": "active",
+      "created_at": "2025-11-23T10:45:48.069999",
+      "metadata": {
+        "description": "Performs statistical analysis of documents (especially CSV files)",
+        "role": "statistical_analysis",
+        "capabilities": [
+          "descriptive_stats",
+          "correlations",
+          "data_quality",
+          "trends"
+        ]
+      }
+    },
+    "visualization_agent": {
+      "id": "visualization_agent",
+      "name": "Visualization Agent",
+      "type": "visualization",
+      "status": "active",
+      "created_at": "2025-11-23T10:45:48.070030",
+      "metadata": {
+        "description": "Creates user-friendly graphs/charts from statistics",
+        "role": "data_visualization",
+        "capabilities": [
+          "bar_charts",
+          "line_charts",
+          "scatter_plots",
+          "heatmaps"
+        ]
+      }
+    },
+    "kg_agent": {
+      "id": "kg_agent",
+      "name": "Knowledge Graph Agent",
+      "type": "kg",
+      "status": "active",
+      "created_at": "2025-11-23T10:45:48.070036",
+      "metadata": {
+        "description": "Extracts facts/knowledge from documents for traceability",
+        "role": "knowledge_extraction",
+        "capabilities": [
+          "fact_extraction",
+          "entity_recognition",
+          "relation_extraction"
+        ]
+      }
+    },
+    "llm_agent": {
+      "id": "llm_agent",
+      "name": "LLM Research Assistant",
+      "type": "llm",
+      "status": "active",
+      "created_at": "2025-11-22T10:48:46.530536",
+      "metadata": {
+        "description": "Provides traceable answers using KG and statistics",
+        "role": "research_assistant",
+        "capabilities": [
+          "qa",
+          "insights",
+          "traceability"
+        ]
+      }
+    }
+  },
+  "note": "Document agents are ephemeral and not persisted"
+}
