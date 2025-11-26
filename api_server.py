@@ -137,8 +137,8 @@ async def lifespan(app: FastAPI):
         if not USE_OLLAMA:
             print("🔄 Pre-loading LLM model for research assistant (this may take 1-2 minutes)...")
             import asyncio
-            from responses import load_llm_model
             import threading
+            from responses import load_llm_model
             
             # Start pre-loading in background (don't block startup)
             def preload_llm_sync():
@@ -448,10 +448,14 @@ async def triplex_status_endpoint():
 async def upload_file_endpoint(files: List[UploadFile] = File(...)):
     """Upload and process files (PDF, DOCX, TXT, CSV)"""
     import asyncio
+    import os
     tmp_paths = []  # Initialize outside try block so finally can access it
+    
+    print(f"📤 Upload endpoint called with {len(files)} file(s)")
     
     async def process_upload():
         """Inner function to process upload - wrapped in timeout"""
+        print(f"🔄 Starting upload processing...")
         facts_before = len(kb_graph)
         file_info_list = []
         
@@ -555,7 +559,9 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                 
                 try:
                     # Process document with all agents (Statistics, Visualization, KG)
-                    print(f"🔄 Processing {file_info['name']} with agents (type: {file_extension})...")
+                    file_size_mb = file_info.get('size', 0) / (1024 * 1024)
+                    print(f"🔄 Processing {file_info['name']} ({file_size_mb:.1f} MB, type: {file_extension})...")
+                    print(f"   This may take several minutes for large files...")
                     agent_result = process_document_with_agents(
                         document_id=document_id,
                         document_name=file_info['name'],
@@ -705,12 +711,23 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
             traceback.print_exc()
             raise
     
-    # Execute upload with timeout (15 minutes for very large CSV files with all rows/columns)
+    # Execute upload with timeout (30 minutes for very large CSV files with parallel processing)
+    # Calculate timeout based on file size if available
+    total_size = sum(f.size for f in files if hasattr(f, 'size') and f.size)
+    file_size_mb = total_size / (1024 * 1024) if total_size > 0 else 0
+    
+    # Adaptive timeout: 30 minutes base + 5 minutes per 10MB over 50MB
+    base_timeout = 1800.0  # 30 minutes
+    additional_timeout = max(0, (file_size_mb - 50) / 10) * 300  # 5 min per 10MB over 50MB
+    timeout_seconds = min(base_timeout + additional_timeout, 3600.0)  # Max 1 hour
+    
+    print(f"⏱️  Upload timeout set to {timeout_seconds/60:.1f} minutes (file size: {file_size_mb:.1f} MB)")
+    
     try:
-        result = await asyncio.wait_for(process_upload(), timeout=900.0)  # 15 minute timeout for large CSVs
+        result = await asyncio.wait_for(process_upload(), timeout=timeout_seconds)
         return result
     except asyncio.TimeoutError:
-        print(f"⏱️  Upload processing timed out after 15 minutes")
+        print(f"⏱️  Upload processing timed out after {timeout_seconds/60:.1f} minutes")
         # Clean up temp files even on timeout
         for tmp_path in tmp_paths:
             if os.path.exists(tmp_path):
@@ -718,13 +735,29 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                     os.unlink(tmp_path)
                 except:
                     pass
-        raise HTTPException(status_code=504, detail="Upload processing timed out after 15 minutes. Very large files may need more time. The file is being processed in batches - please wait or try again.")
+        raise HTTPException(
+            status_code=504, 
+            detail=f"Upload processing timed out after {timeout_seconds/60:.1f} minutes. Very large files may need more time. The file is being processed in parallel batches - please try uploading a smaller file or contact support."
+        )
     except Exception as e:
         error_msg = str(e)
         print(f"❌ Error uploading files: {error_msg}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error uploading files: {error_msg}")
+        
+        # Clean up temp files on error
+        for tmp_path in tmp_paths:
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+        
+        # Return more detailed error information
+        error_detail = f"Error uploading files: {error_msg}"
+        if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            error_detail += ". The file may be too large. Try uploading a smaller file or wait longer."
+        raise HTTPException(status_code=500, detail=error_detail)
     finally:
         # Clean up temporary files
         if tmp_paths:
@@ -1396,7 +1429,7 @@ async def get_agent_architecture_endpoint():
         architecture = get_agent_architecture()
         
         # Debug: Log architecture response
-        print(f"📊 Architecture: {len(architecture.get('statistics_agents', []))} stats, {len(architecture.get('visualization_agents', []))} viz, {len(architecture.get('kg_agents', []))} KG, {len(architecture.get('llm_agents', []))} LLM, {len(architecture.get('document_agents', []))} documents")
+        print(f"📊 Architecture: {len(architecture.get('orchestrator_agents', []))} orchestrator, {len(architecture.get('statistics_agents', []))} stats, {len(architecture.get('visualization_agents', []))} viz, {len(architecture.get('kg_agents', []))} KG, {len(architecture.get('llm_agents', []))} LLM, {len(architecture.get('document_agents', []))} documents")
         
         return {
             "architecture": architecture,
@@ -1599,8 +1632,8 @@ async def get_agent_endpoint(agent_id: str):
 if __name__ == "__main__":
     import uvicorn
     
-    # Get port from environment or default to 8002 (dev version - different from stable)
-    port = int(os.getenv("API_PORT", 8002))
+    # Get port from environment or default to 8001 (matches frontend default)
+    port = int(os.getenv("API_PORT", 8001))
     host = os.getenv("API_HOST", "0.0.0.0")  # Bind to all interfaces for external access
     
     # Check if the requested port is available, if not try alternatives

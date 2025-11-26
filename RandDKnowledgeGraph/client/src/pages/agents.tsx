@@ -35,6 +35,7 @@ export default function AgentsPage() {
     );
   }
 
+  const orchestratorAgents = architectureData?.orchestrator_agents || [];
   const statisticsAgents = architectureData?.statistics_agents || [];
   const visualizationAgents = architectureData?.visualization_agents || [];
   const kgAgents = architectureData?.kg_agents || [];
@@ -79,6 +80,7 @@ export default function AgentsPage() {
 
       {/* Network Visualization */}
       <AgentNetwork
+        orchestratorAgents={orchestratorAgents}
         statisticsAgents={statisticsAgents}
         visualizationAgents={visualizationAgents}
         kgAgents={kgAgents}
@@ -218,9 +220,14 @@ export default function AgentsPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Document Agents ({documentAgents.length})
+          Document Agents ({documentAgents.filter((a: any) => a.type !== "document_worker").length})
+          {documentAgents.filter((a: any) => a.type === "document_worker").length > 0 && (
+            <Badge variant="outline" className="ml-2">
+              {documentAgents.filter((a: any) => a.type === "document_worker").length} Workers
+            </Badge>
+          )}
         </h2>
-        {documentAgents.length === 0 ? (
+        {documentAgents.filter((a: any) => a.type !== "document_worker").length === 0 ? (
           <Card className="p-8 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
@@ -228,47 +235,119 @@ export default function AgentsPage() {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {documentAgents.map((agent: any) => (
-              <Card key={agent.id} className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-semibold text-sm truncate">
-                      {agent.document_name || agent.name}
-                    </h3>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {documentAgents.filter((a: any) => a.type !== "document_worker").map((agent: any) => (
+                <Card key={agent.id} className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-blue-500" />
+                      <h3 className="font-semibold text-sm truncate">
+                        {agent.document_name || agent.name}
+                      </h3>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`${getStatusColor(agent.status)} text-white border-0`}
+                    >
+                      <span className="flex items-center gap-1">
+                        {getStatusIcon(agent.status)}
+                        {agent.status}
+                      </span>
+                    </Badge>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={`${getStatusColor(agent.status)} text-white border-0`}
-                  >
-                    <span className="flex items-center gap-1">
-                      {getStatusIcon(agent.status)}
-                      {agent.status}
-                    </span>
-                  </Badge>
-                </div>
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <div>Document: {agent.document_name || "N/A"}</div>
                   <div>Facts extracted: {agent.facts_extracted || 0}</div>
+                  {agent.employee_names && agent.employee_names.length > 0 && (
+                    <div>Employees: {agent.employee_names.length}</div>
+                  )}
+                  {agent.data_range && (
+                    <div>
+                      {agent.data_range.chunks ? (
+                        <>
+                          Rows: {agent.data_range.start || 0}-{agent.data_range.end || 0} 
+                          ({agent.data_range.rows || 0} total)
+                          <div className="text-[10px] mt-0.5">
+                            Split into {agent.data_range.chunks} chunks ({agent.data_range.chunk_size || 'N/A'} rows/chunk)
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          Rows: {agent.data_range.start || 0}-{agent.data_range.end || 0} 
+                          ({agent.data_range.rows || 0} total)
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {agent.columns_processed && agent.columns_processed.length > 0 && (
+                    <div>
+                      Columns: {agent.columns_processed.length}
+                      {agent.data_range?.total_cols && agent.data_range.total_cols !== agent.columns_processed.length && (
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                          (expected: {agent.data_range.total_cols})
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {agent.metadata?.processed_at && (
                     <div>
                       Processed: {new Date(agent.metadata.processed_at).toLocaleString()}
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Created: {new Date(agent.created_at).toLocaleString()}
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Created: {new Date(agent.created_at).toLocaleString()}
+                  </div>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Worker Agents Section */}
+            {documentAgents.filter((a: any) => a.type === "document_worker").length > 0 && (
+              <div className="mt-6 pt-4 border-t">
+                <div className="flex items-center gap-2 mb-3">
+                  <Cpu className="h-4 w-4" />
+                  <h3 className="text-sm font-semibold">Worker Agents</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {documentAgents.filter((a: any) => a.type === "document_worker").length}
+                  </Badge>
                 </div>
-              </Card>
-            ))}
-          </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {documentAgents.filter((a: any) => a.type === "document_worker").map((agent: any) => (
+                    <Card key={agent.id} className="p-2">
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`} />
+                        <span className="font-medium text-xs">{agent.metadata?.chunk_range || agent.id.split('_').pop()}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        <div>{agent.facts_extracted || 0} facts</div>
+                        {agent.employee_names && agent.employee_names.length > 0 && (
+                          <div>{agent.employee_names.length} employees</div>
+                        )}
+                        {agent.data_range && (
+                          <div className="text-[10px]">{agent.data_range.rows || 0} rows</div>
+                        )}
+                        {agent.columns_processed && agent.columns_processed.length > 0 && (
+                          <div className="text-[10px]">{agent.columns_processed.length} cols</div>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Summary */}
       <Card className="p-4 bg-muted">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold">{orchestratorAgents.length}</div>
+            <div className="text-xs text-muted-foreground">Orchestrator</div>
+          </div>
           <div>
             <div className="text-2xl font-bold">{statisticsAgents.length}</div>
             <div className="text-xs text-muted-foreground">Statistics</div>
@@ -286,8 +365,13 @@ export default function AgentsPage() {
             <div className="text-xs text-muted-foreground">LLM Agents</div>
           </div>
           <div>
-            <div className="text-2xl font-bold">{documentAgents.length}</div>
+            <div className="text-2xl font-bold">{documentAgents.filter((a: any) => a.type !== "document_worker").length}</div>
             <div className="text-xs text-muted-foreground">Documents</div>
+            {documentAgents.filter((a: any) => a.type === "document_worker").length > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                ({documentAgents.filter((a: any) => a.type === "document_worker").length} workers)
+              </div>
+            )}
           </div>
         </div>
       </Card>

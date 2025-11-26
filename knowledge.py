@@ -1461,98 +1461,98 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
                         added_count += 1
                     else:
                         skipped_count += 1
-                        # Even if fact exists, update inferred status if this is an inferred fact
-                        # This ensures inferred facts are correctly marked
+                    # Even if fact exists, update inferred status if this is an inferred fact
+                    # This ensures inferred facts are correctly marked
+                    if is_inferred:
+                        add_fact_is_inferred(subject, predicate, object_val, is_inferred=True)
+                    # If we found an equivalent fact with a different predicate, merge them
+                    if equivalent_fact and equivalent_predicate:
+                        # The equivalent fact exists with a different predicate
+                        # We need to merge them: remove the less specific fact and keep the more specific one
+                        eq_subject, eq_predicate, eq_object = equivalent_fact
+                        
+                        # Get all sources from the existing (less specific) fact
+                        existing_sources = get_fact_source_document(eq_subject, eq_predicate, eq_object)
+                        
+                        # Get other metadata from the existing fact
+                        existing_details = get_fact_details(eq_subject, eq_predicate, eq_object)
+                        existing_confidence = get_fact_confidence(eq_subject, eq_predicate, eq_object)
+                        existing_is_inferred = get_fact_is_inferred(eq_subject, eq_predicate, eq_object)
+                        
+                        # Remove the less specific fact from the graph
+                        # Find and remove the main triple
+                        eq_subject_clean = str(eq_subject).strip().replace(' ', '_')
+                        eq_predicate_clean = str(eq_predicate).strip().replace(' ', '_')
+                        eq_object_clean = str(eq_object).strip()
+                        
+                        eq_subject_uri = rdflib.URIRef(f"urn:entity:{quote(eq_subject_clean, safe='')}")
+                        eq_predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(eq_predicate_clean, safe='')}")
+                        
+                        # Remove the main triple
+                        graph.remove((eq_subject_uri, eq_predicate_uri, rdflib.Literal(eq_object_clean)))
+                        
+                        # Remove all metadata triples for the old fact
+                        eq_fact_id = f"{eq_subject}|{eq_predicate}|{eq_object}"
+                        eq_fact_id_clean = eq_fact_id.strip().replace(' ', '_')
+                        eq_fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(eq_fact_id_clean, safe='')}")
+                        
+                        triples_to_remove = []
+                        for s, p, o in graph:
+                            if str(s) == str(eq_fact_id_uri):
+                                triples_to_remove.append((s, p, o))
+                        for triple in triples_to_remove:
+                            graph.remove(triple)
+                        
+                        # Add the more specific fact
+                        subject_clean = str(subject).strip().replace(' ', '_')
+                        predicate_clean = str(equivalent_predicate).strip().replace(' ', '_')
+                        object_clean = str(object_val).strip()
+                        
+                        subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+                        predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+                        
+                        graph.add((subject_uri, predicate_uri, rdflib.Literal(object_clean)))
+                        
+                        # Transfer metadata from old fact to new fact
+                        if existing_details:
+                            add_fact_details(subject, equivalent_predicate, object_val, existing_details)
+                        elif details:
+                            add_fact_details(subject, equivalent_predicate, object_val, details)
+                        
+                        # Use the higher confidence
+                        final_confidence = max(existing_confidence, confidence)
+                        add_fact_confidence(subject, equivalent_predicate, object_val, final_confidence)
+                        
+                        # Transfer inferred status - prefer existing if it's True (inferred), otherwise use new
+                        if existing_is_inferred:
+                            add_fact_is_inferred(subject, equivalent_predicate, object_val, is_inferred=True)
+                        else:
+                            add_fact_is_inferred(subject, equivalent_predicate, object_val, is_inferred=is_inferred)
+                        
+                        # Transfer all sources from the old fact to the new fact
+                        for old_source, old_timestamp in existing_sources:
+                            add_fact_source_document(subject, equivalent_predicate, object_val, old_source, old_timestamp)
+                        
+                        # Add the new source
+                        add_fact_source_document(subject, equivalent_predicate, object_val, source_document, uploaded_at)
+                        
+                        # Store agent_id if provided
+                        if agent_id:
+                            add_fact_agent_id(subject, equivalent_predicate, object_val, agent_id)
+                        
+                        # Update counts
+                        skipped_count -= 1  # Don't count as skipped since we merged
+                        added_count += 1  # Count as added since we created the merged fact
+                    else:
+                        # Regular duplicate - just add the source
+                        # But also update inferred status if this is an inferred fact
                         if is_inferred:
                             add_fact_is_inferred(subject, predicate, object_val, is_inferred=True)
-                        # If we found an equivalent fact with a different predicate, merge them
-                        if equivalent_fact and equivalent_predicate:
-                            # The equivalent fact exists with a different predicate
-                            # We need to merge them: remove the less specific fact and keep the more specific one
-                            eq_subject, eq_predicate, eq_object = equivalent_fact
-                            
-                            # Get all sources from the existing (less specific) fact
-                            existing_sources = get_fact_source_document(eq_subject, eq_predicate, eq_object)
-                            
-                            # Get other metadata from the existing fact
-                            existing_details = get_fact_details(eq_subject, eq_predicate, eq_object)
-                            existing_confidence = get_fact_confidence(eq_subject, eq_predicate, eq_object)
-                            existing_is_inferred = get_fact_is_inferred(eq_subject, eq_predicate, eq_object)
-                            
-                            # Remove the less specific fact from the graph
-                            # Find and remove the main triple
-                            eq_subject_clean = str(eq_subject).strip().replace(' ', '_')
-                            eq_predicate_clean = str(eq_predicate).strip().replace(' ', '_')
-                            eq_object_clean = str(eq_object).strip()
-                            
-                            eq_subject_uri = rdflib.URIRef(f"urn:entity:{quote(eq_subject_clean, safe='')}")
-                            eq_predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(eq_predicate_clean, safe='')}")
-                            
-                            # Remove the main triple
-                            graph.remove((eq_subject_uri, eq_predicate_uri, rdflib.Literal(eq_object_clean)))
-                            
-                            # Remove all metadata triples for the old fact
-                            eq_fact_id = f"{eq_subject}|{eq_predicate}|{eq_object}"
-                            eq_fact_id_clean = eq_fact_id.strip().replace(' ', '_')
-                            eq_fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(eq_fact_id_clean, safe='')}")
-                            
-                            triples_to_remove = []
-                            for s, p, o in graph:
-                                if str(s) == str(eq_fact_id_uri):
-                                    triples_to_remove.append((s, p, o))
-                            for triple in triples_to_remove:
-                                graph.remove(triple)
-                            
-                            # Add the more specific fact
-                            subject_clean = str(subject).strip().replace(' ', '_')
-                            predicate_clean = str(equivalent_predicate).strip().replace(' ', '_')
-                            object_clean = str(object_val).strip()
-                            
-                            subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
-                            predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
-                            
-                            graph.add((subject_uri, predicate_uri, rdflib.Literal(object_clean)))
-                            
-                            # Transfer metadata from old fact to new fact
-                            if existing_details:
-                                add_fact_details(subject, equivalent_predicate, object_val, existing_details)
-                            elif details:
-                                add_fact_details(subject, equivalent_predicate, object_val, details)
-                            
-                            # Use the higher confidence
-                            final_confidence = max(existing_confidence, confidence)
-                            add_fact_confidence(subject, equivalent_predicate, object_val, final_confidence)
-                            
-                            # Transfer inferred status - prefer existing if it's True (inferred), otherwise use new
-                            if existing_is_inferred:
-                                add_fact_is_inferred(subject, equivalent_predicate, object_val, is_inferred=True)
-                            else:
-                                add_fact_is_inferred(subject, equivalent_predicate, object_val, is_inferred=is_inferred)
-                            
-                            # Transfer all sources from the old fact to the new fact
-                            for old_source, old_timestamp in existing_sources:
-                                add_fact_source_document(subject, equivalent_predicate, object_val, old_source, old_timestamp)
-                            
-                            # Add the new source
-                            add_fact_source_document(subject, equivalent_predicate, object_val, source_document, uploaded_at)
-                            
-                            # Store agent_id if provided
-                            if agent_id:
-                                add_fact_agent_id(subject, equivalent_predicate, object_val, agent_id)
-                            
-                            # Update counts
-                            skipped_count -= 1  # Don't count as skipped since we merged
-                            added_count += 1  # Count as added since we created the merged fact
-                        else:
-                            # Regular duplicate - just add the source
-                            # But also update inferred status if this is an inferred fact
-                            if is_inferred:
-                                add_fact_is_inferred(subject, predicate, object_val, is_inferred=True)
-                            add_fact_source_document(subject, predicate, object_val, source_document, uploaded_at)
-                            
-                            # Store agent_id if provided (even for duplicates)
-                            if agent_id:
-                                add_fact_agent_id(subject, predicate, object_val, agent_id)
+                        add_fact_source_document(subject, predicate, object_val, source_document, uploaded_at)
+            
+                        # Store agent_id if provided (even for duplicates)
+                        if agent_id:
+                            add_fact_agent_id(subject, predicate, object_val, agent_id)
                 except Exception as triple_error:
                     error_count += 1
                     if error_count <= 5:  # Only log first 5 errors to avoid spam

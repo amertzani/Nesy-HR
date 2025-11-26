@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, Network, Bot, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, Network, Bot, FileText, Cpu } from "lucide-react";
 
 interface AgentNode {
   id: string;
@@ -20,6 +20,7 @@ interface Connection {
 }
 
 interface AgentNetworkProps {
+  orchestratorAgents: any[];
   statisticsAgents: any[];
   visualizationAgents: any[];
   kgAgents: any[];
@@ -28,6 +29,7 @@ interface AgentNetworkProps {
 }
 
 export function AgentNetwork({
+  orchestratorAgents,
   statisticsAgents,
   visualizationAgents,
   kgAgents,
@@ -41,11 +43,25 @@ export function AgentNetwork({
     
     // Core agent positions (arranged in a network layout)
     const corePositions = {
+      orchestrator: { x: 400, y: 50 },
       statistics: { x: 200, y: 150 },
       visualization: { x: 400, y: 150 },
       kg: { x: 200, y: 300 },
       llm: { x: 400, y: 300 },
     };
+    
+    // Add Orchestrator Agent (top center - coordinates everything)
+    if (orchestratorAgents.length > 0) {
+      const agent = orchestratorAgents[0];
+      nodeMap.set(agent.id, {
+        id: agent.id,
+        name: agent.name,
+        type: "orchestrator",
+        ...corePositions.orchestrator,
+        icon: Network,
+        color: "#8b5cf6", // purple - central coordinator
+      });
+    }
     
     // Add Statistics Agent
     if (statisticsAgents.length > 0) {
@@ -100,7 +116,12 @@ export function AgentNetwork({
     }
     
     // Add Document Agents (arranged in a row below)
-    documentAgents.forEach((agent, index) => {
+    // Separate main document agents from worker agents
+    const mainDocAgents = documentAgents.filter((a: any) => a.type !== "document_worker");
+    const workerAgents = documentAgents.filter((a: any) => a.type === "document_worker");
+    
+    // Main document agents
+    mainDocAgents.forEach((agent, index) => {
       const x = 100 + (index % 5) * 120;
       const y = 450 + Math.floor(index / 5) * 80;
       nodeMap.set(agent.id, {
@@ -114,41 +135,75 @@ export function AgentNetwork({
       });
     });
     
+    // Worker agents (arranged below main document agents, smaller)
+    workerAgents.forEach((agent, index) => {
+      const x = 100 + (index % 8) * 100;
+      const y = 450 + Math.ceil(mainDocAgents.length / 5) * 80 + 60 + Math.floor(index / 8) * 60;
+      nodeMap.set(agent.id, {
+        id: agent.id,
+        name: agent.metadata?.chunk_range || `Worker ${index + 1}`,
+        type: "document_worker",
+        x,
+        y,
+        icon: Cpu,
+        color: "#8b5cf6", // purple for workers
+      });
+    });
+    
     // Define connections based on architecture
+    const orchId = orchestratorAgents[0]?.id;
     const statsId = statisticsAgents[0]?.id;
     const vizId = visualizationAgents[0]?.id;
     const kgId = kgAgents[0]?.id;
     const llmId = llmAgents[0]?.id;
     
-    // Statistics ↔ Visualization
+    // Orchestrator → All Core Agents (coordinates everything)
+    if (orchId) {
+      if (statsId) conns.push({ from: orchId, to: statsId });
+      if (vizId) conns.push({ from: orchId, to: vizId });
+      if (kgId) conns.push({ from: orchId, to: kgId });
+      if (llmId) conns.push({ from: orchId, to: llmId });
+    }
+    
+    // LLM → Orchestrator (queries go through orchestrator)
+    if (llmId && orchId) {
+      conns.push({ from: llmId, to: orchId });
+    }
+    
+    // Statistics ↔ Visualization (direct collaboration)
     if (statsId && vizId) {
       conns.push({ from: statsId, to: vizId, bidirectional: true });
     }
     
-    // Statistics ↔ KG
+    // Statistics ↔ KG (direct collaboration)
     if (statsId && kgId) {
       conns.push({ from: statsId, to: kgId, bidirectional: true });
     }
     
-    // LLM ↔ KG
+    // LLM ↔ KG (direct access for context)
     if (llmId && kgId) {
       conns.push({ from: llmId, to: kgId, bidirectional: true });
     }
     
-    // LLM ↔ Statistics
-    if (llmId && statsId) {
-      conns.push({ from: llmId, to: statsId, bidirectional: true });
-    }
+    // Document Agents → Orchestrator (orchestrator routes to appropriate agents)
+    documentAgents.filter((a: any) => a.type !== "document_worker").forEach((docAgent) => {
+      if (orchId) conns.push({ from: docAgent.id, to: orchId });
+    });
     
-    // Document Agents → Statistics, Visualization, KG
-    documentAgents.forEach((docAgent) => {
-      if (statsId) conns.push({ from: docAgent.id, to: statsId });
-      if (vizId) conns.push({ from: docAgent.id, to: vizId });
-      if (kgId) conns.push({ from: docAgent.id, to: kgId });
+    // Worker Agents → Parent Document Agent
+    documentAgents.filter((a: any) => a.type === "document_worker").forEach((workerAgent: any) => {
+      const parentId = workerAgent.metadata?.parent_document;
+      if (parentId) {
+        const parentAgentId = `doc_${parentId}`;
+        const parentExists = documentAgents.some((a: any) => a.id === parentAgentId);
+        if (parentExists) {
+          conns.push({ from: workerAgent.id, to: parentAgentId });
+        }
+      }
     });
     
     return { nodes: Array.from(nodeMap.values()), connections: conns };
-  }, [statisticsAgents, visualizationAgents, kgAgents, llmAgents, documentAgents]);
+  }, [orchestratorAgents, statisticsAgents, visualizationAgents, kgAgents, llmAgents, documentAgents]);
   
   const width = 800;
   const height = Math.max(600, 450 + Math.ceil(documentAgents.length / 5) * 80);

@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import * as net from "net";
+import { exec } from "child_process";
 
 const app = express();
 
@@ -136,6 +137,17 @@ app.use((req, res, next) => {
     // Start server with error handling for port conflicts
     server.listen({ port, host }, () => {
       log(`✅ Server running at http://localhost:${port}`);
+      
+      // Automatically open Safari browser
+      const url = `http://localhost:${port}`;
+      exec(`open -a Safari "${url}"`, (error: any) => {
+        if (error) {
+          console.log(`⚠️  Could not open Safari automatically: ${error.message}`);
+          console.log(`   Please open ${url} manually in your browser`);
+        } else {
+          console.log(`🌐 Opened ${url} in Safari`);
+        }
+      });
     });
     
     server.on('error', (err: any) => {

@@ -9,7 +9,7 @@
 // Defaults to port 8001 (backend uses this port by default)
 // Override with VITE_API_URL environment variable if needed
 const BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8002";
+  import.meta.env.VITE_API_URL || "http://localhost:8001";
 
 // Use local backend directly (not HuggingFace or proxy)
 const USE_LOCAL_BACKEND = true;
@@ -167,12 +167,17 @@ class HuggingFaceApiClient {
 
       // Create timeout controller (AbortSignal.timeout might not be available in all browsers)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const timeoutId = setTimeout(() => {
+        console.warn(`⏱️  Request timeout after ${timeoutMs / 1000}s, aborting...`);
+        controller.abort();
+      }, timeoutMs);
       
       const fetchOptions: RequestInit = {
         ...options,
         headers,
         signal: controller.signal,
+        // Don't set keepalive for long-running requests
+        keepalive: timeoutMs < 60000, // Only for requests under 1 minute
       };
 
       const response = await fetch(url, fetchOptions);
@@ -192,9 +197,10 @@ class HuggingFaceApiClient {
       console.error(`❌ API request failed: ${endpoint}`, error);
       if (error instanceof Error) {
         if (error.name === 'AbortError' || error.message.includes('timeout') || error.message.includes('aborted')) {
+          const timeoutMinutes = timeoutMs / 60000;
           return {
             success: false,
-            error: `Request timed out after ${timeoutMs / 1000} seconds. Large files may need more time to process.`,
+            error: `Request timed out after ${timeoutMinutes.toFixed(1)} minutes. The file is being processed in the background. Please check the Documents page in a few minutes to see if processing completed. Large files with many rows and columns can take significant time to process.`,
           };
         }
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
@@ -216,12 +222,21 @@ class HuggingFaceApiClient {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
 
-    // Use longer timeout for uploads (15 minutes = 900000ms) to match backend timeout
+    // Calculate adaptive timeout based on file size
+    // Base: 30 minutes, + 5 minutes per 10MB over 50MB, max 1 hour
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const fileSizeMB = totalSize / (1024 * 1024);
+    const baseTimeout = 30 * 60 * 1000; // 30 minutes
+    const additionalTimeout = Math.max(0, (fileSizeMB - 50) / 10) * 5 * 60 * 1000; // 5 min per 10MB over 50MB
+    const timeoutMs = Math.min(baseTimeout + additionalTimeout, 60 * 60 * 1000); // Max 1 hour
+    
+      console.log(`📤 Upload timeout: ${(timeoutMs / 60000).toFixed(1)} minutes (file size: ${fileSizeMB.toFixed(1)} MB)`);
+
     return this.request("/api/knowledge/upload", {
       method: "POST",
       body: formData,
       headers: {}, // Let browser set Content-Type for FormData
-    }, 900000); // 15 minutes timeout for large CSV files
+    }, timeoutMs);
   }
 
   // Process Documents

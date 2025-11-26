@@ -1,5 +1,16 @@
 {
-  "last_updated": "2025-11-23T19:07:07.357152",
-  "total_documents": 0,
-  "documents": []
+  "last_updated": "2025-11-26T10:01:48.675152",
+  "total_documents": 1,
+  "documents": [
+    {
+      "id": "1",
+      "name": "HRDataset_v14._small.csv",
+      "type": "csv",
+      "size": 7837,
+      "uploaded_at": "2025-11-26T10:01:48.675148",
+      "status": "completed",
+      "facts_extracted": 1159,
+      "agent_id": "doc_HRDataset_v14._small.csv"
+    }
+  ]
 }

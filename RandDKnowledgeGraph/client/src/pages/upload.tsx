@@ -123,11 +123,11 @@ export default function UploadPage() {
           });
         } else {
           // Fallback: just mark as completed
-          setDocuments((prev) =>
-            prev.map((doc) =>
-              doc.status === "processing" ? { ...doc, status: "completed" as const } : doc
-            )
-          );
+        setDocuments((prev) =>
+          prev.map((doc) =>
+            doc.status === "processing" ? { ...doc, status: "completed" as const } : doc
+          )
+        );
         }
         
         // Refresh facts to show newly extracted facts

@@ -142,18 +142,23 @@ def generate_ollama_response(message, context):
             clean_lines = [line for line in lines if 'agent' not in line.lower() or 'agent_id' not in line.lower()]
             clean_context = '\n'.join(clean_lines)
         
-        # Build prompt focused on insights
+        # Build prompt focused on insights and traceability
         system_prompt = """You are an intelligent data analyst assistant that helps users understand their data and make evidence-based decisions.
 
 CRITICAL RULES:
-1. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
-2. Synthesize information to provide clear, concise answers
-3. For CSV/statistical questions: highlight key patterns, trends, and what they mean for decision-making
-4. When presenting statistics: explain what they mean, not just list numbers
-5. Group related information together
-6. If you see insights or correlations, explain their significance
-7. Be helpful and conversational - help the user understand, not just list facts
-8. NEVER mention agent IDs or technical metadata - focus on the actual data insights"""
+1. Always provide TRACEABLE answers - cite the specific facts from the knowledge graph that support your answer
+2. For structured queries (max/min/filter): provide the exact answer first, then explain the evidence
+3. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
+4. Synthesize information to provide clear, concise answers
+5. For CSV/statistical questions: highlight key patterns, trends, and what they mean for decision-making
+6. When presenting statistics: explain what they mean, not just list numbers
+7. Group related information together
+8. If you see insights or correlations, explain their significance
+9. Be helpful and conversational - help the user understand, not just list facts
+# 10. NEVER mention agent IDs or technical metadata - focus on the actual data insights
+10. focus on the actual data insights
+11. For employee queries: use exact names and values from the knowledge graph
+12. Always ground your answers in the provided context facts"""
         
         prompt = f"{system_prompt}\n\nKnowledge Base Context:\n{clean_context}\n\nQuestion: {message}\n\nAnswer:"
         
@@ -210,18 +215,22 @@ def generate_llm_response(message, context):
             import openai
             client = openai.OpenAI(api_key=OPENAI_API_KEY)
             
-            # Build intelligent prompt focused on insights
+            # Build intelligent prompt focused on insights and traceability
             system_prompt = """You are an intelligent data analyst assistant that helps users understand their data and make evidence-based decisions.
 
 CRITICAL RULES:
-1. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
-2. Synthesize information to provide clear, concise answers
-3. For CSV/statistical questions: highlight key patterns, trends, and what they mean for decision-making
-4. When presenting statistics: explain what they mean, not just list numbers
-5. Group related information together
-6. If you see insights or correlations, explain their significance
-7. Be helpful and conversational - help the user understand, not just list facts
-8. If information is missing, clearly state what's missing and what would be helpful"""
+1. Always provide TRACEABLE answers - cite the specific facts from the knowledge graph that support your answer
+2. For structured queries (max/min/filter): provide the exact answer first, then explain the evidence
+3. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
+4. Synthesize information to provide clear, concise answers
+5. For CSV/statistical questions: highlight key patterns, trends, and what they mean for decision-making
+6. When presenting statistics: explain what they mean, not just list numbers
+7. Group related information together
+8. If you see insights or correlations, explain their significance
+9. Be helpful and conversational - help the user understand, not just list facts
+10. If information is missing, clearly state what's missing and what would be helpful
+11. For employee queries: use exact names and values from the knowledge graph
+12. Always ground your answers in the provided context facts"""
             
             # Clean context - remove agent ownership info
             clean_context = context
@@ -257,18 +266,23 @@ CRITICAL RULES:
             if not load_llm_model():
                 return None
         
-        # Build prompt with context from knowledge graph - focused on insights
+        # Build prompt with context from knowledge graph - focused on insights and traceability
         system_prompt = """You are an intelligent data analyst assistant that helps users understand their data and make evidence-based decisions.
 
 CRITICAL RULES:
-1. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
-2. Synthesize information to provide clear, concise answers
-3. For CSV/statistical questions: highlight key patterns, trends, and what they mean
-4. When presenting statistics: explain what they mean, not just list numbers
-5. Group related information together
-6. If you see insights or correlations, explain their significance
-7. Be helpful and conversational - help the user understand
-8. NEVER mention agent IDs or technical metadata - focus on the actual data insights"""
+1. Always provide TRACEABLE answers - cite the specific facts from the knowledge graph that support your answer
+2. For structured queries (max/min/filter): provide the exact answer first, then explain the evidence
+3. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
+4. Synthesize information to provide clear, concise answers
+5. For CSV/statistical questions: highlight key patterns, trends, and what they mean
+6. When presenting statistics: explain what they mean, not just list numbers
+7. Group related information together
+8. If you see insights or correlations, explain their significance
+9. Be helpful and conversational - help the user understand
+# 10. NEVER mention agent IDs or technical metadata - 
+10. focus on the actual data insights
+11. For employee queries: use exact names and values from the knowledge graph
+12. Always ground your answers in the provided context facts"""
         
         # Format context from knowledge graph - remove agent ownership info
         if context and "No directly relevant facts found" not in context and "Partially Relevant" not in context:
@@ -599,6 +613,65 @@ def generate_intelligent_response(message, context, system_message):
 def respond(message, history=None, system_message="You are an intelligent assistant that answers questions based on factual information from a knowledge base. You provide clear, accurate, and helpful responses. When you have relevant information, you share it directly. When you don't have enough information, you clearly state this limitation. You always stay grounded in the facts provided and never hallucinate information."):
     # CSV queries are handled by the normal LLM flow with context retrieval
     # The LLM will use the facts extracted from CSV data to answer questions
+    
+    # Try orchestrator-based query processing first
+    try:
+        import importlib
+        orchestrator_module = importlib.import_module('orchestrator')
+        orchestrate_query = orchestrator_module.orchestrate_query
+        
+        query_processor = importlib.import_module('query_processor')
+        detect_query_type = query_processor.detect_query_type
+        build_evidence_context = query_processor.build_evidence_context
+        
+        query_info = detect_query_type(message)
+        
+        print(f"🔍 Query detection: type={query_info.get('query_type')}, operation={query_info.get('operation')}, attribute={query_info.get('attribute')}")
+        
+        # Use orchestrator for structured queries
+        if query_info.get("query_type") == "structured":
+            print(f"🎯 Routing query through orchestrator...")
+            answer, evidence_facts, routing_info = orchestrate_query(message, query_info)
+            
+            print(f"📊 Orchestrator result: answer={answer}, evidence_count={len(evidence_facts)}, strategy={routing_info.get('strategy')}")
+            
+            if answer:
+                # Build evidence context
+                evidence_context = build_evidence_context(evidence_facts, message)
+                
+                # Format response with evidence and routing info
+                response = answer
+                if evidence_context:
+                    response += f"\n\n{evidence_context}"
+                if routing_info.get('reason'):
+                    response += f"\n\n*Query routed via orchestrator: {routing_info['reason']}*"
+                
+                print(f"✅ Orchestrated query answered: {query_info.get('operation')} - {answer}")
+                return response
+            else:
+                print(f"⚠️  Orchestrator returned no answer, trying direct query processing")
+        
+        # Fallback to direct query processing if orchestrator didn't find answer
+        if query_info.get("query_type") == "structured":
+            process_structured_query = query_processor.process_structured_query
+            answer, evidence_facts = process_structured_query(message, query_info)
+            
+            if answer:
+                evidence_context = build_evidence_context(evidence_facts, message)
+                response = answer
+                if evidence_context:
+                    response += f"\n\n{evidence_context}"
+                print(f"✅ Direct query answered: {query_info.get('operation')} - {answer}")
+                return response
+        
+    except ImportError as e:
+        print(f"⚠️  Orchestrator/query processor not available: {e}")
+        # Fall through to normal processing
+    except Exception as e:
+        print(f"⚠️  Orchestrator query processing failed: {e}")
+        import traceback
+        traceback.print_exc()
+        # Fall through to normal processing
     
     # Retrieve relevant context from knowledge graph
     context = retrieve_context(message)

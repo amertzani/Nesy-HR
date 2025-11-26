@@ -24,11 +24,11 @@ if [ ! -f "api_server.py" ]; then
     exit 1
 fi
 
-# Set default port for DEV version (8002)
-export API_PORT=${API_PORT:-8002}
+# Set default port (8001 to match frontend)
+export API_PORT=${API_PORT:-8001}
 export API_HOST=${API_HOST:-0.0.0.0}
 
-echo "🌐 Starting FastAPI server on http://localhost:${API_PORT} (DEV VERSION)"
+echo "🌐 Starting FastAPI server on http://localhost:${API_PORT}"
 echo "📚 API documentation will be available at http://localhost:${API_PORT}/docs"
 echo ""
 echo "Press Ctrl+C to stop the server"
