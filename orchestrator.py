@@ -132,9 +132,63 @@ def orchestrate_query(query: str, query_info: Dict[str, Any]) -> Tuple[Optional[
         print(f"🎯 Orchestrator routing: {routing_info['strategy']} - {routing_info['reason']}")
         print(f"   Target agents: {len(routing_info['target_agents'])} agent(s)")
         
+        # Simple keyword-based routing: Check for "operational" or "strategic" keywords first
+        # This takes priority over complex pattern matching
+        query_type = query_info.get("query_type")
+        
+        # Route to Operational Query Agent if keyword "operational" is detected
+        if query_type == "operational":
+            try:
+                from operational_query_agent import process_operational_query_with_agent, OPERATIONAL_QUERY_AGENT_ID
+                operational_agent = agents_store.get(OPERATIONAL_QUERY_AGENT_ID)
+                if operational_agent:
+                    operational_agent.status = "processing"
+                    answer, evidence_facts, op_routing = process_operational_query_with_agent(query_info, query)
+                    operational_agent.status = "active"
+                    routing_info.update(op_routing)
+                    routing_info["target_agents"] = [OPERATIONAL_QUERY_AGENT_ID]
+                    routing_info["strategy"] = "operational_agent"
+                    routing_info["reason"] = "Routed to operational agent based on keyword detection"
+                    orchestrator.status = "active"
+                    return answer, evidence_facts, routing_info
+                else:
+                    print("⚠️  Operational Query Agent not found")
+            except ImportError as e:
+                print(f"⚠️  Operational query agent module not available: {e}")
+            except Exception as e:
+                print(f"⚠️  Error processing operational query: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # Route to Strategic Query Agent if keyword "strategic" is detected
+        elif query_type == "strategic":
+            # Keyword-based routing for strategic queries
+            try:
+                from strategic_query_agent import process_strategic_query_with_agent, STRATEGIC_QUERY_AGENT_ID
+                strategic_agent = agents_store.get(STRATEGIC_QUERY_AGENT_ID)
+                if strategic_agent:
+                    strategic_agent.status = "processing"
+                    answer, evidence_facts, strat_routing = process_strategic_query_with_agent(query_info, query)
+                    strategic_agent.status = "active"
+                    routing_info.update(strat_routing)
+                    routing_info["target_agents"] = [STRATEGIC_QUERY_AGENT_ID]
+                    routing_info["strategy"] = "strategic_agent"
+                    routing_info["reason"] = "Routed to strategic agent based on keyword detection"
+                    orchestrator.status = "active"
+                    return answer, evidence_facts, routing_info
+                else:
+                    print("⚠️  Strategic Query Agent not found")
+            except ImportError as e:
+                print(f"⚠️  Strategic query agent module not available: {e}")
+            except Exception as e:
+                print(f"⚠️  Error processing strategic query: {e}")
+                import traceback
+                traceback.print_exc()
+        
         # For structured queries, use query processor but with agent-aware extraction
         if query_info.get("query_type") == "structured":
-            from query_processor import process_structured_query, extract_employee_facts_from_agents
+            from query_processor import process_structured_query
+            # extract_employee_facts_from_agents is defined in this file (orchestrator.py)
             
             # Extract facts from specific agents if routing found them
             if routing_info["strategy"] == "specific_agents" and routing_info["target_agents"]:

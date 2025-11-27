@@ -1,13 +1,13 @@
 {
-  "last_updated": "2025-11-26T10:17:22.126700",
-  "total_agents": 5,
+  "last_updated": "2025-11-27T23:20:40.507949",
+  "total_agents": 7,
   "agents": {
     "orchestrator_agent": {
       "id": "orchestrator_agent",
       "name": "Orchestrator Agent",
       "type": "orchestrator",
       "status": "active",
-      "created_at": "2025-11-26T10:17:22.125483",
+      "created_at": "2025-11-27T23:20:40.507447",
       "metadata": {
         "description": "Coordinates queries and delegates tasks to appropriate agents",
         "role": "query_coordination",
@@ -24,7 +24,7 @@
       "name": "Statistics Agent",
       "type": "statistics",
       "status": "active",
-      "created_at": "2025-11-26T10:17:22.125542",
+      "created_at": "2025-11-27T23:20:40.507471",
       "metadata": {
         "description": "Performs statistical analysis of documents (especially CSV files)",
         "role": "statistical_analysis",
@@ -41,7 +41,7 @@
       "name": "Visualization Agent",
       "type": "visualization",
       "status": "active",
-      "created_at": "2025-11-26T10:17:22.125554",
+      "created_at": "2025-11-27T23:20:40.507477",
       "metadata": {
         "description": "Creates user-friendly graphs/charts from statistics",
         "role": "data_visualization",
@@ -58,7 +58,7 @@
       "name": "Knowledge Graph Agent",
       "type": "kg",
       "status": "active",
-      "created_at": "2025-11-26T10:17:22.125566",
+      "created_at": "2025-11-27T23:20:40.507482",
       "metadata": {
         "description": "Extracts facts/knowledge from documents for traceability",
         "role": "knowledge_extraction",
@@ -71,7 +71,7 @@
     },
     "llm_agent": {
       "id": "llm_agent",
-      "name": "LLM Research Assistant",
+      "name": "HR Assistant",
       "type": "llm",
       "status": "active",
       "created_at": "2025-11-22T10:48:46.530536",
@@ -82,6 +82,40 @@
           "qa",
           "insights",
           "traceability"
+        ]
+      }
+    },
+    "strategic_query_agent": {
+      "id": "strategic_query_agent",
+      "name": "Strategic Query Agent",
+      "type": "strategic_query",
+      "status": "active",
+      "created_at": "2025-11-27T23:20:40.507660",
+      "metadata": {
+        "description": "Processes strategic-level multi-variable queries (S1, S2) using statistics and knowledge graph",
+        "role": "strategic_analysis",
+        "capabilities": [
+          "multi_variable_analysis",
+          "risk_detection",
+          "performance_monitoring",
+          "recruitment_analysis"
+        ]
+      }
+    },
+    "operational_query_agent": {
+      "id": "operational_query_agent",
+      "name": "Operational Query Agent",
+      "type": "operational_query",
+      "status": "active",
+      "created_at": "2025-11-27T23:20:40.507666",
+      "metadata": {
+        "description": "Processes operational-level multi-variable queries (O1, O2, O3) using statistics and knowledge graph",
+        "role": "operational_analysis",
+        "capabilities": [
+          "performance_monitoring",
+          "absence_tracking",
+          "engagement_monitoring",
+          "departmental_analysis"
         ]
       }
     }

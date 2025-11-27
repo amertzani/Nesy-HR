@@ -27,7 +27,7 @@ export default function HomePage() {
       href: "/graph",
     },
     {
-      title: "Research Assistant",
+      title: "HR Assistant",
       description: "Chat with AI about your research data",
       icon: MessageSquare,
       href: "/chat",

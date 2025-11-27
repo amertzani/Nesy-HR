@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { hfApi } from "@/lib/api-client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Network, Bot, Cpu, FileText, CheckCircle2, Clock, AlertCircle, BarChart3, TrendingUp } from "lucide-react";
+import { Loader2, Network, Bot, Cpu, FileText, CheckCircle2, Clock, AlertCircle, BarChart3, TrendingUp, Target } from "lucide-react";
 import { AgentNetwork } from "@/components/AgentNetwork";
 
 export default function AgentsPage() {
@@ -40,6 +40,8 @@ export default function AgentsPage() {
   const visualizationAgents = architectureData?.visualization_agents || [];
   const kgAgents = architectureData?.kg_agents || [];
   const llmAgents = architectureData?.llm_agents || [];
+  const strategicQueryAgents = architectureData?.strategic_query_agents || [];
+  const operationalQueryAgents = architectureData?.operational_query_agents || [];
   const documentAgents = architectureData?.document_agents || [];
 
   const getStatusColor = (status: string) => {
@@ -85,6 +87,8 @@ export default function AgentsPage() {
         visualizationAgents={visualizationAgents}
         kgAgents={kgAgents}
         llmAgents={llmAgents}
+        strategicQueryAgents={strategicQueryAgents}
+        operationalQueryAgents={operationalQueryAgents}
         documentAgents={documentAgents}
       />
 
@@ -172,6 +176,94 @@ export default function AgentsPage() {
         ))}
       </div>
 
+      {/* Strategic Query Agents */}
+      {strategicQueryAgents.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Strategic Query Agents ({strategicQueryAgents.length})
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {strategicQueryAgents.map((agent: any) => (
+              <Card key={agent.id} className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-amber-500" />
+                    <h3 className="font-semibold">{agent.name}</h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`${getStatusColor(agent.status)} text-white border-0`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {getStatusIcon(agent.status)}
+                      {agent.status}
+                    </span>
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {agent.metadata?.description || "Processes multi-variable strategic queries"}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(agent.metadata?.capabilities || []).map((cap: string) => (
+                    <Badge key={cap} variant="secondary" className="text-xs">
+                      {cap}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Created: {new Date(agent.created_at).toLocaleString()}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Operational Query Agents */}
+      {operationalQueryAgents.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Operational Query Agents ({operationalQueryAgents.length})
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {operationalQueryAgents.map((agent: any) => (
+              <Card key={agent.id} className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-500" />
+                    <h3 className="font-semibold">{agent.name}</h3>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`${getStatusColor(agent.status)} text-white border-0`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {getStatusIcon(agent.status)}
+                      {agent.status}
+                    </span>
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {agent.metadata?.description || "Processes operational-level multi-variable queries"}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {(agent.metadata?.capabilities || []).map((cap: string) => (
+                    <Badge key={cap} variant="secondary" className="text-xs">
+                      {cap}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Created: {new Date(agent.created_at).toLocaleString()}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* LLM Agents */}
       <div>
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -199,15 +291,6 @@ export default function AgentsPage() {
               <p className="text-sm text-muted-foreground mb-2">
                 {agent.metadata?.description || "No description"}
               </p>
-              {agent.metadata?.ontology_initialized && (
-                <div className="mt-2 p-2 bg-muted rounded text-xs">
-                  <div className="font-semibold mb-1">Ontology:</div>
-                  <div>
-                    {agent.metadata?.ontology?.entities?.length || 0} entities,{" "}
-                    {agent.metadata?.ontology?.relationships?.length || 0} relationships
-                  </div>
-                </div>
-              )}
               <div className="text-xs text-muted-foreground mt-2">
                 Created: {new Date(agent.created_at).toLocaleString()}
               </div>

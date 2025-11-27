@@ -22,12 +22,12 @@ A multi-agent system for processing documents and building a knowledge graph, wi
 - **Location**: `agent_system.py` → `combine_knowledge_graphs()`
 
 #### **LLM Agent** (`llm_agent`)
-- **Role**: Ontology management and enhancement
+- **Role**: LLM-powered research assistant
 - **Responsibility**: 
-  - Initializes HR management ontology schema
-  - Enhances ontology based on new data patterns
-  - Stores ontology in metadata
-- **Location**: `agent_system.py` → `initialize_ontology()`, `enhance_ontology()`
+  - Generates intelligent responses to user queries
+  - Retrieves relevant facts from knowledge graph
+  - Provides context-aware insights
+- **Location**: `responses.py` → `respond()`
 
 ---
 
@@ -128,14 +128,6 @@ Facts stored in knowledge_graph.pkl
 - **Note**: Worker agents are NOT persisted (ephemeral)
 - **Location**: `agent_system.py`
 
-### **Ontology** (stored in LLM agent metadata)
-- **Format**: Dictionary
-- **Content**:
-  - `domain`: "Human Resource Management"
-  - `entities`: List of entity types
-  - `relationships`: List of relationship types
-  - `properties`: Entity properties
-- **Location**: `agent_system.py` → LLM agent metadata
 
 ---
 
@@ -166,11 +158,6 @@ Facts stored in knowledge_graph.pkl
 
 ## 🔄 Key Processes
 
-### **Ontology Enhancement**
-- When new entities/relationships are detected in documents
-- LLM agent enhances ontology schema
-- Stored in LLM agent metadata
-- **Location**: `agent_system.py` → `enhance_ontology()`
 
 ### **Fact Extraction**
 - Uses knowledge extraction pipeline (`kg_pipeline.py`)
@@ -203,7 +190,6 @@ Facts stored in knowledge_graph.pkl
 ### **Agents**
 - `GET /api/agents/architecture` - Get agent architecture
 - `GET /api/agents/{agent_id}` - Get specific agent
-- `GET /api/agents/ontology` - Get ontology schema
 
 ### **Research Assistant**
 - `POST /api/chat` - Ask questions, get intelligent responses
@@ -227,8 +213,7 @@ Facts stored in knowledge_graph.pkl
     └── client/
         └── src/
             ├── pages/
-            │   ├── agents.tsx      # Agent architecture visualization
-            │   └── ontology.tsx    # Ontology visualization
+            │   └── agents.tsx      # Agent architecture visualization
             └── components/
                 ├── DocumentList.tsx      # Shows documents with agent_id
                 └── KnowledgeBaseTable.tsx # Shows facts with agentId
@@ -244,10 +229,6 @@ Facts stored in knowledge_graph.pkl
 - Main graph combines all facts
 - Agent ownership tracked via `agent_id` metadata
 
-### **Ontology-Driven**
-- HR management ontology schema
-- Dynamic enhancement based on data
-- Ensures consistent fact structure
 
 ### **Intelligent Responses**
 - LLM-powered research assistant

@@ -28,7 +28,7 @@ Multi-agent knowledge graph system for extracting, storing, and visualizing fact
 
 ### Frontend (React/TypeScript)
 - **`RandDKnowledgeGraph/client/src/`** - React app
-  - **`pages/`** - Main pages (upload, knowledge-base, graph, agents, ontology, chat)
+  - **`pages/`** - Main pages (upload, knowledge-base, graph, agents, chat)
   - **`components/`** - UI components (tables, visualizations, dialogs)
   - **`lib/api-client.ts`** - API client for backend communication
 
@@ -49,13 +49,9 @@ Multi-agent knowledge graph system for extracting, storing, and visualizing fact
 - **Agents**:
   - **Task Allocator**: Assigns documents to workers
   - **KG Combiner**: Combines worker graphs
-  - **LLM Agent**: Manages ontology schema
+  - **LLM Agent**: Generates intelligent responses to queries
   - **Worker Agents**: One per document, separate knowledge graphs
 
-### 4. Ontology Management
-- **Location**: `agent_system.py` → `initialize_ontology()`, `enhance_ontology()`
-- **Features**: HR management schema, auto-enhancement from worker suggestions
-- **API**: `/api/agents/ontology`
 
 ### 5. Knowledge Base View
 - **Location**: Frontend `pages/knowledge-base.tsx`, Backend `/api/knowledge/facts`
@@ -83,7 +79,7 @@ Multi-agent knowledge graph system for extracting, storing, and visualizing fact
 2. **Allocation** → `agent_system.py` creates worker agent
 3. **Extraction** → `knowledge.py` extracts facts (with agent_id)
 4. **Storage** → Facts stored in RDFLib graph + worker's separate graph
-5. **Enhancement** → Worker suggests ontology improvements
+5. **Storage** → Facts stored in knowledge graph
 6. **Combination** → KG Combiner aggregates worker graphs
 7. **Visualization** → Frontend displays facts/graph
 

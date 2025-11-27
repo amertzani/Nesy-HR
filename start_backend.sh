@@ -1,9 +1,21 @@
 #!/bin/bash
 
 # Start Python FastAPI Backend Server (DEV VERSION)
-# This script starts the Python backend API server on port 8002
+# This script starts the Python backend API server on port 8001
 
 set -e  # Exit on error
+
+# Kill any existing processes on port 8001
+echo "🔧 Checking for existing processes on port 8001..."
+if lsof -ti:8001 > /dev/null 2>&1; then
+    echo "⚠️  Port 8001 is in use, killing existing process..."
+    lsof -ti:8001 | xargs kill -9 2>/dev/null || true
+    sleep 2
+fi
+
+# Kill any existing api_server processes
+pkill -f "python.*api_server" 2>/dev/null || true
+sleep 1
 
 echo "🚀 Starting NesyX Backend Server (DEV VERSION)..."
 echo ""
@@ -36,4 +48,5 @@ echo ""
 
 # Start the server
 # source venv/bin/activate
+# Start the backend server
 python3 api_server.py

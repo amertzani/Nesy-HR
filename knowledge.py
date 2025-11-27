@@ -85,6 +85,11 @@ graph = rdflib.Graph()
 # Mapping of fact IDs to triples for editing operations
 fact_index = {}
 
+# In-memory set-based index for fast fact existence checks
+# Key: (normalized_subject, normalized_predicate, normalized_object) -> True
+_fact_lookup_set = set()
+_fact_index_initialized = False
+
 def save_knowledge_graph():
     try:
         with open(KNOWLEDGE_FILE, 'wb') as f:
@@ -108,7 +113,8 @@ def save_knowledge_graph():
         return f" Error saving knowledge: {e}"
 
 def load_knowledge_graph():
-    global graph
+    global graph, _fact_index_initialized, _fact_lookup_set
+    _fact_index_initialized = False  # Reset index so it rebuilds after load
     # Load normalization map on startup
     load_normalization_map()
     try:
@@ -1243,11 +1249,51 @@ def extract_triples(text):
                 unique_triples.append((s, p, o))
     return unique_triples
 
+def _initialize_fact_lookup_index():
+    """Initialize in-memory fact lookup index for fast existence checks"""
+    global _fact_lookup_set, _fact_index_initialized, graph
+    from urllib.parse import unquote
+    
+    if _fact_index_initialized:
+        return
+    
+    print(f"🔄 Initializing fact lookup index from {len(graph)} triples...")
+    _fact_lookup_set.clear()
+    
+    for s, p, o in graph:
+        # Skip metadata triples
+        predicate_str = str(p)
+        if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
+            'fact_object' in predicate_str or 'has_details' in predicate_str or 
+            'source_document' in predicate_str or 'uploaded_at' in predicate_str or
+            'agent_id' in predicate_str):
+            continue
+        
+        # Normalize and add to index
+        s_str = str(s)
+        if 'urn:' in s_str:
+            s_decoded = unquote(s_str.replace('urn:', '')).replace('_', ' ').lower().strip()
+        else:
+            s_decoded = str(s).lower().strip().replace('_', ' ')
+        s_decoded = normalize_entity(s_decoded)
+        
+        p_str = str(p)
+        if 'urn:' in p_str:
+            p_decoded = unquote(p_str.replace('urn:', '')).replace('_', ' ').lower().strip()
+        else:
+            p_decoded = str(p).lower().strip().replace('_', ' ')
+        
+        o_decoded = normalize_entity(str(o).lower().strip())
+        
+        _fact_lookup_set.add((s_decoded, p_decoded, o_decoded))
+    
+    _fact_index_initialized = True
+    print(f"✅ Fact lookup index initialized with {len(_fact_lookup_set)} facts")
+
 def fact_exists(subject: str, predicate: str, object_val: str) -> bool:
     """
     Check if a fact (subject, predicate, object) already exists in the graph.
-    Handles URI encoding/decoding to properly compare facts.
-    Case-insensitive comparison to prevent duplicates with different cases.
+    Uses in-memory index for O(1) lookup instead of O(n) iteration.
     
     Args:
         subject: The subject of the fact
@@ -1257,54 +1303,19 @@ def fact_exists(subject: str, predicate: str, object_val: str) -> bool:
     Returns:
         True if the fact already exists (case-insensitive), False otherwise
     """
-    global graph
-    import rdflib
-    from urllib.parse import quote, unquote
+    global _fact_lookup_set, _fact_index_initialized
+    
+    # Initialize index if needed
+    if not _fact_index_initialized:
+        _initialize_fact_lookup_index()
     
     # Normalize the input (case-insensitive + entity normalization)
-    # Convert to lowercase and normalize spaces/underscores for consistent comparison
     subject_normalized = normalize_entity(str(subject).strip().lower().replace('_', ' '))
     predicate_normalized = str(predicate).strip().lower().replace('_', ' ')
     object_normalized = normalize_entity(str(object_val).strip().lower())
     
-    # OPTIMIZED: Skip metadata triples early to speed up duplicate checking
-    # Check all facts in the graph for case-insensitive match with normalization
-    for s, p, o in graph:
-        # Skip metadata triples early (much faster than processing them)
-        predicate_str = str(p)
-        if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
-            'fact_object' in predicate_str or 'has_details' in predicate_str or 
-            'source_document' in predicate_str or 'uploaded_at' in predicate_str):
-            continue
-        
-        # Extract and normalize subject from URI
-        s_str = str(s)
-        if 'urn:' in s_str:
-            # Decode URI: unquote, replace underscores with spaces, lowercase
-            s_decoded = unquote(s_str.replace('urn:', '')).replace('_', ' ').lower().strip()
-        else:
-            s_decoded = str(s).lower().strip().replace('_', ' ')
-        
-        # Normalize subject using entity normalization
-        s_decoded = normalize_entity(s_decoded)
-        
-        # Extract and normalize predicate from URI
-        p_str = str(p)
-        if 'urn:' in p_str:
-            p_decoded = unquote(p_str.replace('urn:', '')).replace('_', ' ').lower().strip()
-        else:
-            p_decoded = str(p).lower().strip().replace('_', ' ')
-        
-        # Normalize object (already a literal) using entity normalization
-        o_decoded = normalize_entity(str(o).lower().strip())
-        
-        # Compare case-insensitively with normalization (handles abbreviations, aliases)
-        if (s_decoded == subject_normalized and 
-            p_decoded == predicate_normalized and 
-            o_decoded == object_normalized):
-            return True
-    
-    return False
+    # Fast O(1) lookup using set
+    return (subject_normalized, predicate_normalized, object_normalized) in _fact_lookup_set
 
 def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None, agent_id: Optional[str] = None):
     """
@@ -1887,9 +1898,26 @@ def retrieve_context(question, limit=None):
     """
     Retrieve relevant context from knowledge graph for answering questions.
     Uses improved semantic matching and includes details for better context.
+    
+    Args:
+        question: The question to retrieve context for
+        limit: Maximum number of facts to return (default: 100 for large graphs, unlimited for small)
     """
     from urllib.parse import unquote
     from knowledge import get_fact_details
+    
+    # Determine limit EARLY to prevent processing all facts
+    if limit is None:
+        graph_size = len(graph) if graph else 0
+        if graph_size > 5000:  # Large document (1000+ rows typically = 5000+ facts)
+            limit = 500  # Limit to top 100 most relevant facts
+        elif graph_size > 2000:  # Medium document
+            limit = 500
+        else:  # Small document
+            limit = 500  # Still limit to prevent issues
+    
+    # For very large graphs, use early exit to avoid processing all facts
+    early_exit_threshold = limit * 3 if graph_size > 10000 else None  # Get 3x candidates, then sort and take top N
     
     # Extract meaningful keywords from question (remove stopwords)
     stopwords = {
@@ -1909,6 +1937,13 @@ def retrieve_context(question, limit=None):
     entities = [w.lower() for w in question.split() if (w[0].isupper() or w.isupper()) and len(w) > 1]
     qwords.extend(entities)
     
+    # Add operational/strategic query keywords to help find insights
+    insight_keywords = ['operational', 'strategic', 'analysis', 'insight', 'monitoring', 'tracking', 
+                       'performance', 'engagement', 'absence', 'department', 'manager', 'team']
+    for keyword in insight_keywords:
+        if keyword in question.lower():
+            qwords.append(keyword)
+    
     # Remove duplicates
     qwords = list(set(qwords))
     
@@ -1917,7 +1952,24 @@ def retrieve_context(question, limit=None):
         qwords = [w.lower() for w in question.split() if len(w) > 2]
     
     scored_matches = []
+    facts_processed = 0
+    max_facts_to_check = None
+    
+    # For very large graphs, limit how many facts we check
+    graph_size = len(graph) if graph else 0
+    if graph_size > 10000:
+        # Only check first 20,000 facts (enough to find top matches)
+        max_facts_to_check = 20000
+        print(f"📊 Large graph detected ({graph_size} facts), limiting check to first {max_facts_to_check} facts")
+    elif graph_size > 5000:
+        max_facts_to_check = 10000
+        print(f"📊 Medium-large graph ({graph_size} facts), limiting check to first {max_facts_to_check} facts")
+    
     for s, p, o in graph:
+        # Early exit if we've checked enough facts
+        if max_facts_to_check and facts_processed >= max_facts_to_check:
+            break
+        facts_processed += 1
         # Skip metadata triples
         predicate_str = str(p)
         if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
@@ -1952,8 +2004,25 @@ def retrieve_context(question, limit=None):
         # Build fact text for matching
         fact_text = f"{subject} {predicate} {object_val}".lower()
         
+        # Boost score for operational/strategic insights - check source document
+        source_doc = None
+        try:
+            # Try to get source document from metadata
+            fact_id = f"urn:fact:{subject}|{predicate}|{object_val}"
+            for s2, p2, o2 in graph:
+                if str(s2) == fact_id and 'source_document' in str(p2).lower():
+                    source_doc = str(o2).lower()
+                    break
+        except:
+            pass
+        
+        is_insight = ('operational' in fact_text or 'strategic' in fact_text or 
+                     'operational_insights' in str(s).lower() or 'strategic_insights' in str(s).lower() or
+                     'operational_insights' in str(p).lower() or 'strategic_insights' in str(p).lower() or
+                     (source_doc and ('operational' in source_doc or 'strategic' in source_doc or 'insight' in source_doc)))
+        
         # Calculate relevance score with improved matching
-        score = 0
+        score = 10 if is_insight else 0  # Strong boost for insights
         
         # Exact word matches
         for word in qwords:
@@ -2062,6 +2131,16 @@ def retrieve_context(question, limit=None):
                 fact_desc += " | Source: unknown"
             
             scored_matches.append((score, fact_desc, subject, predicate, object_val, match_locations, matched_words))
+            
+            # Early exit optimization: if we have enough high-scoring matches, stop iterating
+            # Check every 1000 facts if we can exit early
+            if facts_processed % 1000 == 0 and len(scored_matches) >= limit * 2:
+                # If we have 2x the limit in matches, we likely have enough good ones
+                # Sort what we have so far and check if top N are high-scoring
+                temp_sorted = sorted(scored_matches, key=lambda x: x[0], reverse=True)
+                if len(temp_sorted) >= limit and temp_sorted[limit-1][0] >= 5:  # Top N have score >= 5
+                    print(f"📊 Early exit: Found {len(scored_matches)} matches after checking {facts_processed} facts")
+                    break
     
     # Sort by score (highest first) - but return ALL matches, not just top N
     scored_matches.sort(key=lambda x: x[0], reverse=True)
@@ -2096,30 +2175,42 @@ def retrieve_context(question, limit=None):
                         if doc_name not in facts_by_document:
                             facts_by_document[doc_name] = []
                         facts_by_document[doc_name].append(fact_desc)
-            # No limit - return ALL relevant facts with any word match
+            # Limit already determined at function start, no need to recalculate
+    
+    # Apply limit to unique_matches
+    if limit and len(unique_matches) > limit:
+        unique_matches = unique_matches[:limit]
+        print(f"📊 Limiting context to top {limit} most relevant facts (out of {len(scored_matches)} matches) to prevent LLM timeout")
     
     if unique_matches:
         # If we have multiple documents, organize by document
         if len(facts_by_document) > 1:
+            total_shown = 0
             result = f"**Relevant Knowledge from Your Documents ({len(unique_matches)} facts found across {len(facts_by_document)} documents):**\n\n"
             for doc_name, doc_facts in facts_by_document.items():
+                if total_shown >= limit:
+                    break
                 result += f"**From {doc_name}:**\n"
-                for i, fact in enumerate(doc_facts[:10], 1):  # Limit to top 10 per document
+                doc_limit = min(10, limit - total_shown)
+                for i, fact in enumerate(doc_facts[:doc_limit], 1):
                     result += f"  {i}. {fact}\n"
-                if len(doc_facts) > 10:
-                    result += f"  ... and {len(doc_facts) - 10} more facts from this document\n"
+                    total_shown += 1
+                if len(doc_facts) > doc_limit:
+                    result += f"  ... and {len(doc_facts) - doc_limit} more facts from this document\n"
                 result += "\n"
             
             # Add remaining facts that weren't grouped
-            remaining = [f for f in unique_matches if f not in [fact for facts in facts_by_document.values() for fact in facts]]
-            if remaining:
-                result += "**Other relevant facts:**\n"
-                for i, match in enumerate(remaining[:20], 1):
-                    result += f"{i}. {match}\n"
+            if total_shown < limit:
+                remaining = [f for f in unique_matches if f not in [fact for facts in facts_by_document.values() for fact in facts]]
+                if remaining:
+                    result += "**Other relevant facts:**\n"
+                    remaining_limit = min(20, limit - total_shown)
+                    for i, match in enumerate(remaining[:remaining_limit], 1):
+                        result += f"{i}. {match}\n"
         else:
-            # Single document or no grouping - show all facts
+            # Single document or no grouping - show limited facts
             result = f"**Relevant Knowledge from Your Documents ({len(unique_matches)} facts found):**\n\n"
-            for i, match in enumerate(unique_matches, 1):
+            for i, match in enumerate(unique_matches[:limit] if limit else unique_matches, 1):
                 result += f"{i}. {match}\n"
         return result
     

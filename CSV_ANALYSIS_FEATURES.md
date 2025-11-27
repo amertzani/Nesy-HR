@@ -2,7 +2,7 @@
 
 ## Overview
 
-Enhanced CSV file processing with evidence-based statistics, ontology enhancement, and explainable insights.
+Enhanced CSV file processing with evidence-based statistics and explainable insights.
 
 ## Key Features
 
@@ -30,33 +30,12 @@ Enhanced CSV file processing with evidence-based statistics, ontology enhancemen
 - Worker agents automatically detect CSV files
 - Run comprehensive analysis on upload
 - Store analysis results in agent metadata
-- Generate ontology suggestions based on CSV structure
 
 **Traceability:**
 - Analysis timestamp stored
 - Column-by-column statistics preserved
 - Insights linked to specific data patterns
-- Ontology suggestions traceable to column names
 
-### 3. **Ontology Enhancement** (`csv_analysis.py` → `agent_system.py`)
-
-**What it does:**
-- Analyzes column names to suggest entity types
-  - Detects ID columns → suggests entities
-  - Recognizes keywords (employee, department, project, skill)
-  - Infers entity types from naming patterns
-- Suggests relationships from foreign key patterns
-  - `*_id` columns → relationships
-  - Keywords like "belongs_to", "works_in", "reports_to"
-- Maps column types to ontology properties
-  - Numeric → float/integer properties
-  - Categorical → enum properties
-  - Datetime → datetime properties
-
-**Transparency:**
-- All suggestions include source (column name, pattern detected)
-- Suggestions stored in worker metadata
-- LLM agent automatically enhances ontology
 
 ### 4. **Evidence-Based Insights** (`csv_analysis.py`)
 
@@ -114,17 +93,10 @@ CSV Analysis Module
     ├─ Column Type Detection
     ├─ Statistical Analysis
     ├─ Correlation Computation
-    ├─ Insight Generation
-    └─ Ontology Suggestions
-    ↓
-LLM Agent Enhancement
-    ├─ Entity Types Added
-    ├─ Relationships Added
-    └─ Properties Mapped
+    └─ Insight Generation
     ↓
 Results Stored
     ├─ Worker Metadata (full analysis)
-    ├─ Ontology Updated
     └─ Facts Extracted (as before)
 ```
 
@@ -135,7 +107,6 @@ Results Stored
 1. **Transparency**: See exactly what the system found in your CSV
    - Column-by-column breakdown
    - Statistical evidence for every insight
-   - Traceable ontology suggestions
 
 2. **Reliability**: Evidence-based insights
    - No black-box analysis
@@ -162,12 +133,10 @@ Results Stored
 2. **Integration**: Seamlessly integrated with agent system
    - Automatic detection
    - Metadata storage
-   - Ontology enhancement
 
 3. **Extensibility**: Easy to add new analysis types
    - Column analysis functions are modular
    - Insight generation is configurable
-   - Ontology suggestions are pattern-based
 
 ## Example Output
 
@@ -202,11 +171,7 @@ Results Stored
         {"column1": "salary", "column2": "years_experience", "correlation": 0.85}
       ]
     }
-  ],
-  "ontology_suggestions": {
-    "entities": ["Employee", "Department"],
-    "relationships": ["works_in", "has_department"]
-  }
+  ]
 }
 ```
 
@@ -216,7 +181,6 @@ Results Stored
 2. **View Statistics**: Check worker agent metadata or use API endpoint
 3. **Query via Chat**: Ask questions about CSV statistics
 4. **Review Insights**: See evidence-based recommendations
-5. **Check Ontology**: Verify auto-enhanced ontology
 
 ## Future Enhancements
 

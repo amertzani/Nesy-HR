@@ -16,6 +16,7 @@ import DocumentsPage from "@/pages/documents";
 import ImportExportPage from "@/pages/import-export";
 import AgentsPage from "@/pages/agents";
 import StatisticsPage from "@/pages/statistics";
+import InsightsPage from "@/pages/insights";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,8 @@ function Router() {
       <Route path="/documents" component={DocumentsPage} />
       <Route path="/import-export" component={ImportExportPage} />
       <Route path="/statistics" component={StatisticsPage} />
+              <Route path="/insights" component={InsightsPage} />
+              <Route path="/strategic-insights" component={InsightsPage} /> {/* Legacy route */}
       <Route path="/agents" component={AgentsPage} />
       <Route component={NotFound} />
     </Switch>

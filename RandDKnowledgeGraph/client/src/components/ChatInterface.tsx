@@ -47,7 +47,7 @@ export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterf
       <div className="p-6 border-b">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Research Assistant</h3>
+          <h3 className="text-lg font-semibold">HR Assistant</h3>
         </div>
         <p className="text-sm text-muted-foreground">
           Ask questions about your research data and knowledge base
@@ -59,7 +59,7 @@ export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterf
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-2">
-              Start a conversation with your research assistant
+              Start a conversation with your HR assistant
             </p>
             <p className="text-sm text-muted-foreground">
               Ask about findings, methodologies, or relationships in your data

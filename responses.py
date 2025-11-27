@@ -626,7 +626,60 @@ def respond(message, history=None, system_message="You are an intelligent assist
         
         query_info = detect_query_type(message)
         
-        print(f"🔍 Query detection: type={query_info.get('query_type')}, operation={query_info.get('operation')}, attribute={query_info.get('attribute')}")
+        print(f"🔍 Query detection: type={query_info.get('query_type')}, operation={query_info.get('operation')}, attribute={query_info.get('attribute')}, strategic_type={query_info.get('strategic_type')}")
+        
+        # Try orchestrator for operational queries (keyword-based routing)
+        if query_info.get("query_type") == "operational":
+            print(f"🎯 Routing operational query through orchestrator (keyword-based)...")
+            answer, evidence_facts, routing_info = orchestrate_query(message, query_info)
+            
+            print(f"📊 Query result: answer={'present' if answer else 'none'}, evidence_count={len(evidence_facts)}, strategy={routing_info.get('strategy')}")
+            
+            if answer:
+                # Build evidence context
+                evidence_context = build_evidence_context(evidence_facts, message)
+                
+                # Format response with evidence and routing info
+                response = answer
+                if evidence_context:
+                    response += f"\n\n{evidence_context}"
+                if routing_info.get('reason'):
+                    response += f"\n\n*Query processed via operational analysis: {routing_info['reason']}*"
+                
+                print(f"✅ Query answered: operational - {answer[:100]}...")
+                return response
+            else:
+                # Query detected but no answer found
+                return f"I detected an operational query but couldn't process it. Please ensure a CSV file has been uploaded with the required columns."
+        
+        # Try orchestrator for strategic queries (keyword-based or pattern-based)
+        if query_info.get("query_type") == "strategic":
+            strategic_type = query_info.get("strategic_type")
+            query_type_label = "operational" if strategic_type in ['O1', 'O2', 'O3', 'O4'] else "strategic"
+            print(f"🎯 Routing {query_type_label} query through orchestrator...")
+            answer, evidence_facts, routing_info = orchestrate_query(message, query_info)
+            
+            print(f"📊 Query result: answer={'present' if answer else 'none'}, evidence_count={len(evidence_facts)}, strategy={routing_info.get('strategy')}")
+            
+            if answer:
+                # Build evidence context
+                evidence_context = build_evidence_context(evidence_facts, message)
+                
+                # Format response with evidence and routing info
+                response = answer
+                if evidence_context:
+                    response += f"\n\n{evidence_context}"
+                if routing_info.get('reason'):
+                    response += f"\n\n*Query processed via {query_type_label} analysis: {routing_info['reason']}*"
+                
+                print(f"✅ Query answered: {strategic_type or 'strategic'} - {answer[:100]}...")
+                return response
+            else:
+                # Query detected but no answer found
+                if strategic_type:
+                    return f"I detected a {query_type_label} query ({strategic_type}) but couldn't process it. Please ensure a CSV file has been uploaded with the required columns."
+                else:
+                    return f"I detected a strategic query but couldn't process it. Please ensure a CSV file has been uploaded with the required columns."
         
         # Use orchestrator for structured queries
         if query_info.get("query_type") == "structured":
@@ -663,6 +716,23 @@ def respond(message, history=None, system_message="You are an intelligent assist
                     response += f"\n\n{evidence_context}"
                 print(f"✅ Direct query answered: {query_info.get('operation')} - {answer}")
                 return response
+            else:
+                # Structured query detected but no answer found - return helpful error instead of using LLM
+                operation = query_info.get('operation', 'query')
+                attribute = query_info.get('attribute', 'information')
+                entity = query_info.get('entity_name', '')
+                
+                if operation == "filter" and entity:
+                    error_msg = f"I couldn't find {attribute} information for {entity} in the knowledge base. "
+                    error_msg += f"Please check if the name is spelled correctly or if this employee exists in the uploaded documents."
+                elif operation in ["max", "min"]:
+                    error_msg = f"I couldn't find any employees with {attribute} information in the knowledge base. "
+                    error_msg += f"Please check if the data was uploaded correctly."
+                else:
+                    error_msg = f"I couldn't process this structured query. Please try rephrasing your question."
+                
+                print(f"⚠️  Structured query failed: {error_msg}")
+                return error_msg
         
     except ImportError as e:
         print(f"⚠️  Orchestrator/query processor not available: {e}")
@@ -671,9 +741,29 @@ def respond(message, history=None, system_message="You are an intelligent assist
         print(f"⚠️  Orchestrator query processing failed: {e}")
         import traceback
         traceback.print_exc()
-        # Fall through to normal processing
+        # If it was a structured query, don't fall through to LLM - return error instead
+        try:
+            query_processor = importlib.import_module('query_processor')
+            detect_query_type = query_processor.detect_query_type
+            query_info = detect_query_type(message)
+            if query_info.get("query_type") == "structured":
+                return f"I encountered an error processing your structured query. Please try rephrasing your question. Error: {str(e)}"
+        except:
+            pass
+        # Fall through to normal processing for non-structured queries
     
-    # Retrieve relevant context from knowledge graph
+    # CRITICAL: For structured queries, NEVER use LLM - return error instead
+    # This prevents timeout issues with large documents
+    try:
+        query_processor = importlib.import_module('query_processor')
+        detect_query_type = query_processor.detect_query_type
+        query_info = detect_query_type(message)
+        if query_info.get("query_type") == "structured":
+            return "I detected this as a structured query but couldn't process it. Please try rephrasing your question or check if the data was uploaded correctly."
+    except:
+        pass
+    
+    # Retrieve relevant context from knowledge graph (only for non-structured queries)
     context = retrieve_context(message)
     
     # Enable LLM if Ollama or OpenAI API is configured

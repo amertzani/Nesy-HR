@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, Network, Bot, FileText, Cpu } from "lucide-react";
+import { BarChart3, TrendingUp, Network, Bot, FileText, Cpu, Target } from "lucide-react";
 
 interface AgentNode {
   id: string;
@@ -25,6 +25,8 @@ interface AgentNetworkProps {
   visualizationAgents: any[];
   kgAgents: any[];
   llmAgents: any[];
+  strategicQueryAgents: any[];
+  operationalQueryAgents: any[];
   documentAgents: any[];
 }
 
@@ -34,6 +36,8 @@ export function AgentNetwork({
   visualizationAgents,
   kgAgents,
   llmAgents,
+  strategicQueryAgents,
+  operationalQueryAgents,
   documentAgents,
 }: AgentNetworkProps) {
   // Define node positions and connections
@@ -41,13 +45,16 @@ export function AgentNetwork({
     const nodeMap: Map<string, AgentNode> = new Map();
     const conns: Connection[] = [];
     
-    // Core agent positions (arranged in a network layout)
+    // Core agent positions (reorganized to avoid overlaps and make all visible)
+    // Spread out more to show all agents clearly with names visible
     const corePositions = {
-      orchestrator: { x: 400, y: 50 },
-      statistics: { x: 200, y: 150 },
-      visualization: { x: 400, y: 150 },
-      kg: { x: 200, y: 300 },
-      llm: { x: 400, y: 300 },
+      orchestrator: { x: 400, y: 40 },        // Top center
+      strategic_query: { x: 150, y: 140 },    // Left, below orchestrator (more space)
+      operational_query: { x: 650, y: 140 },  // Right, below orchestrator (more space)
+      statistics: { x: 80, y: 280 },          // Far left (more space from strategic)
+      visualization: { x: 720, y: 280 },      // Far right (more space from operational)
+      kg: { x: 80, y: 420 },                  // Far left bottom (more space)
+      llm: { x: 720, y: 420 },                // Far right bottom (more space)
     };
     
     // Add Orchestrator Agent (top center - coordinates everything)
@@ -115,15 +122,44 @@ export function AgentNetwork({
       });
     }
     
+    // Add Strategic Query Agent (left of center, below orchestrator)
+    if (strategicQueryAgents.length > 0) {
+      const agent = strategicQueryAgents[0];
+      nodeMap.set(agent.id, {
+        id: agent.id,
+        name: agent.name,
+        type: "strategic_query",
+        ...corePositions.strategic_query,
+        icon: Target,
+        color: "#f59e0b", // amber/orange
+      });
+    }
+    
+    // Add Operational Query Agent (right of center, below orchestrator)
+    if (operationalQueryAgents && operationalQueryAgents.length > 0) {
+      const agent = operationalQueryAgents[0];
+      nodeMap.set(agent.id, {
+        id: agent.id,
+        name: agent.name,
+        type: "operational_query",
+        ...corePositions.operational_query,
+        icon: BarChart3,
+        color: "#3b82f6", // blue
+      });
+    }
+    
     // Add Document Agents (arranged in a row below)
     // Separate main document agents from worker agents
     const mainDocAgents = documentAgents.filter((a: any) => a.type !== "document_worker");
     const workerAgents = documentAgents.filter((a: any) => a.type === "document_worker");
     
-    // Main document agents
+    // Main document agents (arranged at bottom center, avoiding KG agent area)
+    // Position them in the center-bottom area, away from left side where KG is
     mainDocAgents.forEach((agent, index) => {
-      const x = 100 + (index % 5) * 120;
-      const y = 450 + Math.floor(index / 5) * 80;
+      const cols = Math.min(5, Math.ceil(Math.sqrt(mainDocAgents.length)));
+      const startX = 400 - (cols - 1) * 60; // Center horizontally
+      const x = startX + (index % cols) * 120;
+      const y = 500 + Math.floor(index / cols) * 80;
       nodeMap.set(agent.id, {
         id: agent.id,
         name: agent.document_name || agent.name,
@@ -135,10 +171,13 @@ export function AgentNetwork({
       });
     });
     
-    // Worker agents (arranged below main document agents, smaller)
+    // Worker agents (arranged below main document agents, offset to avoid KG)
+    // Position workers further right to avoid overlapping with KG connections
     workerAgents.forEach((agent, index) => {
-      const x = 100 + (index % 8) * 100;
-      const y = 450 + Math.ceil(mainDocAgents.length / 5) * 80 + 60 + Math.floor(index / 8) * 60;
+      const cols = Math.min(8, Math.ceil(Math.sqrt(workerAgents.length * 1.5)));
+      const startX = 350; // Start more to the right to avoid KG area
+      const x = startX + (index % cols) * 90;
+      const y = 500 + Math.ceil(mainDocAgents.length / 5) * 80 + 50 + Math.floor(index / cols) * 55;
       nodeMap.set(agent.id, {
         id: agent.id,
         name: agent.metadata?.chunk_range || `Worker ${index + 1}`,
@@ -170,6 +209,28 @@ export function AgentNetwork({
       conns.push({ from: llmId, to: orchId });
     }
     
+    // Strategic Query Agent connections
+    const strategicId = strategicQueryAgents[0]?.id;
+    if (strategicId) {
+      // Orchestrator → Strategic Query Agent (orchestrator routes strategic queries)
+      if (orchId) conns.push({ from: orchId, to: strategicId });
+      // Strategic Query Agent → Statistics Agent (uses statistics)
+      if (statsId) conns.push({ from: strategicId, to: statsId });
+      // Strategic Query Agent → KG Agent (uses knowledge graph)
+      if (kgId) conns.push({ from: strategicId, to: kgId });
+    }
+    
+    // Operational Query Agent connections
+    const operationalId = operationalQueryAgents[0]?.id;
+    if (operationalId) {
+      // Orchestrator → Operational Query Agent (orchestrator routes operational queries)
+      if (orchId) conns.push({ from: orchId, to: operationalId });
+      // Operational Query Agent → Statistics Agent (uses statistics)
+      if (statsId) conns.push({ from: operationalId, to: statsId });
+      // Operational Query Agent → KG Agent (uses knowledge graph)
+      if (kgId) conns.push({ from: operationalId, to: kgId });
+    }
+    
     // Statistics ↔ Visualization (direct collaboration)
     if (statsId && vizId) {
       conns.push({ from: statsId, to: vizId, bidirectional: true });
@@ -190,7 +251,7 @@ export function AgentNetwork({
       if (orchId) conns.push({ from: docAgent.id, to: orchId });
     });
     
-    // Worker Agents → Parent Document Agent
+    // Worker Agents → Parent Document Agent (aggregation)
     documentAgents.filter((a: any) => a.type === "document_worker").forEach((workerAgent: any) => {
       const parentId = workerAgent.metadata?.parent_document;
       if (parentId) {
@@ -202,23 +263,64 @@ export function AgentNetwork({
       }
     });
     
+    // Worker Agents → Knowledge Graph (direct triple construction - KEY ARCHITECTURE!)
+    // Workers construct triples directly, bypassing KG Agent for CSV files
+    if (kgId) {
+      documentAgents.filter((a: any) => a.type === "document_worker").forEach((workerAgent: any) => {
+        conns.push({ from: workerAgent.id, to: kgId });
+      });
+    }
+    
     return { nodes: Array.from(nodeMap.values()), connections: conns };
   }, [orchestratorAgents, statisticsAgents, visualizationAgents, kgAgents, llmAgents, documentAgents]);
   
   const width = 800;
-  const height = Math.max(600, 450 + Math.ceil(documentAgents.length / 5) * 80);
+  const mainDocCount = documentAgents.filter((a: any) => a.type !== "document_worker").length;
+  const workerCount = documentAgents.filter((a: any) => a.type === "document_worker").length;
+  const docRows = Math.ceil(mainDocCount / 5);
+  const workerRows = Math.ceil(workerCount / 8);
+  const height = Math.max(700, 500 + docRows * 80 + workerRows * 55 + 100);
   
   return (
     <Card className="p-6 overflow-auto">
       <h3 className="text-lg font-semibold mb-4">Agent Network Architecture</h3>
       <div className="relative border rounded-lg bg-muted/20" style={{ width, height, minHeight: 600 }}>
         <svg width={width} height={height} className="absolute inset-0">
-          {/* Draw connections */}
+          {/* Draw connections with curved paths to avoid overlaps */}
           {connections.map((conn, idx) => {
             const fromNode = nodes.find(n => n.id === conn.from);
             const toNode = nodes.find(n => n.id === conn.to);
             if (!fromNode || !toNode) return null;
             
+            // Check if this is a document/worker to orchestrator connection
+            const isDocToOrch = (fromNode.type === "document" || fromNode.type === "document_worker") && 
+                              toNode.type === "orchestrator";
+            
+            // Use curved path for document connections to avoid overlapping with KG agent
+            if (isDocToOrch) {
+              // Create a curved path that goes around the KG agent area
+              const midX = (fromNode.x + toNode.x) / 2;
+              const midY = (fromNode.y + toNode.y) / 2;
+              // Offset curve to the right to avoid KG agent (x: 150)
+              const controlX = Math.max(midX, 250);
+              const controlY = midY - 50; // Curve upward
+              
+              return (
+                <g key={`conn-${idx}`}>
+                  <path
+                    d={`M ${fromNode.x} ${fromNode.y} Q ${controlX} ${controlY} ${toNode.x} ${toNode.y}`}
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    fill="none"
+                    opacity="0.6"
+                    markerEnd="url(#arrowhead)"
+                  />
+                </g>
+              );
+            }
+            
+            // Straight lines for other connections
             return (
               <g key={`conn-${idx}`}>
                 <line
@@ -230,6 +332,7 @@ export function AgentNetwork({
                   strokeWidth="2"
                   strokeDasharray={conn.bidirectional ? "0" : "5,5"}
                   opacity="0.6"
+                  markerEnd={!conn.bidirectional ? "url(#arrowhead)" : undefined}
                 />
                 {conn.bidirectional && (
                   <line
@@ -292,12 +395,13 @@ export function AgentNetwork({
                   </div>
                 </foreignObject>
                 
-                {/* Label */}
+                {/* Label with description for core agents - positioned to avoid overlap */}
                 <text
                   x={node.x}
-                  y={node.y + nodeSize / 2 + 15}
+                  y={node.y + nodeSize / 2 + 18}
                   textAnchor="middle"
                   className="text-xs font-medium fill-foreground"
+                  style={{ fontSize: '11px', fontWeight: '600' }}
                 >
                   {isDocument
                     ? node.name.length > 15
@@ -305,6 +409,24 @@ export function AgentNetwork({
                       : node.name
                     : node.name}
                 </text>
+                {/* Description for core agents (smaller text below name) - more spacing */}
+                {!isDocument && node.type !== "document_worker" && (
+                  <text
+                    x={node.x}
+                    y={node.y + nodeSize / 2 + 35}
+                    textAnchor="middle"
+                    className="text-[9px] fill-muted-foreground"
+                    style={{ fontSize: '9px' }}
+                  >
+                    {node.type === "orchestrator" ? "Coordinates queries" :
+                     node.type === "strategic_query" ? "Strategic analysis" :
+                     node.type === "operational_query" ? "Operational analysis" :
+                     node.type === "statistics" ? "Statistical analysis" :
+                     node.type === "visualization" ? "Data visualization" :
+                     node.type === "kg" ? "Knowledge extraction" :
+                     node.type === "llm" ? "HR Assistant" : ""}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -328,6 +450,10 @@ export function AgentNetwork({
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-pink-500"></div>
           <span>LLM Agent</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+          <span>Strategic Query Agent</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-indigo-500"></div>

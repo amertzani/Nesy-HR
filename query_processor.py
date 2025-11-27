@@ -23,6 +23,27 @@ def detect_query_type(question: str) -> Dict[str, Any]:
     """
     question_lower = question.lower()
     
+    # Simple keyword-based routing: Check for "operational" or "strategic" keywords first
+    # This takes priority over complex pattern matching
+    if "operational" in question_lower or "opererational" in question_lower or "operation" in question_lower:  # Handle typo
+        return {
+            "query_type": "operational",
+            "operation": None,
+            "attribute": None,
+            "entity_name": None,
+            "filter_value": None,
+        }
+    
+    if "strategic" in question_lower or "strrategic" in question_lower or "strategy" in question_lower:
+        return {
+            "query_type": "strategic",
+            "operation": None,
+            "attribute": None,
+            "entity_name": None,
+            "filter_value": None,
+        }
+    
+    # If no operational/strategic keywords found, continue with structured query detection
     # Pattern 1: Max/Min queries
     # "what is the employee name with the max salary"
     # "who has the highest salary"
@@ -46,9 +67,12 @@ def detect_query_type(question: str) -> Dict[str, Any]:
     # Pattern 2: Filter queries (find attribute of specific entity)
     # "what is the position of Beak, Kimberly"
     # "what is the salary of Becker, Renee"
+    # "who is the manager of Boutwell, Bonalyn"
     filter_patterns = [
-        r'(?:what|which).*?(?:is|are).*?(?:the|a).*?(position|salary|department|age|name|status).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)?)',
-        r'([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)?).*?(?:has|have).*?(?:a|an|the).*?(position|salary|department|age|status)',
+        r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?(position|salary|department|age|name|status|absences|marital|gender|state|city|zip|phone|email|manager|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+        r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?(position|salary|department|age|status|absences|marital|gender|state|city|zip|phone|email|manager|managerid)',
+        r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:salary|position|department|age|status|absences|manager|managerid)',
+        r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
     ]
     
     # Pattern 3: Count/Aggregation queries
@@ -129,6 +153,7 @@ def extract_employee_facts() -> List[Dict[str, Any]]:
     """
     Extract all employee-related facts from the knowledge graph.
     Returns a list of structured employee records.
+    Optimized for large graphs by skipping metadata triples early.
     """
     if graph is None:
         print("⚠️  Knowledge graph is None")
@@ -136,16 +161,19 @@ def extract_employee_facts() -> List[Dict[str, Any]]:
     
     employees = {}  # employee_name -> {attributes}
     fact_count = 0
+    skipped_metadata = 0
     
     for s, p, o in graph:
         fact_count += 1
-        # Skip metadata triples
+        
+        # Early skip for metadata triples (most common, skip before processing)
         predicate_str = str(p)
         if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
             'fact_object' in predicate_str or 'has_details' in predicate_str or 
             'source_document' in predicate_str or 'uploaded_at' in predicate_str or
             'is_inferred' in predicate_str or 'confidence' in predicate_str or
             'agent_id' in predicate_str):
+            skipped_metadata += 1
             continue
         
         # Extract subject
@@ -266,12 +294,206 @@ def extract_employee_facts() -> List[Dict[str, Any]]:
     return list(employees.values())
 
 
+def extract_single_employee_facts(employee_name: str) -> List[Dict[str, Any]]:
+    """
+    Extract facts for a single employee only (much faster than extracting all).
+    Optimized for filter queries - uses RDFLib's triples() method for efficient lookup.
+    """
+    if graph is None:
+        return []
+    
+    employee_normalized = employee_name.strip()
+    employees = {}
+    fact_count = 0
+    skipped_metadata = 0
+    
+    # Normalize name parts for matching
+    name_parts = [p.strip() for p in employee_normalized.split(',')]
+    
+    # Pre-compute normalized patterns for faster matching
+    query_normalized = employee_normalized.lower().replace(' ', '').replace(',', ',')
+    last_name_lower = name_parts[0].lower().strip() if len(name_parts) >= 2 else ''
+    first_name_lower = name_parts[1].lower().strip() if len(name_parts) >= 2 else ''
+    
+    # Try to use RDFLib's efficient triples() method with subject pattern
+    # Try multiple formats to find the employee
+    from rdflib import Literal, URIRef
+    from urllib.parse import quote, unquote
+    
+    matching_triples = []
+    
+    # Format 1: Literal with exact name
+    subject_literal = Literal(employee_normalized)
+    matching_triples = list(graph.triples((subject_literal, None, None)))
+    
+    # Format 2: URI with spaces replaced by underscores
+    if not matching_triples:
+        subject_clean = employee_normalized.replace(' ', '_')
+        subject_uri = URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+        matching_triples = list(graph.triples((subject_uri, None, None)))
+    
+    # Format 3: URI without quote encoding
+    if not matching_triples:
+        subject_uri2 = URIRef(f"urn:entity:{subject_clean}")
+        matching_triples = list(graph.triples((subject_uri2, None, None)))
+    
+    # Format 4: Try with quotes removed (e.g., "Costello, Frank" -> Costello, Frank)
+    if not matching_triples:
+        # Try removing quotes if present
+        unquoted_name = employee_normalized
+        if employee_normalized.startswith('"') and employee_normalized.endswith('"'):
+            unquoted_name = employee_normalized[1:-1].strip()
+        elif employee_normalized.startswith("'") and employee_normalized.endswith("'"):
+            unquoted_name = employee_normalized[1:-1].strip()
+        
+        if unquoted_name != employee_normalized:
+            subject_literal2 = Literal(unquoted_name)
+            matching_triples = list(graph.triples((subject_literal2, None, None)))
+        
+        # Also try with quotes added (in case KG has quotes but query doesn't)
+        if not matching_triples:
+            quoted_name = f'"{employee_normalized}"'
+            subject_literal3 = Literal(quoted_name)
+            matching_triples = list(graph.triples((subject_literal3, None, None)))
+    
+    # Format 5: Try with different case
+    if not matching_triples:
+        # Try with first letter of each name capitalized differently
+        parts = employee_normalized.split(',')
+        if len(parts) == 2:
+            last_name = parts[0].strip()
+            first_name = parts[1].strip()
+            # Try various capitalizations
+            variations = [
+                f"{last_name}, {first_name}",
+                f"{last_name.title()}, {first_name.title()}",
+                f"{last_name.upper()}, {first_name.upper()}",
+            ]
+            for variant in variations:
+                variant_literal = Literal(variant)
+                variant_triples = list(graph.triples((variant_literal, None, None)))
+                if variant_triples:
+                    matching_triples = variant_triples
+                    break
+    
+    # If still no matches, use LIMITED iteration with early exit (max 10,000 facts checked)
+    if not matching_triples:
+        print(f"⚠️  No direct triples() match, using LIMITED iteration (max 10k facts)...")
+        max_iterations = 10000  # Limit to prevent timeout
+        for s, p, o in graph:
+            fact_count += 1
+            
+            # Early skip for metadata triples
+            predicate_str = str(p)
+            if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
+                'fact_object' in predicate_str or 'has_details' in predicate_str or 
+                'source_document' in predicate_str or 'uploaded_at' in predicate_str or
+                'is_inferred' in predicate_str or 'confidence' in predicate_str or
+                'agent_id' in predicate_str):
+                skipped_metadata += 1
+                continue
+            
+            # Fast subject match check
+            subject_uri_str = str(s)
+            subject_uri_lower = subject_uri_str.lower()
+            
+            # Quick literal match check
+            if len(name_parts) >= 2:
+                subject_normalized = subject_uri_lower.replace(' ', '').replace(',', ',')
+                if query_normalized == subject_normalized:
+                    matching_triples.append((s, p, o))
+                elif last_name_lower in subject_uri_lower and first_name_lower in subject_uri_lower:
+                    comma_idx = subject_uri_lower.find(',')
+                    if comma_idx > 0:
+                        subject_last = subject_uri_lower[:comma_idx].strip()
+                        subject_first = subject_uri_lower[comma_idx+1:].strip()
+                        if last_name_lower in subject_last and first_name_lower in subject_first:
+                            matching_triples.append((s, p, o))
+            elif employee_normalized.lower() in subject_uri_lower:
+                matching_triples.append((s, p, o))
+            
+            # Early exit: if we've found enough facts, stop iterating
+            if len(matching_triples) > 50:  # Reduced from 100 for faster response
+                break
+            
+            # Hard limit: don't iterate more than max_iterations
+            if fact_count >= max_iterations:
+                print(f"⚠️  Reached iteration limit ({max_iterations}), stopping search")
+                break
+    
+    # Process matching triples
+    for s, p, o in matching_triples:
+        fact_count += 1
+        
+        # Skip metadata triples
+        predicate_str = str(p)
+        if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
+            'fact_object' in predicate_str or 'has_details' in predicate_str or 
+            'source_document' in predicate_str or 'uploaded_at' in predicate_str or
+            'is_inferred' in predicate_str or 'confidence' in predicate_str or
+            'agent_id' in predicate_str):
+            skipped_metadata += 1
+            continue
+        
+        # Extract subject, predicate, object
+        subject_uri_str = str(s)
+        if 'urn:entity:' in subject_uri_str:
+            subject = subject_uri_str.split('urn:entity:')[-1]
+        elif 'urn:' in subject_uri_str:
+            subject = subject_uri_str.split('urn:')[-1]
+        else:
+            subject = subject_uri_str
+        subject = unquote(subject).replace('_', ' ')
+        
+        predicate_uri_str = str(p)
+        if 'urn:predicate:' in predicate_uri_str:
+            predicate = predicate_uri_str.split('urn:predicate:')[-1]
+        elif 'urn:' in predicate_uri_str:
+            predicate = predicate_uri_str.split('urn:')[-1]
+        else:
+            predicate = predicate_uri_str
+        predicate = unquote(predicate).replace('_', ' ')
+        
+        object_val = str(o)
+        
+        # Found matching employee fact
+        if employee_normalized not in employees:
+            employees[employee_normalized] = {
+                "name": employee_normalized,
+                "attributes": {},
+                "facts": []
+            }
+        
+        attr_name = predicate.lower()
+        employees[employee_normalized]["attributes"][attr_name] = object_val
+        employees[employee_normalized]["facts"].append({
+            "subject": subject,
+            "predicate": predicate,
+            "object": object_val,
+            "source": []  # Skip expensive source lookup for filter queries
+        })
+    
+    print(f"📊 Extracted facts for {employee_normalized}: {len(employees.get(employee_normalized, {}).get('attributes', {}))} attributes from {len(matching_triples)} triples (skipped {skipped_metadata} metadata)")
+    return list(employees.values())
+
+
 def process_structured_query(question: str, query_info: Dict[str, Any]) -> Tuple[Optional[str], List[Dict[str, Any]]]:
     """
     Process structured queries using KG facts.
     Returns (answer, evidence_facts)
+    Optimized: For filter queries, only extract the specific employee needed.
     """
-    employees = extract_employee_facts()
+    operation = query_info.get("operation")
+    entity_name = query_info.get("entity_name")
+    
+    # For filter queries, extract only the specific employee (much faster)
+    if operation == "filter" and entity_name:
+        print(f"🔍 Filter query: extracting only {entity_name} (optimized)")
+        employees = extract_single_employee_facts(entity_name)
+    else:
+        # For max/min queries, need all employees
+        print(f"🔍 {operation.upper()} query: extracting all employees...")
+        employees = extract_employee_facts()
     
     if not employees:
         print("⚠️  No employees found in knowledge graph")
@@ -445,26 +667,65 @@ def process_structured_query(question: str, query_info: Dict[str, Any]) -> Tuple
         
         if matching_employee:
             # Find attribute value
-            attr_variations = [
-                attribute.lower(),
-                f"has_{attribute.lower()}",
-                f"{attribute.lower()}_is",
-                attribute.lower().replace(' ', '_'),
-            ]
+            # Special handling for manager queries - map to correct predicate
+            if attribute.lower() in ['manager', 'managerid']:
+                attr_variations = [
+                    "has manager name",  # Primary predicate used in KG
+                    "has managername",
+                    "manager name",
+                    "managername",
+                    "managerid",
+                    "has managerid",
+                    "manager",
+                    "has manager",
+                ]
+            else:
+                attr_variations = [
+                    attribute.lower(),
+                    f"has_{attribute.lower()}",
+                    f"{attribute.lower()}_is",
+                    attribute.lower().replace(' ', '_'),
+                    f"has {attribute.lower()}",  # Add space-separated version
+                ]
             
             attr_value = None
+            matched_attr = None
             for attr_var in attr_variations:
                 if attr_var in matching_employee["attributes"]:
+                    matched_attr = attr_var
                     attr_value = matching_employee["attributes"][attr_var]
                     # Collect evidence facts
                     evidence_facts = [f for f in matching_employee["facts"] 
                                     if attribute.lower() in f["predicate"].lower() or 
-                                       attr_var in f["predicate"].lower()]
+                                       attr_var in f["predicate"].lower() or
+                                       "manager" in f["predicate"].lower()]
                     break
+            
+            # Try partial match if exact match failed
+            if not attr_value:
+                for attr_key in matching_employee["attributes"].keys():
+                    # For manager queries, check for any manager-related key
+                    if attribute.lower() in ['manager', 'managerid']:
+                        if 'manager' in attr_key.lower():
+                            matched_attr = attr_key
+                            attr_value = matching_employee["attributes"][attr_key]
+                            evidence_facts = [f for f in matching_employee["facts"] 
+                                            if "manager" in f["predicate"].lower()]
+                            break
+                    elif attribute.lower() in attr_key.lower() or attr_key.lower() in attribute.lower():
+                        matched_attr = attr_key
+                        attr_value = matching_employee["attributes"][attr_key]
+                        evidence_facts = [f for f in matching_employee["facts"] 
+                                        if attribute.lower() in f["predicate"].lower() or 
+                                           attr_key.lower() in f["predicate"].lower()]
+                        break
             
             if attr_value:
                 answer = str(attr_value)
+                print(f"✅ Found {attribute} for {entity_name}: {answer} (matched attr: {matched_attr})")
                 return answer, evidence_facts
+            else:
+                print(f"⚠️  Could not find {attribute} for {entity_name}. Available attributes: {list(matching_employee['attributes'].keys())[:10]}")
     
     return None, []
 
@@ -488,11 +749,29 @@ def build_evidence_context(evidence_facts: List[Dict[str, Any]], question: str) 
         
         if sources:
             source_list = []
-            for source_doc, uploaded_at in sources:
-                if source_doc:
-                    source_list.append(source_doc)
+            # Handle different source formats:
+            # 1. List of strings: ["operational_query", "strategic_query"]
+            # 2. List of tuples: [("document.csv", "2024-01-01"), ...]
+            # 3. Mixed or other formats
+            for source_item in sources:
+                if isinstance(source_item, tuple):
+                    # Tuple format: (source_doc, uploaded_at) or more elements
+                    if len(source_item) >= 1:
+                        source_doc = source_item[0]
+                        if source_doc:
+                            source_list.append(str(source_doc))
+                elif isinstance(source_item, (list, tuple)):
+                    # Nested list/tuple
+                    if len(source_item) >= 1:
+                        source_list.append(str(source_item[0]))
+                else:
+                    # String or other format
+                    source_list.append(str(source_item))
+            
             if source_list:
-                fact_line += f" [Source: {', '.join(source_list[:2])}]"
+                # Remove duplicates and limit to 2
+                unique_sources = list(dict.fromkeys(source_list))[:2]
+                fact_line += f" [Source: {', '.join(unique_sources)}]"
         
         context_lines.append(fact_line)
     

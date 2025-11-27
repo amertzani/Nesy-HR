@@ -48,7 +48,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         title: "Error",
-        description: "Failed to get response from research assistant",
+        description: "Failed to get response from HR assistant",
         variant: "destructive",
       });
     } finally {
@@ -59,7 +59,7 @@ export default function ChatPage() {
   return (
     <div className="h-full flex flex-col">
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold mb-2">Research Assistant</h1>
+        <h1 className="text-3xl font-semibold mb-2">HR Assistant</h1>
         <p className="text-muted-foreground">
           Ask questions about your research data and get AI-powered insights
         </p>

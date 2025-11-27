@@ -516,10 +516,12 @@ class HuggingFaceApiClient {
     history: any[] = [],
   ): Promise<ApiResponse<any>> {
     if (USE_LOCAL_BACKEND) {
-      // Use local FastAPI backend
+      // Use local FastAPI backend with extended timeout for strategic queries
+      // Strategic queries may take longer due to DataFrame reconstruction and analysis
       const response = await this.request("/api/chat", {
         method: "POST",
         body: JSON.stringify({ message, history }),
+        timeoutMs: 120000, // 2 minutes for strategic queries
       });
       // FastAPI returns { response: "...", status: "success" }
       if (response.success && response.data?.response) {
@@ -572,10 +574,6 @@ class HuggingFaceApiClient {
     return response;
   }
 
-  async getOntology(): Promise<ApiResponse<any>> {
-    const response = await this.request("/api/agents/ontology", { method: "GET" });
-    return response;
-  }
 
   // Statistics and Visualizations
   async getDocumentStatistics(documentId: string): Promise<ApiResponse<any>> {
@@ -592,6 +590,11 @@ class HuggingFaceApiClient {
 
   async getDocumentSummary(documentId: string): Promise<ApiResponse<any>> {
     return this.request(`/api/documents/${documentId}/summary`, { method: "GET" });
+  }
+
+  // Operational Insights
+  async getOperationalInsights(): Promise<ApiResponse<any>> {
+    return this.request("/api/insights/operational", { method: "GET" });
   }
 }
 

@@ -58,6 +58,7 @@ class DocumentAgent(Agent):
     document_name: str
     document_id: str
     document_type: str  # "csv", "pdf", "docx", "txt"
+    file_path: Optional[str] = None  # Store file path for CSV access
     facts_extracted: int = 0  # Track facts extracted for this document
     employee_names: List[str] = field(default_factory=list)  # Employees this agent processed (for orchestrator routing)
     data_range: Optional[Dict[str, Any]] = None  # Row ranges, column info, etc. (for orchestrator routing)
@@ -75,6 +76,8 @@ STATISTICS_AGENT_ID = "statistics_agent"
 VISUALIZATION_AGENT_ID = "visualization_agent"
 KG_AGENT_ID = "kg_agent"
 LLM_AGENT_ID = "llm_agent"
+STRATEGIC_QUERY_AGENT_ID = "strategic_query_agent"
+OPERATIONAL_QUERY_AGENT_ID = "operational_query_agent"
 
 # Document-specific agents (created per document)
 document_agents: Dict[str, DocumentAgent] = {}
@@ -203,7 +206,7 @@ def initialize_agents(clear_document_agents: bool = True):
     if llm_agent_data:
         agents_store[LLM_AGENT_ID] = Agent(
             id=LLM_AGENT_ID,
-            name="LLM Research Assistant",
+            name="HR Assistant",
             type="llm",
             status="active",
             created_at=llm_agent_data.get('created_at', datetime.now().isoformat()),
@@ -213,38 +216,74 @@ def initialize_agents(clear_document_agents: bool = True):
                 "capabilities": ["qa", "insights", "traceability"]
             })
         )
-        print(f"✅ Restored LLM agent")
+        print(f"✅ Restored HR Assistant agent")
     else:
         agents_store[LLM_AGENT_ID] = Agent(
             id=LLM_AGENT_ID,
-            name="LLM Research Assistant",
+            name="HR Assistant",
             type="llm",
             status="active",
             created_at=datetime.now().isoformat(),
             metadata={
-                "description": "Provides traceable answers using KG and statistics",
-                "role": "research_assistant",
-                "capabilities": ["qa", "insights", "traceability"]
+                "description": "Generates intelligent responses using LLM with knowledge graph context",
+                "role": "intelligent_responses",
+                "capabilities": ["rag", "context_aware_responses", "insights", "explanations"]
             }
         )
     
+    # Strategic Query Agent (handles S1, S2 queries)
+    agents_store[STRATEGIC_QUERY_AGENT_ID] = Agent(
+        id=STRATEGIC_QUERY_AGENT_ID,
+        name="Strategic Query Agent",
+        type="strategic_query",
+        status="active",
+        created_at=datetime.now().isoformat(),
+        metadata={
+            "description": "Processes strategic-level multi-variable queries (S1, S2) using statistics and knowledge graph",
+            "role": "strategic_analysis",
+            "capabilities": ["multi_variable_analysis", "risk_detection", "performance_monitoring", "recruitment_analysis"]
+        }
+    )
+    
+    # Operational Query Agent (handles O1, O2, O3 queries)
+    agents_store[OPERATIONAL_QUERY_AGENT_ID] = Agent(
+        id=OPERATIONAL_QUERY_AGENT_ID,
+        name="Operational Query Agent",
+        type="operational_query",
+        status="active",
+        created_at=datetime.now().isoformat(),
+        metadata={
+            "description": "Processes operational-level multi-variable queries (O1, O2, O3) using statistics and knowledge graph",
+            "role": "operational_analysis",
+            "capabilities": ["performance_monitoring", "absence_tracking", "engagement_monitoring", "departmental_analysis"]
+        }
+    )
+    
+    # Note: LLM agent is already created above (either restored from storage or newly created)
+    
     save_agents()
     print(f"✅ Initialized {len(agents_store)} core agents:")
+    print(f"   - Orchestrator Agent")
     print(f"   - Statistics Agent")
     print(f"   - Visualization Agent")
     print(f"   - Knowledge Graph Agent")
-    print(f"   - LLM Research Assistant")
+    print(f"   - HR Assistant (LLM)")
+    print(f"   - Strategic Query Agent")
+    print(f"   - Operational Query Agent")
     print(f"   Document agents will be created when documents are uploaded")
 
 # ============================================================================
 # DOCUMENT PROCESSING
 # ============================================================================
 
-def create_document_agent(document_name: str, document_id: str, document_type: str) -> str:
+def create_document_agent(document_name: str, document_id: str, document_type: str, file_path: Optional[str] = None) -> str:
     """Create a document-specific agent for processing a document"""
     agent_id = f"doc_{document_id}"
     
     if agent_id in document_agents:
+        # Update file_path if provided
+        if file_path and hasattr(document_agents[agent_id], 'file_path'):
+            document_agents[agent_id].file_path = file_path
         return agent_id
     
     document_agents[agent_id] = DocumentAgent(
@@ -256,6 +295,7 @@ def create_document_agent(document_name: str, document_id: str, document_type: s
         document_name=document_name,
         document_id=document_id,
         document_type=document_type,
+        file_path=file_path,
         facts_extracted=0,
         employee_names=[],  # Will be populated as data is processed
         data_range=None,
@@ -275,7 +315,7 @@ def create_document_agent(document_name: str, document_id: str, document_type: s
 def process_document_with_agents(document_id: str, document_name: str, document_type: str, 
                                  file_path: str, extracted_text: Optional[str] = None) -> Dict[str, Any]:
     """Process a document using all relevant agents"""
-    doc_agent_id = create_document_agent(document_name, document_id, document_type)
+    doc_agent_id = create_document_agent(document_name, document_id, document_type, file_path=file_path)
     doc_agent = document_agents[doc_agent_id]
     
     results = {
@@ -289,34 +329,12 @@ def process_document_with_agents(document_id: str, document_name: str, document_
         "visualization_agent_id": VISUALIZATION_AGENT_ID
     }
     
-    # Step 1: Statistics Agent - Analyze document (especially for CSV files)
-    statistics_result = None
+    # OPTIMIZATION: For CSV files, read the file ONCE and pass DataFrame to all agents
+    df = None
     if document_type.lower() == '.csv':
         try:
-            statistics_result = process_with_statistics_agent(file_path, document_name)
-            results["statistics"] = statistics_result
-            
-            # Step 2: Visualization Agent - Create visualizations from statistics
-            if statistics_result:
-                try:
-                    visualizations = process_with_visualization_agent(statistics_result, document_name)
-                    results["visualizations"] = visualizations
-                except Exception as viz_error:
-                    print(f"⚠️  Visualization agent error: {viz_error}")
-                    import traceback
-                    traceback.print_exc()
-        except Exception as stats_error:
-            print(f"⚠️  Statistics agent error: {stats_error}")
-            import traceback
-            traceback.print_exc()
-    
-    # Step 3: Knowledge Graph Agent - Extract facts from document
-    # For CSV files, use provided text or extract comprehensive sample
-    kg_text = extracted_text
-    if document_type.lower() == '.csv' and (not kg_text or len(kg_text.strip()) < 10):
-        # If CSV and no text provided, extract comprehensive sample from CSV for KG agent
-        try:
             import pandas as pd
+            print(f"📖 Reading CSV file once (will be reused by all agents)...")
             # Detect separator
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 first_line = f.readline()
@@ -330,207 +348,130 @@ def process_document_with_agents(document_id: str, document_name: str, document_
                 else:
                     sep = ','
             
-            # Read more rows for better extraction (increased from 100 to 200)
-            df_sample = pd.read_csv(file_path, sep=sep, encoding='utf-8', on_bad_lines='skip', engine='python', nrows=200)
-            if len(df_sample.columns) == 1:
-                df_sample = pd.read_csv(file_path, sep=';', encoding='utf-8', on_bad_lines='skip', engine='python', nrows=200)
+            # Read full CSV file ONCE
+            df = pd.read_csv(file_path, sep=sep, encoding='utf-8', on_bad_lines='skip', engine='python')
+            if len(df.columns) == 1:
+                df = pd.read_csv(file_path, sep=';', encoding='utf-8', on_bad_lines='skip', engine='python')
             
-            # Build comprehensive text representation for KG extraction
-            text_lines = []
+            print(f"✅ CSV loaded: {len(df)} rows × {len(df.columns)} columns")
+        except Exception as csv_read_error:
+            print(f"⚠️  Error reading CSV: {csv_read_error}")
+            df = None
+    
+    # Step 1: Run Statistics, Visualization, and prepare KG text in parallel for CSV files
+    statistics_result = None
+    visualizations = None
+    kg_text = extracted_text  # Initialize with provided text
+    if document_type.lower() == '.csv' and df is not None:
+        try:
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            import time
+            start_time = time.time()
             
-            # Header: Dataset overview
-            text_lines.append(f"Human Resources Employee Dataset: {document_name}")
-            text_lines.append(f"Total records: {len(df_sample)} sample rows from dataset")
-            text_lines.append(f"Total attributes: {len(df_sample.columns)} columns")
-            text_lines.append("")
+            print(f"🚀 Running Statistics, Visualization, and KG text preparation in parallel...")
             
-            # Column descriptions
-            text_lines.append("Dataset Attributes:")
-            for col in df_sample.columns:
-                col_type = "numeric" if pd.api.types.is_numeric_dtype(df_sample[col]) else "categorical"
-                unique_count = df_sample[col].nunique()
-                text_lines.append(f"- {col} ({col_type}): {unique_count} unique values")
-            text_lines.append("")
-            
-            # Statistical summaries for numeric columns
-            numeric_cols = [col for col in df_sample.columns if pd.api.types.is_numeric_dtype(df_sample[col])]
-            if numeric_cols:
-                text_lines.append("Numeric Attribute Statistics:")
-                for col in numeric_cols[:10]:  # Limit to first 10 numeric columns
-                    stats = df_sample[col].describe()
-                    text_lines.append(f"- {col}: mean {stats['mean']:.2f}, median {stats['50%']:.2f}, range [{stats['min']:.2f}, {stats['max']:.2f}]")
-                text_lines.append("")
-            
-            # Categorical value distributions
-            categorical_cols = [col for col in df_sample.columns if not pd.api.types.is_numeric_dtype(df_sample[col])]
-            if categorical_cols:
-                text_lines.append("Categorical Attribute Distributions:")
-                for col in categorical_cols[:10]:  # Limit to first 10 categorical columns
-                    top_values = df_sample[col].value_counts().head(5)
-                    value_list = ", ".join([f"{val} ({count})" for val, count in top_values.items()])
-                    text_lines.append(f"- {col}: top values are {value_list}")
-                text_lines.append("")
-            
-            # Sample records with structured format for better extraction
-            text_lines.append("Sample Employee Records:")
-            
-            # Find employee name column
-            name_col = None
-            for col in df_sample.columns:
-                if any(keyword in col.lower() for keyword in ['name', 'employee', 'empname', 'employee_name']):
-                    name_col = col
-                    break
-            
-            try:
-                for idx, row in df_sample.head(100).iterrows():  # Increased from 50 to 100 rows
-                    # Extract employee name if available
-                    employee_name = None
-                    if name_col and name_col in df_sample.columns:
-                        try:
-                            name_val = row[name_col]
-                            if pd.notna(name_val):
-                                employee_name = str(name_val).strip()
-                        except (KeyError, IndexError):
-                            pass
-                    
-                    # Create structured fact-like sentences with employee name as subject
-                    if employee_name:
-                        # Format: "Employee Name has attribute value"
-                        fact_sentences = []
-                        for col, val in row.items():
-                            try:
-                                if pd.notna(val) and col != name_col:
-                                    col_lower = str(col).lower()
-                                    val_str = str(val).strip()
-                                    
-                                    # Format based on attribute type
-                                    if 'salary' in col_lower:
-                                        fact_sentences.append(f"{employee_name} has salary {val_str}")
-                                        fact_sentences.append(f"{employee_name} salary is {val_str}")
-                                    elif 'position' in col_lower:
-                                        fact_sentences.append(f"{employee_name} has position {val_str}")
-                                        fact_sentences.append(f"{employee_name} position is {val_str}")
-                                    elif 'department' in col_lower or 'dept' in col_lower:
-                                        fact_sentences.append(f"{employee_name} works in department {val_str}")
-                                        fact_sentences.append(f"{employee_name} department is {val_str}")
-                                    elif 'age' in col_lower:
-                                        fact_sentences.append(f"{employee_name} has age {val_str}")
-                                        fact_sentences.append(f"{employee_name} age is {val_str}")
-                                    else:
-                                        # Generic format
-                                        fact_sentences.append(f"{employee_name} has {col} {val_str}")
-                                        fact_sentences.append(f"{employee_name} {col} is {val_str}")
-                            except Exception:
-                                continue  # Skip problematic columns
-                        
-                        if fact_sentences:
-                            text_lines.append(f"Record {idx + 1}: {' | '.join(fact_sentences[:10])}")  # Limit to 10 facts per record
-                    else:
-                        # Fallback: original format
-                        record_parts = []
-                        for col, val in row.items():
-                            try:
-                                if pd.notna(val):
-                                    col_lower = str(col).lower()
-                                    if col_lower in ['name', 'employee', 'id', 'employeeid']:
-                                        record_parts.append(f"Employee {val}")
-                                    else:
-                                        record_parts.append(f"{col} is {val}")
-                            except Exception:
-                                continue  # Skip problematic columns
-                        
-                        if record_parts:
-                            text_lines.append(f"Record {idx + 1}: {' | '.join(record_parts)}")
-            except Exception as e:
-                print(f"⚠️  Error processing employee records: {e}")
-                import traceback
-                traceback.print_exc()
-                # Fallback to simple format
+            # Prepare KG text extraction (doesn't depend on statistics) - uses DataFrame
+            def prepare_kg_text():
+                """Extract comprehensive text from CSV for KG agent - uses pre-loaded DataFrame"""
                 try:
-                    for idx, row in df_sample.head(50).iterrows():
-                        try:
-                            row_text = " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)])
-                            if row_text:
-                                text_lines.append(f"Record {idx + 1}: {row_text}")
-                        except Exception:
-                            continue
-                except Exception as fallback_error:
-                    print(f"⚠️  Fallback format also failed: {fallback_error}")
-                    # Last resort: just add column names
-                    if 'text_lines' in locals():
-                        text_lines.append(f"Columns: {', '.join(df_sample.columns.tolist())}")
-        
-            # Add correlation information if statistics are available
-            if statistics_result and statistics_result.get("correlations"):
-                try:
-                    correlations = statistics_result["correlations"]
-                    text_lines.append("")
-                    text_lines.append("Correlation Analysis:")
-                    strong_corrs = []
-                    for col1, corr_dict in correlations.items():
-                        for col2, corr_value in corr_dict.items():
-                            if col1 != col2 and abs(corr_value) > 0.5:
-                                strong_corrs.append((col1, col2, corr_value))
+                    import pandas as pd
+                    # Use pre-loaded DataFrame (sample for speed)
+                    df_sample = df.head(200)  # Use first 200 rows from already-loaded DataFrame
                     
-                    if strong_corrs:
-                        text_lines.append(f"Found {len(strong_corrs)} strong correlations (|r| > 0.5):")
-                        for col1, col2, corr_value in strong_corrs[:10]:  # Top 10 correlations
-                            strength = "strong" if abs(corr_value) > 0.7 else "moderate"
-                            direction = "positive" if corr_value > 0 else "negative"
-                            text_lines.append(f"- {col1} has {strength} {direction} correlation ({corr_value:.3f}) with {col2}")
-                            text_lines.append(f"- {col1} correlates with {col2} with coefficient {corr_value:.3f}")
+                    # Build comprehensive text representation for KG extraction
+                    text_lines = []
+                    text_lines.append(f"Human Resources Employee Dataset: {document_name}")
+                    text_lines.append(f"Total records: {len(df)} rows in dataset (showing {len(df_sample)} sample rows)")
+                    text_lines.append(f"Total attributes: {len(df.columns)} columns")
                     text_lines.append("")
-                except Exception as corr_error:
-                    print(f"⚠️  Error adding correlation info: {corr_error}")
+                    text_lines.append("Dataset Attributes:")
+                    for col in df_sample.columns:
+                        col_type = "numeric" if pd.api.types.is_numeric_dtype(df_sample[col]) else "categorical"
+                        unique_count = df_sample[col].nunique()
+                        text_lines.append(f"- {col} ({col_type}): {unique_count} unique values")
+                    text_lines.append("")
+                    
+                    # Sample records (limited for speed)
+                    name_col = None
+                    for col in df_sample.columns:
+                        if any(keyword in col.lower() for keyword in ['name', 'employee', 'empname', 'employee_name']):
+                            name_col = col
+                            break
+                    
+                    for idx, row in df_sample.head(50).iterrows():  # Reduced from 100 to 50 for speed
+                        if name_col and name_col in df_sample.columns:
+                            try:
+                                name_val = row[name_col]
+                                if pd.notna(name_val):
+                                    employee_name = str(name_val).strip()
+                                    fact_sentences = []
+                                    for col, val in row.items():
+                                        if pd.notna(val) and col != name_col:
+                                            fact_sentences.append(f"{employee_name} has {col} {val}")
+                                    if fact_sentences:
+                                        text_lines.append(f"Record {idx + 1}: {' | '.join(fact_sentences[:5])}")  # Limit to 5 facts per record
+                            except:
+                                pass
+                    
+                    return "\n".join(text_lines)
+                except Exception as e:
+                    print(f"⚠️  Error preparing KG text: {e}")
+                    return f"CSV Dataset: {document_name}\nColumns: {', '.join(df.columns.tolist()) if df is not None else 'unknown'}"
             
-            # Add summary insights
-            try:
-                text_lines.append("")
-                text_lines.append("Dataset Insights:")
-                if 'numeric_cols' in locals() and numeric_cols:
-                    text_lines.append(f"- Contains {len(numeric_cols)} numeric attributes including salary, age, tenure, and performance metrics")
-                if 'categorical_cols' in locals() and categorical_cols:
-                    text_lines.append(f"- Contains {len(categorical_cols)} categorical attributes including department, role, location, and status")
-                text_lines.append(f"- Dataset represents employee information and organizational data")
-            except Exception as insight_error:
-                print(f"⚠️  Error adding insights: {insight_error}")
+            # Run Statistics and KG text preparation in parallel - both use pre-loaded DataFrame
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                # Submit statistics agent and KG text preparation in parallel (both use DataFrame)
+                stats_future = executor.submit(process_with_statistics_agent_from_df, df, document_name)
+                kg_text_future = executor.submit(prepare_kg_text)
+                
+                # Wait for both to complete
+                statistics_result = stats_future.result()
+                results["statistics"] = statistics_result
+                kg_text = kg_text_future.result()
+                
+                # Visualization depends on statistics, so run after stats completes
+                if statistics_result:
+                    visualizations = process_with_visualization_agent(statistics_result, document_name)
+                    results["visualizations"] = visualizations
             
-            kg_text = "\n".join(text_lines)
-            if 'df_sample' in locals():
-                print(f"📊 Extracted comprehensive text from CSV for KG agent ({len(df_sample)} rows, {len(df_sample.columns)} columns)")
-        except Exception as csv_text_error:
-            print(f"⚠️  Could not extract CSV text for KG: {csv_text_error}")
+            elapsed = time.time() - start_time
+            print(f"✅ Statistics, KG text preparation, and Visualization completed in {elapsed:.1f}s")
+            
+        except Exception as stats_error:
+            print(f"⚠️  Statistics/Visualization/KG preparation error: {stats_error}")
             import traceback
             traceback.print_exc()
-            # Minimal fallback
-            try:
-                if 'df_sample' in locals():
-                    kg_text = f"CSV Dataset: {document_name}\nColumns: {', '.join(df_sample.columns.tolist())}"
-                else:
-                    kg_text = f"CSV Dataset: {document_name}"
-            except:
-                kg_text = f"CSV Dataset: {document_name}"
+    
+    # Step 3: Knowledge Graph Agent - Extract facts from document
+    # For CSV files, kg_text is already prepared in parallel above
+    # For non-CSV files, use provided extracted_text
+    if document_type.lower() != '.csv':
+        kg_text = extracted_text
     
     # Step 3a: For CSV files, extract facts directly from DataFrame using parallel processing
     csv_facts_count = 0
-    if document_type.lower() == '.csv':
+    if document_type.lower() == '.csv' and df is not None:
         try:
-            # Use parallel processing for large files, sequential for small ones
-            import os
-            file_size = os.path.getsize(file_path) if os.path.exists(file_path) else 0
-            file_size_mb = file_size / (1024 * 1024)
+            # Use pre-loaded DataFrame for fact extraction
+            total_rows = len(df)
+            total_cols = len(df.columns)
+            complexity = total_rows * total_cols
             
-            # Use parallel processing for files > 1MB or if explicitly requested
-            use_parallel = file_size_mb > 1.0
-            
-            if use_parallel:
-                # Determine optimal number of workers (4-8 workers, based on file size)
-                num_workers = min(8, max(4, int(file_size_mb / 2)))
-                print(f"🔄 Extracting facts using parallel processing ({num_workers} workers) from CSV file...")
-                csv_facts_count = extract_csv_facts_directly_parallel(file_path, document_name, document_id, num_workers=num_workers)
+            # Adaptive chunking: base chunk size on complexity (rows × columns)
+            # Target: ~1000-2000 facts per chunk for optimal parallelization
+            # Minimum 25 rows per chunk for better parallelization (but not too small to avoid overhead)
+            if complexity < 5000:
+                num_workers = 2
+                chunk_size = max(25, total_rows // num_workers)
+            elif complexity < 50000:
+                num_workers = min(4, max(2, total_rows // 100))
+                chunk_size = max(25, total_rows // num_workers)
             else:
-                print(f"🔄 Extracting facts directly from CSV file (sequential, small file)...")
-                csv_facts_count = extract_csv_facts_directly(file_path, document_name, document_id)
+                num_workers = min(8, max(4, total_rows // 200))
+                chunk_size = max(100, total_rows // num_workers)
+            
+            print(f"🔄 Extracting facts using parallel processing ({num_workers} workers, ~{chunk_size} rows/chunk, {total_rows} rows × {total_cols} cols)...")
+            csv_facts_count = extract_csv_facts_directly_parallel_from_df(df, document_name, document_id, num_workers=num_workers, chunk_size=chunk_size, document_type=document_type)
             
             print(f"✅ CSV extraction completed: {csv_facts_count} facts")
         except Exception as csv_facts_error:
@@ -549,27 +490,204 @@ def process_document_with_agents(document_id: str, document_name: str, document_
             import traceback
             traceback.print_exc()
     
-    # Step 3c: Also process text for any additional facts (complementary, not primary for CSV)
+    # Step 3c: Skip redundant KG text processing for CSV files
+    # Workers already construct triples directly from DataFrame rows
+    # KG text processing is only needed for non-CSV files (PDF, DOCX, TXT)
     kg_result_facts = 0
-    if kg_text and len(kg_text.strip()) > 10:
+    if document_type.lower() != '.csv' and kg_text and len(kg_text.strip()) > 10:
         try:
+            print(f"🔄 Running KG agent for text extraction (non-CSV file)...")
             kg_result = process_with_kg_agent(kg_text, document_name, document_id)
             kg_result_facts = kg_result.get("facts_extracted", 0)
             results["kg_result"] = kg_result.get("result", "")
+            print(f"✅ KG agent extracted {kg_result_facts} facts from text")
         except Exception as kg_error:
             print(f"⚠️  KG agent error: {kg_error}")
             import traceback
             traceback.print_exc()
+    elif document_type.lower() == '.csv':
+        print(f"⏭️  Skipping KG text processing for CSV (workers already construct triples directly)")
     
-    # Total facts = direct CSV facts + statistical facts + text extraction facts
+    # Total facts = direct CSV facts + statistical facts + text extraction facts (for non-CSV)
     results["facts_extracted"] = csv_facts_count + stats_facts_count + kg_result_facts
     print(f"📊 Total facts extracted: {results['facts_extracted']} (CSV: {csv_facts_count}, Stats: {stats_facts_count}, Text: {kg_result_facts})")
+    
+    # Step 4: Generate groupby insights and run operational queries in parallel
+    operational_insights = {}
+    groupby_insights = {}
+    if document_type.lower() == '.csv' and results["facts_extracted"] > 0:
+        try:
+            print(f"🔄 Generating groupby insights and running operational queries in parallel...")
+            from concurrent.futures import ThreadPoolExecutor
+            import pandas as pd
+            import time
+            start_time = time.time()
+            
+            # Use pre-loaded DataFrame for groupby insights
+            if df is not None:
+                try:
+                    def generate_groupby_insights():
+                        """Generate insights using groupby operations - runs in parallel"""
+                        insights = {}
+                        numeric_cols = ['Salary', 'EmpSatisfaction', 'Absences', 'PerfScoreID', 'PerformanceScore', 'EngagementSurvey']
+                        groupby_cols = ['Department', 'RecruitmentSource', 'ManagerName', 'EmploymentStatus']
+                        
+                        # Find actual column names (case-insensitive)
+                        actual_numeric = []
+                        for col in df.columns:
+                            for nc in numeric_cols:
+                                if nc.lower() in col.lower() or col.lower() in nc.lower():
+                                    actual_numeric.append(col)
+                                    break
+                        
+                        actual_groupby = []
+                        for col in df.columns:
+                            for gc in groupby_cols:
+                                if gc.lower() in col.lower() or col.lower() in gc.lower():
+                                    actual_groupby.append(col)
+                                    break
+                        
+                        print(f"📊 Generating groupby insights: {len(actual_groupby)} grouping columns × {len(actual_numeric)} numeric columns")
+                        
+                        for group_col in actual_groupby:
+                            if group_col not in df.columns:
+                                continue
+                            
+                            group_insights = {}
+                            for num_col in actual_numeric:
+                                if num_col not in df.columns:
+                                    continue
+                                
+                                try:
+                                    # Convert to numeric
+                                    df[num_col] = pd.to_numeric(df[num_col], errors='coerce')
+                                    # Group by and calculate statistics
+                                    grouped = df.groupby(group_col)[num_col].agg(['mean', 'min', 'max', 'count']).round(2)
+                                    group_insights[num_col] = grouped.to_dict('index')
+                                except Exception as e:
+                                    print(f"⚠️  Error grouping {group_col} by {num_col}: {e}")
+                                    pass
+                            
+                            if group_insights:
+                                insights[group_col] = group_insights
+                        
+                        return insights
+                    
+                    def run_operational_queries():
+                        """Run operational queries - uses pre-loaded DataFrame instead of reconstructing from KG"""
+                        ops_insights = {}
+                    from strategic_query_agent import process_o1_1, process_o1_2, process_o2_1, process_o3_1
+                    from strategic_query_agent import normalize_column_name
+                    
+                    queries = [
+                        ("O1.1", process_o1_1, ["PerformanceScore", "PerfScoreID", "Department"]),
+                        ("O1.2", process_o1_2, ["PerformanceScore", "PerfScoreID", "Department"]),
+                        ("O2.1", process_o2_1, ["Absences", "EmploymentStatus", "Department", "Position"]),
+                        ("O3.1", process_o3_1, ["EngagementSurvey", "ManagerName", "ManagerID"]),
+                    ]
+                    
+                    for query_id, process_func, required_cols in queries:
+                        try:
+                            # Find actual column names
+                            columns = {}
+                            for var in required_cols:
+                                actual_col = normalize_column_name(df, var)
+                                if actual_col:
+                                    columns[var] = actual_col
+                            
+                            # Check if all required columns are found
+                            if len(columns) >= 2:  # At least 2 columns needed for operational queries
+                                answer_parts, evidence_facts = process_func(df, columns)
+                                answer = "".join(answer_parts) if isinstance(answer_parts, list) else str(answer_parts)
+                                
+                                if answer and len(answer) > 50 and "error" not in answer.lower() and "couldn't" not in answer.lower():
+                                    ops_insights[query_id] = answer
+                                    print(f"✅ {query_id} completed")
+                                    
+                                    # Store insight in knowledge graph for LLM access
+                                    try:
+                                        from knowledge import add_to_graph
+                                        from datetime import datetime
+                                        add_to_graph(
+                                            f"Operational Insight {query_id}:\n{answer}",
+                                            source_document="operational_insights",
+                                            uploaded_at=datetime.now().isoformat(),
+                                            agent_id="operational_query_agent"
+                                        )
+                                        print(f"✅ Stored operational insight in knowledge graph for LLM access")
+                                    except Exception as store_error:
+                                        print(f"⚠️  Error storing insight: {store_error}")
+                            else:
+                                print(f"⚠️  {query_id}: Missing required columns (found {len(columns)}/{len(required_cols)})")
+                        except Exception as e:
+                            print(f"⚠️  {query_id} query failed: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    
+                    return ops_insights
+                
+                    # Run groupby insights and operational queries in parallel
+                    with ThreadPoolExecutor(max_workers=2) as executor:
+                        groupby_future = executor.submit(generate_groupby_insights)
+                        ops_future = executor.submit(run_operational_queries)
+                        
+                        # Get results
+                        groupby_insights = groupby_future.result()
+                        operational_insights = ops_future.result()
+                    
+                    elapsed = time.time() - start_time
+                    print(f"✅ Groupby insights and operational queries completed in {elapsed:.1f}s")
+                    print(f"   Groupby insights: {len(groupby_insights)} grouping columns")
+                    print(f"   Operational insights: {len(operational_insights)} queries")
+                    
+                    # Store groupby insights in results
+                    results["groupby_insights"] = groupby_insights
+                    
+                    # Store groupby insights in knowledge graph for LLM access
+                    if groupby_insights:
+                        try:
+                            from knowledge import add_to_graph
+                            from datetime import datetime
+                            
+                            for group_col, metrics in groupby_insights.items():
+                                for metric_col, group_data in metrics.items():
+                                    insight_text = f"Groupby Analysis: {group_col} × {metric_col}\n"
+                                    insight_text += f"Statistics by {group_col}:\n"
+                                    for group_val, stats in group_data.items():
+                                        insight_text += f"- {group_val}: mean={stats.get('mean', 'N/A')}, min={stats.get('min', 'N/A')}, max={stats.get('max', 'N/A')}, count={stats.get('count', 'N/A')}\n"
+                                    
+                                    add_to_graph(
+                                        insight_text,
+                                        source_document="groupby_insights",
+                                        uploaded_at=datetime.now().isoformat(),
+                                        agent_id="groupby_agent"
+                                    )
+                            
+                            print(f"✅ Stored {sum(len(m) for m in groupby_insights.values())} groupby insights in knowledge graph")
+                        except Exception as e:
+                            print(f"⚠️  Error storing groupby insights: {e}")
+                    
+                    if operational_insights:
+                        results["operational_insights"] = operational_insights
+                        print(f"✅ Generated {len(operational_insights)} operational insights")
+                    else:
+                        print(f"⚠️  No operational insights generated (queries may have failed or data missing)")
+                
+                except Exception as df_error:
+                    print(f"⚠️  Error in groupby/operational insights: {df_error}")
+                    import traceback
+                    traceback.print_exc()
+                
+        except Exception as auto_query_error:
+            print(f"⚠️  Error running insights generation: {auto_query_error}")
+            import traceback
+            traceback.print_exc()
     
     doc_agent.status = "completed"
     return results
 
 def process_with_statistics_agent(file_path: str, document_name: str) -> Optional[Dict[str, Any]]:
-    """Process document with Statistics Agent"""
+    """Process document with Statistics Agent (legacy - reads file)"""
     stats_agent = agents_store.get(STATISTICS_AGENT_ID)
     if not stats_agent:
         return None
@@ -601,19 +719,60 @@ def process_with_statistics_agent(file_path: str, document_name: str) -> Optiona
             if len(df.columns) == 1:
                 df = pd.read_csv(file_path, sep=';', encoding='utf-8', on_bad_lines='skip', engine='python')
             
-            # Perform statistical analysis
-            analysis = {
-                "total_rows": len(df),
-                "total_columns": len(df.columns),
-                "columns": list(df.columns),
-                "column_types": {},
-                "descriptive_stats": {},
-                "missing_values": {},
-                "data_quality": {}
-            }
+            return _process_statistics_from_df(df, document_name, stats_agent)
             
-            # Analyze each column
-            for col in df.columns:
+        except ImportError:
+            print("⚠️  pandas not available, skipping statistical analysis")
+            stats_agent.status = "active"
+            return None
+        except Exception as e:
+            print(f"⚠️  Error in statistics agent: {e}")
+            stats_agent.status = "active"
+            import traceback
+            traceback.print_exc()
+            return None
+    except Exception as e:
+        print(f"⚠️  Error in statistics agent (outer): {e}")
+        stats_agent.status = "active"
+        import traceback
+        traceback.print_exc()
+        return None
+
+def process_with_statistics_agent_from_df(df, document_name: str) -> Optional[Dict[str, Any]]:
+    """Process document with Statistics Agent using pre-loaded DataFrame"""
+    stats_agent = agents_store.get(STATISTICS_AGENT_ID)
+    if not stats_agent:
+        return None
+    
+    stats_agent.status = "processing"
+    
+    try:
+        return _process_statistics_from_df(df, document_name, stats_agent)
+    except Exception as e:
+        print(f"⚠️  Error in statistics agent: {e}")
+        stats_agent.status = "active"
+        import traceback
+        traceback.print_exc()
+        return None
+
+def _process_statistics_from_df(df, document_name: str, stats_agent) -> Optional[Dict[str, Any]]:
+    """Internal function to process statistics from DataFrame"""
+    try:
+        import pandas as pd
+        
+        # Perform statistical analysis
+        analysis = {
+            "total_rows": len(df),
+            "total_columns": len(df.columns),
+            "columns": list(df.columns),
+            "column_types": {},
+            "descriptive_stats": {},
+            "missing_values": {},
+            "data_quality": {}
+        }
+        
+        # Analyze each column
+        for col in df.columns:
                 col_data = df[col]
                 analysis["missing_values"][col] = int(col_data.isna().sum())
                 analysis["data_quality"][col] = {
@@ -641,38 +800,31 @@ def process_with_statistics_agent(file_path: str, document_name: str) -> Optiona
                     analysis["descriptive_stats"][col] = {
                         "value_counts": {str(k): int(v) for k, v in value_counts.items()}
                     }
-            
-            # Compute correlations for numeric columns
-            numeric_cols = [col for col in df.columns if analysis["column_types"][col] == "numeric"]
-            if len(numeric_cols) > 1:
-                corr_matrix = df[numeric_cols].corr()
-                analysis["correlations"] = {
-                    col: {
-                        other_col: float(corr_matrix.loc[col, other_col])
-                        for other_col in numeric_cols
-                        if col != other_col and not pd.isna(corr_matrix.loc[col, other_col])
-                    }
-                    for col in numeric_cols
+        
+        # Compute correlations for numeric columns
+        # Include ALL numeric columns in the correlation matrix
+        numeric_cols = [col for col in df.columns if analysis["column_types"][col] == "numeric"]
+        if len(numeric_cols) > 1:
+            corr_matrix = df[numeric_cols].corr()
+            # Build full symmetric correlation matrix (including self-correlations)
+            analysis["correlations"] = {
+                col: {
+                    other_col: float(corr_matrix.loc[col, other_col])
+                    for other_col in numeric_cols
+                    if not pd.isna(corr_matrix.loc[col, other_col])
                 }
-            
-            stats_agent.status = "active"
-            print(f"✅ Statistics Agent analyzed {document_name}: {len(df)} rows, {len(df.columns)} columns")
-            return analysis
-            
-        except ImportError:
-            print("⚠️  pandas not available, skipping statistical analysis")
-            stats_agent.status = "active"
-            return None
-        except Exception as e:
-            print(f"⚠️  Statistics analysis error: {e}")
-            import traceback
-            traceback.print_exc()
-            stats_agent.status = "active"
-            return None
-    
-    except Exception as e:
-        print(f"❌ Statistics Agent error: {e}")
+                for col in numeric_cols
+            }
+            print(f"📊 Computed correlation matrix for {len(numeric_cols)} numeric columns")
+        
         stats_agent.status = "active"
+        print(f"✅ Statistics Agent analyzed {document_name}: {len(df)} rows, {len(df.columns)} columns")
+        return analysis
+    except Exception as e:
+        print(f"⚠️  Error processing statistics from DataFrame: {e}")
+        stats_agent.status = "active"
+        import traceback
+        traceback.print_exc()
         return None
 
 def process_with_visualization_agent(statistics: Dict[str, Any], document_name: str) -> Dict[str, Any]:
@@ -758,8 +910,446 @@ def process_with_visualization_agent(statistics: Dict[str, Any], document_name: 
         viz_agent.status = "active"
         return {}
 
+def extract_csv_facts_directly_parallel_from_df(df, document_name: str, document_id: str, 
+                                                 num_workers: int = 4, chunk_size: Optional[int] = None, 
+                                                 document_type: str = ".csv") -> int:
+    """
+    Extract facts from CSV DataFrame using parallel processing with multiple worker agents.
+    Uses pre-loaded DataFrame instead of reading file again.
+    
+    Args:
+        df: Pre-loaded pandas DataFrame
+        document_name: Name of the document
+        document_id: ID of the document
+        num_workers: Number of parallel workers (default: 4)
+        chunk_size: Rows per chunk (auto-calculated if None)
+        document_type: Type of document (e.g., ".csv")
+    
+    Returns:
+        Total number of facts extracted
+    """
+    try:
+        import pandas as pd
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from knowledge import fact_exists, add_fact_source_document, graph, save_knowledge_graph
+        from datetime import datetime
+        import rdflib
+        from urllib.parse import quote
+        import threading
+        
+        # Thread-safe counter for facts
+        facts_counter = {'added': 0, 'skipped': 0}
+        facts_lock = threading.Lock()
+        
+        total_rows = len(df)
+        total_cols = len(df.columns)
+        
+        # Find employee name column
+        name_col = None
+        for col in df.columns:
+            if any(keyword in col.lower() for keyword in ['name', 'employee', 'empname', 'employee_name', 'employeename']):
+                name_col = col
+                break
+        
+        if not name_col:
+            name_col = df.columns[0] if len(df.columns) > 0 else None
+        
+        # Calculate optimal chunk size based on data complexity (rows × columns)
+        # More columns = more facts per row = smaller chunks needed
+        if chunk_size is None:
+            # Calculate data complexity: rows × columns
+            data_complexity = total_rows * total_cols
+            
+            # Target: ~10,000-20,000 data points per chunk (rows × columns)
+            # This ensures balanced load across workers
+            target_data_points_per_chunk = 15000  # Optimal for memory and processing
+            
+            # Calculate chunk size based on complexity
+            if data_complexity > 0:
+                calculated_chunk_size = max(25, min(200, target_data_points_per_chunk // total_cols))
+            else:
+                calculated_chunk_size = 100
+            
+            # Ensure we have enough chunks for parallelization
+            # Minimum: num_workers chunks, maximum: reasonable chunk size
+            min_chunks_needed = num_workers
+            max_chunk_size_for_parallelization = max(25, total_rows // min_chunks_needed)
+            
+            # Use the smaller of: calculated size or max for parallelization
+            chunk_size = min(calculated_chunk_size, max_chunk_size_for_parallelization)
+            
+            # Ensure minimum chunk size for efficiency (25 rows minimum for better parallelization)
+            # Too small (< 25) creates excessive overhead from too many workers
+            chunk_size = max(25, chunk_size)
+            
+            print(f"📊 Data complexity: {data_complexity:,} data points ({total_rows:,} rows × {total_cols} cols)")
+            print(f"📊 Optimal chunk size: {chunk_size} rows (targeting ~{chunk_size * total_cols:,} data points per chunk)")
+        
+        # Split into chunks - CRITICAL: Ensure no rows are missed
+        chunks = []
+        for start_idx in range(0, total_rows, chunk_size):
+            end_idx = min(start_idx + chunk_size, total_rows)
+            chunks.append((start_idx, end_idx))
+        
+        # Verify chunk coverage - ensure all rows are covered
+        covered_rows = set()
+        for start_idx, end_idx in chunks:
+            for row_idx in range(start_idx, end_idx):
+                covered_rows.add(row_idx)
+        
+        if len(covered_rows) != total_rows:
+            missing_rows = set(range(total_rows)) - covered_rows
+            print(f"⚠️  WARNING: Chunking may miss rows! Missing row indices: {sorted(missing_rows)[:20]}..." if len(missing_rows) > 20 else f"⚠️  WARNING: Chunking may miss rows! Missing row indices: {sorted(missing_rows)}")
+        else:
+            print(f"✅ Chunking verification: All {total_rows} rows are covered by chunks")
+        
+        print(f"📊 Splitting {total_rows} rows into {len(chunks)} chunks ({chunk_size} rows/chunk) for {num_workers} workers")
+        
+        # Ensure parent document agent tracks ALL columns upfront (before chunk processing)
+        parent_agent_id = f"doc_{document_id}"
+        if parent_agent_id in document_agents:
+            parent_agent = document_agents[parent_agent_id]
+            # Initialize with ALL columns from the DataFrame (ensures no columns are missed)
+            with facts_lock:
+                parent_agent.columns_processed = list(df.columns)
+                parent_agent.data_range = {
+                    "start": 0,
+                    "end": total_rows,
+                    "rows": total_rows,
+                    "total_cols": total_cols,
+                    "chunks": len(chunks),
+                    "chunk_size": chunk_size
+                }
+            print(f"📊 Parent agent {parent_agent_id} initialized with {len(df.columns)} columns")
+        
+        uploaded_at = datetime.now().isoformat()
+        
+        def process_chunk(chunk_idx: int, start_idx: int, end_idx: int):
+            """Process a single chunk of rows - each chunk is handled by a worker agent"""
+            worker_id = f"doc_{document_id}_worker_{chunk_idx}"
+            chunk_df = df.iloc[start_idx:end_idx].copy()
+            chunk_facts_added = 0
+            chunk_facts_skipped = 0
+            
+            # Create a worker agent for this chunk (visible in architecture)
+            worker_agent_id = f"{worker_id}"
+            worker_agent = DocumentAgent(
+                id=worker_agent_id,
+                name=f"Worker {chunk_idx + 1} - {document_name}",
+                type="document_worker",
+                status="processing",
+                created_at=datetime.now().isoformat(),
+                document_name=f"{document_name} (rows {start_idx}-{end_idx})",
+                document_id=f"{document_id}_chunk_{chunk_idx}",
+                document_type=document_type,
+                facts_extracted=0,
+                employee_names=[],  # Will be populated as rows are processed
+                data_range={"start": start_idx, "end": end_idx, "rows": end_idx - start_idx},
+                columns_processed=list(df.columns),  # Track all columns this worker processes
+                metadata={
+                    "description": f"Worker agent processing rows {start_idx}-{end_idx} of {document_name}",
+                    "chunk_range": f"{start_idx}-{end_idx}",
+                    "parent_document": document_id,
+                    "worker_index": chunk_idx,
+                    "chunk_size": end_idx - start_idx,
+                    "total_rows": total_rows,
+                    "total_cols": total_cols
+                }
+            )
+            
+            # Add worker agent to document_agents (thread-safe)
+            with facts_lock:
+                document_agents[worker_agent_id] = worker_agent
+            
+            chunk_employee_names = []  # Track employees processed by this worker
+            chunk_columns_processed = set()  # Track all columns processed by this worker
+            rows_processed_count = 0  # Track number of rows actually processed
+            rows_skipped_count = 0  # Track number of rows skipped
+            
+            try:
+                # First pass: track all columns in this chunk
+                for col in chunk_df.columns:
+                    chunk_columns_processed.add(col)
+                
+                # Log start of chunk processing
+                expected_rows = end_idx - start_idx
+                print(f"🔄 Worker {chunk_idx}: Processing rows {start_idx}-{end_idx-1} ({expected_rows} rows expected)")
+                
+                for idx, row in chunk_df.iterrows():
+                    rows_processed_count += 1
+                    
+                    # Log progress every 50 rows or at start/end
+                    if rows_processed_count == 1 or rows_processed_count % 50 == 0 or rows_processed_count == expected_rows:
+                        print(f"   📊 Worker {chunk_idx}: Processing row {idx} ({rows_processed_count}/{expected_rows} rows processed)")
+                    
+                    # Extract employee name - handle quotes and ensure proper formatting
+                    employee_name = None
+                    if name_col and name_col in df.columns:
+                        name_val = row[name_col]
+                        if pd.notna(name_val):
+                            employee_name = str(name_val).strip()
+                            # Remove surrounding quotes if present (CSV might have "Name, First")
+                            if employee_name.startswith('"') and employee_name.endswith('"'):
+                                employee_name = employee_name[1:-1].strip()
+                            # Also remove single quotes
+                            if employee_name.startswith("'") and employee_name.endswith("'"):
+                                employee_name = employee_name[1:-1].strip()
+                    
+                    # CRITICAL: Only skip if name is truly empty (not just whitespace)
+                    # This ensures ALL employees are processed
+                    if not employee_name or len(employee_name.strip()) == 0:
+                        rows_skipped_count += 1
+                        # Calculate absolute row number in the full dataset
+                        absolute_row_num = start_idx + rows_processed_count - 1
+                        print(f"⚠️  Worker {chunk_idx}: Skipping row {idx} (absolute row {absolute_row_num}) - No valid employee name")
+                        continue
+                    
+                    # Track employee name for orchestrator routing (normalized, no quotes)
+                    if employee_name not in chunk_employee_names:
+                        chunk_employee_names.append(employee_name)
+                    
+                    # Also track in parent document agent
+                    parent_agent_id = f"doc_{document_id}"
+                    if parent_agent_id in document_agents:
+                        parent_agent = document_agents[parent_agent_id]
+                        if employee_name not in parent_agent.employee_names:
+                            with facts_lock:
+                                parent_agent.employee_names.append(employee_name)
+                        # Columns are already tracked upfront, but ensure they're in the list
+                        # (this is redundant but ensures thread-safety)
+                        for col in chunk_df.columns:
+                            if col not in parent_agent.columns_processed:
+                                with facts_lock:
+                                    parent_agent.columns_processed.append(col)
+                    
+                    # Create facts for each column (ensure ALL columns are processed, including last column)
+                    for col, val in row.items():
+                        # Skip only if value is NaN or this is the name column
+                        if pd.isna(val) or col == name_col:
+                            continue
+                        
+                        # Ensure column is tracked
+                        chunk_columns_processed.add(col)
+                        
+                        col_lower = str(col).lower().strip()
+                        val_str = str(val).strip()
+                        
+                        # Create predicate - handle all columns including absences, etc.
+                        # Use standardized predicates for key columns to ensure consistent mapping
+                        # IMPORTANT: Be specific to avoid duplicates (e.g., PositionID vs Position)
+                        if 'salary' in col_lower:
+                            predicate = "has salary"
+                        elif ('position' in col_lower or 'job' in col_lower or 'title' in col_lower) and 'id' not in col_lower:
+                            # Position, Job, Title (but NOT PositionID, JobID, etc.)
+                            predicate = "has position"
+                        elif ('position' in col_lower or 'job' in col_lower) and 'id' in col_lower:
+                            # PositionID, JobID - use specific predicate to avoid duplicates
+                            predicate = f"has {col.lower().replace('id', ' id')}"
+                        elif 'department' in col_lower or 'dept' in col_lower:
+                            predicate = "works in department"
+                        elif 'age' in col_lower:
+                            predicate = "has age"
+                        elif 'absence' in col_lower or 'absent' in col_lower:
+                            predicate = "has absences"
+                        elif ('performance' in col_lower or 'perf' in col_lower) and ('score' in col_lower or 'id' in col_lower):
+                            # Handle both PerformanceScore and PerfScoreID
+                            predicate = "has performance score"
+                        elif 'engagement' in col_lower and ('survey' in col_lower or 'score' in col_lower):
+                            predicate = "has engagement survey"
+                        elif 'employment' in col_lower and 'status' in col_lower:
+                            predicate = "has employment status"
+                        elif 'recruitment' in col_lower or ('source' in col_lower and 'recruit' in col_lower):
+                            predicate = "has recruitment source"
+                        elif 'manager' in col_lower and 'name' in col_lower:
+                            predicate = "has manager name"
+                        elif 'manager' in col_lower and 'id' not in col_lower:
+                            predicate = "has manager name"
+                        elif 'date' in col_lower and ('hire' in col_lower or 'of' in col_lower):
+                            predicate = "has dateofhire"
+                        elif 'special' in col_lower and 'project' in col_lower:
+                            predicate = "has specialprojectscount"
+                        elif 'gender' in col_lower or 'sex' in col_lower:
+                            predicate = "has gender"
+                        elif 'marital' in col_lower:
+                            predicate = "has marital status"
+                        elif 'state' in col_lower and 'marital' not in col_lower:
+                            predicate = "lives in state"
+                        elif 'city' in col_lower:
+                            predicate = "lives in city"
+                        elif 'zip' in col_lower or 'postal' in col_lower:
+                            predicate = "has zip code"
+                        elif 'phone' in col_lower:
+                            predicate = "has phone"
+                        elif 'email' in col_lower:
+                            predicate = "has email"
+                        elif 'date' in col_lower or 'dob' in col_lower or 'birth' in col_lower:
+                            predicate = f"has {col}"
+                        elif 'id' in col_lower and 'employee' not in col_lower:
+                            # ID columns get their own predicate to avoid duplicates
+                            predicate = f"has {col}"
+                        else:
+                            # Default: use column name as predicate (ensures all columns are captured)
+                            predicate = f"has {col}"
+                        
+                        # Check if fact already exists (thread-safe)
+                        # Use normalized employee name for consistency
+                        with facts_lock:
+                            fact_exists_check = fact_exists(employee_name, predicate, val_str)
+                        
+                        if not fact_exists_check:
+                            # Add fact directly to graph (thread-safe)
+                            with facts_lock:
+                                # CRITICAL: Normalize employee name (remove quotes, ensure consistent format)
+                                # This ensures names are stored consistently for reliable lookup
+                                normalized_employee_name = employee_name.strip()
+                                if normalized_employee_name.startswith('"') and normalized_employee_name.endswith('"'):
+                                    normalized_employee_name = normalized_employee_name[1:-1].strip()
+                                if normalized_employee_name.startswith("'") and normalized_employee_name.endswith("'"):
+                                    normalized_employee_name = normalized_employee_name[1:-1].strip()
+                                
+                                subject_clean = normalized_employee_name.replace(' ', '_')
+                                predicate_clean = predicate.strip().replace(' ', '_')
+                                object_clean = val_str.strip()
+                                
+                                subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+                                predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+                                object_literal = rdflib.Literal(object_clean)
+                                
+                                # WORKER CONSTRUCTS TRIPLE DIRECTLY - This is parallel KG construction!
+                                graph.add((subject_uri, predicate_uri, object_literal))
+                                
+                                # Update in-memory index for fast future lookups (O(1) instead of O(n))
+                                try:
+                                    from knowledge import _fact_lookup_set, normalize_entity
+                                    s_norm = normalize_entity(subject_clean.lower().replace('_', ' '))
+                                    p_norm = predicate_clean.lower().replace('_', ' ')
+                                    o_norm = normalize_entity(object_clean.lower())
+                                    _fact_lookup_set.add((s_norm, p_norm, o_norm))
+                                except:
+                                    pass  # Index update is optional, don't fail if it errors
+                                
+                                # Use normalized name for source document tracking
+                                add_fact_source_document(normalized_employee_name, predicate, val_str, document_name, uploaded_at)
+                                
+                                chunk_facts_added += 1
+                                facts_counter['added'] += 1
+                        else:
+                            chunk_facts_skipped += 1
+                            with facts_lock:
+                                facts_counter['skipped'] += 1
+                
+                # Verify all rows were processed
+                if rows_processed_count != expected_rows:
+                    print(f"⚠️  Worker {chunk_idx}: WARNING - Expected {expected_rows} rows but processed {rows_processed_count} rows!")
+                else:
+                    print(f"✅ Worker {chunk_idx}: Successfully processed all {rows_processed_count} rows ({rows_skipped_count} skipped, {rows_processed_count - rows_skipped_count} with valid names)")
+                
+                # Update worker agent status and track employees and columns
+                with facts_lock:
+                    worker_agent.employee_names = chunk_employee_names
+                    worker_agent.columns_processed = list(chunk_columns_processed)
+                    worker_agent.facts_extracted = chunk_facts_added
+                    worker_agent.status = "completed"
+                    # Store row processing stats in metadata
+                    worker_agent.metadata["rows_processed"] = rows_processed_count
+                    worker_agent.metadata["rows_expected"] = expected_rows
+                    worker_agent.metadata["rows_skipped"] = rows_skipped_count
+                    worker_agent.metadata["rows_with_valid_names"] = rows_processed_count - rows_skipped_count
+                
+                return chunk_facts_added, chunk_facts_skipped
+                
+            except Exception as chunk_error:
+                print(f"❌ Worker {chunk_idx} (rows {start_idx}-{end_idx}) failed: {chunk_error}")
+                import traceback
+                traceback.print_exc()
+                with facts_lock:
+                    worker_agent.status = "error"
+                return 0, 0
+        
+        # Process chunks in parallel
+        print(f"🚀 Starting parallel processing with {num_workers} workers...")
+        print(f"📊 Workers will process {len(chunks)} chunks:")
+        for idx, (start, end) in enumerate(chunks):
+            rows_in_chunk = end - start
+            print(f"   Worker {idx + 1}: rows {start}-{end} ({rows_in_chunk} rows)")
+        
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {executor.submit(process_chunk, idx, start, end): (idx, start, end) 
+                      for idx, (start, end) in enumerate(chunks)}
+            
+            completed = 0
+            total_rows_processed = 0
+            total_rows_expected = 0
+            for future in as_completed(futures):
+                chunk_idx, start_idx, end_idx = futures[future]
+                rows_in_chunk = end_idx - start_idx
+                total_rows_expected += rows_in_chunk
+                completed += 1
+                try:
+                    added, skipped = future.result()
+                    facts_counter['added'] += added
+                    facts_counter['skipped'] += skipped
+                    
+                    # Get row processing stats from worker agent
+                    worker_agent_id = f"doc_{document_id}_worker_{chunk_idx}"
+                    if worker_agent_id in document_agents:
+                        worker_agent = document_agents[worker_agent_id]
+                        rows_processed = worker_agent.metadata.get("rows_processed", rows_in_chunk)
+                        rows_skipped = worker_agent.metadata.get("rows_skipped", 0)
+                        total_rows_processed += rows_processed
+                        print(f"✅ Worker {chunk_idx + 1} completed: rows {start_idx}-{end_idx-1} ({rows_in_chunk} expected, {rows_processed} processed, {rows_skipped} skipped) → {added} facts added, {skipped} skipped [{completed}/{len(chunks)}]")
+                    else:
+                        total_rows_processed += rows_in_chunk
+                        print(f"✅ Worker {chunk_idx + 1} completed: rows {start_idx}-{end_idx-1} ({rows_in_chunk} rows) → {added} facts added, {skipped} skipped [{completed}/{len(chunks)}]")
+                except Exception as e:
+                    print(f"❌ Worker {chunk_idx + 1} (rows {start_idx}-{end_idx-1}) failed: {e}")
+            
+            # Verify all rows were processed
+            print(f"\n📊 ROW PROCESSING VERIFICATION:")
+            print(f"   Total rows in dataset: {total_rows}")
+            print(f"   Total rows expected across all chunks: {total_rows_expected}")
+            print(f"   Total rows processed: {total_rows_processed}")
+            if total_rows_processed == total_rows_expected == total_rows:
+                print(f"   ✅ SUCCESS: All {total_rows} rows were processed!")
+            else:
+                missing = total_rows - total_rows_processed
+                print(f"   ⚠️  WARNING: {missing} rows may not have been processed!")
+                print(f"   Expected: {total_rows}, Processed: {total_rows_processed}, Difference: {missing}")
+        
+        # Aggregate results from all workers
+        parent_agent_id = f"doc_{document_id}"
+        if parent_agent_id in document_agents:
+            parent_agent = document_agents[parent_agent_id]
+            # Aggregate employee names and columns from all workers
+            all_employee_names = set(parent_agent.employee_names)
+            all_columns = set(parent_agent.columns_processed)
+            
+            for worker_id, worker_agent in document_agents.items():
+                if (worker_agent.type == "document_worker" and 
+                    worker_agent.metadata.get("parent_document") == document_id):
+                    all_employee_names.update(worker_agent.employee_names)
+                    all_columns.update(worker_agent.columns_processed)
+            
+            with facts_lock:
+                parent_agent.employee_names = list(all_employee_names)
+                parent_agent.columns_processed = list(all_columns)
+            
+            print(f"✅ Parent agent {parent_agent_id} aggregated: {len(all_employee_names)} employees, {len(all_columns)} columns")
+        
+        print(f"✅ Parallel CSV extraction completed: {facts_counter['added']} facts added, {facts_counter['skipped']} duplicates skipped")
+        print(f"📊 Document split into {len(chunks)} chunks, processed by {num_workers} workers")
+        
+        return facts_counter['added']
+        
+    except Exception as e:
+        print(f"❌ Error in parallel CSV fact extraction: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
 def extract_csv_facts_directly_parallel(file_path: str, document_name: str, document_id: str, 
-                                        num_workers: int = 4, chunk_size: Optional[int] = None) -> int:
+                                        num_workers: int = 4, chunk_size: Optional[int] = None, 
+                                        document_type: str = ".csv") -> int:
     """
     Extract facts from CSV using parallel processing with multiple worker agents.
     Each worker processes a different chunk of rows concurrently.
@@ -831,29 +1421,42 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
             
             # Calculate chunk size based on complexity
             if data_complexity > 0:
-                calculated_chunk_size = max(50, min(200, target_data_points_per_chunk // total_cols))
+                calculated_chunk_size = max(25, min(200, target_data_points_per_chunk // total_cols))
             else:
                 calculated_chunk_size = 100
             
             # Ensure we have enough chunks for parallelization
             # Minimum: num_workers chunks, maximum: reasonable chunk size
             min_chunks_needed = num_workers
-            max_chunk_size_for_parallelization = max(50, total_rows // min_chunks_needed)
+            max_chunk_size_for_parallelization = max(25, total_rows // min_chunks_needed)
             
             # Use the smaller of: calculated size or max for parallelization
             chunk_size = min(calculated_chunk_size, max_chunk_size_for_parallelization)
             
-            # Ensure minimum chunk size for efficiency
-            chunk_size = max(50, chunk_size)
+            # Ensure minimum chunk size for efficiency (25 rows minimum for better parallelization)
+            # Too small (< 25) creates excessive overhead from too many workers
+            chunk_size = max(25, chunk_size)
             
             print(f"📊 Data complexity: {data_complexity:,} data points ({total_rows:,} rows × {total_cols} cols)")
             print(f"📊 Optimal chunk size: {chunk_size} rows (targeting ~{chunk_size * total_cols:,} data points per chunk)")
         
-        # Split into chunks
+        # Split into chunks - CRITICAL: Ensure no rows are missed
         chunks = []
         for start_idx in range(0, total_rows, chunk_size):
             end_idx = min(start_idx + chunk_size, total_rows)
             chunks.append((start_idx, end_idx))
+        
+        # Verify chunk coverage - ensure all rows are covered
+        covered_rows = set()
+        for start_idx, end_idx in chunks:
+            for row_idx in range(start_idx, end_idx):
+                covered_rows.add(row_idx)
+        
+        if len(covered_rows) != total_rows:
+            missing_rows = set(range(total_rows)) - covered_rows
+            print(f"⚠️  WARNING: Chunking may miss rows! Missing row indices: {sorted(missing_rows)[:20]}..." if len(missing_rows) > 20 else f"⚠️  WARNING: Chunking may miss rows! Missing row indices: {sorted(missing_rows)}")
+        else:
+            print(f"✅ Chunking verification: All {total_rows} rows are covered by chunks")
         
         print(f"📊 Splitting {total_rows} rows into {len(chunks)} chunks ({chunk_size} rows/chunk) for {num_workers} workers")
         
@@ -915,24 +1518,48 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
             
             chunk_employee_names = []  # Track employees processed by this worker
             chunk_columns_processed = set()  # Track all columns processed by this worker
+            rows_processed_count = 0  # Track number of rows actually processed
+            rows_skipped_count = 0  # Track number of rows skipped
             
             try:
                 # First pass: track all columns in this chunk
                 for col in chunk_df.columns:
                     chunk_columns_processed.add(col)
                 
+                # Log start of chunk processing
+                expected_rows = end_idx - start_idx
+                print(f"🔄 Worker {chunk_idx}: Processing rows {start_idx}-{end_idx-1} ({expected_rows} rows expected)")
+                
                 for idx, row in chunk_df.iterrows():
-                    # Extract employee name
+                    rows_processed_count += 1
+                    
+                    # Log progress every 50 rows or at start/end
+                    if rows_processed_count == 1 or rows_processed_count % 50 == 0 or rows_processed_count == expected_rows:
+                        print(f"   📊 Worker {chunk_idx}: Processing row {idx} ({rows_processed_count}/{expected_rows} rows processed)")
+                    
+                    # Extract employee name - handle quotes and ensure proper formatting
                     employee_name = None
                     if name_col and name_col in df.columns:
                         name_val = row[name_col]
                         if pd.notna(name_val):
                             employee_name = str(name_val).strip()
+                            # Remove surrounding quotes if present (CSV might have "Name, First")
+                            if employee_name.startswith('"') and employee_name.endswith('"'):
+                                employee_name = employee_name[1:-1].strip()
+                            # Also remove single quotes
+                            if employee_name.startswith("'") and employee_name.endswith("'"):
+                                employee_name = employee_name[1:-1].strip()
                     
-                    if not employee_name:
+                    # CRITICAL: Only skip if name is truly empty (not just whitespace)
+                    # This ensures ALL employees are processed
+                    if not employee_name or len(employee_name.strip()) == 0:
+                        rows_skipped_count += 1
+                        # Calculate absolute row number in the full dataset
+                        absolute_row_num = start_idx + rows_processed_count - 1
+                        print(f"⚠️  Worker {chunk_idx}: Skipping row {idx} (absolute row {absolute_row_num}) - No valid employee name")
                         continue
                     
-                    # Track employee name for orchestrator routing
+                    # Track employee name for orchestrator routing (normalized, no quotes)
                     if employee_name not in chunk_employee_names:
                         chunk_employee_names.append(employee_name)
                     
@@ -963,6 +1590,7 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
                         val_str = str(val).strip()
                         
                         # Create predicate - handle all columns including absences, etc.
+                        # Use standardized predicates for key columns to ensure consistent mapping
                         if 'salary' in col_lower:
                             predicate = "has salary"
                         elif 'position' in col_lower or 'job' in col_lower or 'title' in col_lower:
@@ -973,6 +1601,25 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
                             predicate = "has age"
                         elif 'absence' in col_lower or 'absent' in col_lower:
                             predicate = "has absences"
+                        elif ('performance' in col_lower or 'perf' in col_lower) and ('score' in col_lower or 'id' in col_lower):
+                            # Handle both PerformanceScore and PerfScoreID
+                            predicate = "has performance score"
+                        elif 'engagement' in col_lower and ('survey' in col_lower or 'score' in col_lower):
+                            predicate = "has engagement survey"
+                            # Also store with exact column name for direct matching
+                            # This ensures "EngagementSurvey" column is preserved
+                        elif 'employment' in col_lower and 'status' in col_lower:
+                            predicate = "has employment status"
+                        elif 'recruitment' in col_lower or ('source' in col_lower and 'recruit' in col_lower):
+                            predicate = "has recruitment source"
+                        elif 'manager' in col_lower and 'name' in col_lower:
+                            predicate = "has manager name"
+                        elif 'manager' in col_lower:
+                            predicate = "has manager name"
+                        elif 'date' in col_lower and ('hire' in col_lower or 'of' in col_lower):
+                            predicate = "has dateofhire"
+                        elif 'special' in col_lower and 'project' in col_lower:
+                            predicate = "has specialprojectscount"
                         elif 'gender' in col_lower or 'sex' in col_lower:
                             predicate = "has gender"
                         elif 'marital' in col_lower:
@@ -1002,7 +1649,15 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
                         if not fact_exists_check:
                             # Add fact directly to graph (thread-safe)
                             with facts_lock:
-                                subject_clean = employee_name.strip().replace(' ', '_')
+                                # CRITICAL: Normalize employee name (remove quotes, ensure consistent format)
+                                # This ensures names are stored consistently for reliable lookup
+                                normalized_employee_name = employee_name.strip()
+                                if normalized_employee_name.startswith('"') and normalized_employee_name.endswith('"'):
+                                    normalized_employee_name = normalized_employee_name[1:-1].strip()
+                                if normalized_employee_name.startswith("'") and normalized_employee_name.endswith("'"):
+                                    normalized_employee_name = normalized_employee_name[1:-1].strip()
+                                
+                                subject_clean = normalized_employee_name.replace(' ', '_')
                                 predicate_clean = predicate.strip().replace(' ', '_')
                                 object_clean = val_str.strip()
                                 
@@ -1010,8 +1665,21 @@ def extract_csv_facts_directly_parallel(file_path: str, document_name: str, docu
                                 predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
                                 object_literal = rdflib.Literal(object_clean)
                                 
+                                # WORKER CONSTRUCTS TRIPLE DIRECTLY - This is parallel KG construction!
                                 graph.add((subject_uri, predicate_uri, object_literal))
-                                add_fact_source_document(employee_name, predicate, val_str, document_name, uploaded_at)
+                                
+                                # Update in-memory index for fast future lookups (O(1) instead of O(n))
+                                try:
+                                    from knowledge import _fact_lookup_set, normalize_entity
+                                    s_norm = normalize_entity(subject_clean.lower().replace('_', ' '))
+                                    p_norm = predicate_clean.lower().replace('_', ' ')
+                                    o_norm = normalize_entity(object_clean.lower())
+                                    _fact_lookup_set.add((s_norm, p_norm, o_norm))
+                                except:
+                                    pass  # Index update is optional, don't fail if it errors
+                                
+                                # Use normalized name for source document tracking
+                                add_fact_source_document(normalized_employee_name, predicate, val_str, document_name, uploaded_at)
                                 
                                 chunk_facts_added += 1
                                 facts_counter['added'] += 1
@@ -1155,15 +1823,23 @@ def extract_csv_facts_directly(file_path: str, document_name: str, document_id: 
             for idx in range(batch_start, batch_end):
                 row = df.iloc[idx]
                 
-                # Extract employee name
+                # Extract employee name - handle quotes and ensure proper formatting
                 employee_name = None
                 if name_col and name_col in df.columns:
                     name_val = row[name_col]
                     if pd.notna(name_val):
                         employee_name = str(name_val).strip()
+                        # Remove surrounding quotes if present (CSV might have "Name, First")
+                        if employee_name.startswith('"') and employee_name.endswith('"'):
+                            employee_name = employee_name[1:-1].strip()
+                        # Also remove single quotes
+                        if employee_name.startswith("'") and employee_name.endswith("'"):
+                            employee_name = employee_name[1:-1].strip()
                 
-                # If no employee name, skip or use row index
-                if not employee_name:
+                # CRITICAL: Only skip if name is truly empty (not just whitespace)
+                # This ensures ALL employees are processed
+                if not employee_name or len(employee_name.strip()) == 0:
+                    print(f"⚠️  Skipping row {idx}: No valid employee name found")
                     continue
                 
                 # Create facts for each column
@@ -1174,17 +1850,31 @@ def extract_csv_facts_directly(file_path: str, document_name: str, document_id: 
                     col_lower = str(col).lower()
                     val_str = str(val).strip()
                     
-                    # Create predicate based on column type
+                    # Create predicate based on column type - match parallel processing logic
                     if 'salary' in col_lower:
                         predicate = "has salary"
-                    elif 'position' in col_lower:
+                    elif 'position' in col_lower or 'job' in col_lower or 'title' in col_lower:
                         predicate = "has position"
                     elif 'department' in col_lower or 'dept' in col_lower:
                         predicate = "works in department"
                     elif 'age' in col_lower:
                         predicate = "has age"
+                    elif 'absence' in col_lower or 'absent' in col_lower:
+                        predicate = "has absences"
+                    elif ('performance' in col_lower or 'perf' in col_lower) and ('score' in col_lower or 'id' in col_lower):
+                        predicate = "has performance score"
+                    elif 'engagement' in col_lower and ('survey' in col_lower or 'score' in col_lower):
+                        predicate = "has engagement survey"
+                    elif 'employment' in col_lower and 'status' in col_lower:
+                        predicate = "has employment status"
+                    elif 'manager' in col_lower:
+                        predicate = "has manager name"
                     else:
-                        predicate = f"has {col}"
+                        # For columns that match exact CSV names (capitalized), use the column name directly
+                        if col[0].isupper() or col.isupper():
+                            predicate = f"has {col}"  # e.g., "has EngagementSurvey"
+                        else:
+                            predicate = f"has {col}"
                     
                     # Check if fact already exists
                     if not fact_exists(employee_name, predicate, val_str):
@@ -1200,8 +1890,8 @@ def extract_csv_facts_directly(file_path: str, document_name: str, document_id: 
                         
                         graph.add((subject_uri, predicate_uri, object_literal))
                         
-                        # Add source document
-                        add_fact_source_document(employee_name, predicate, val_str, document_name, uploaded_at)
+                        # Add source document (use normalized name)
+                        add_fact_source_document(normalized_employee_name, predicate, val_str, document_name, uploaded_at)
                         
                         facts_added += 1
                     else:
@@ -1398,6 +2088,8 @@ def get_agent_architecture() -> Dict[str, Any]:
         "visualization_agents": [],
         "kg_agents": [],
         "llm_agents": [],
+        "strategic_query_agents": [],
+        "operational_query_agents": [],
         "document_agents": []
     }
     
@@ -1414,6 +2106,10 @@ def get_agent_architecture() -> Dict[str, Any]:
             architecture["kg_agents"].append(agent_dict)
         elif agent.type == "llm":
             architecture["llm_agents"].append(agent_dict)
+        elif agent.type == "strategic_query":
+            architecture["strategic_query_agents"].append(agent_dict)
+        elif agent.type == "operational_query":
+            architecture["operational_query_agents"].append(agent_dict)
     
     # Add document agents (including worker agents)
     for agent_id, agent in document_agents.items():

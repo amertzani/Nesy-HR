@@ -7,6 +7,8 @@ import {
   Download,
   Settings,
   Bot,
+  TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,7 +41,7 @@ const menuItems = [
     icon: Network,
   },
   {
-    title: "Research Assistant",
+    title: "HR Assistant",
     url: "/chat",
     icon: MessageSquare,
   },
@@ -55,6 +57,11 @@ const managementItems = [
     title: "Statistics",
     url: "/statistics",
     icon: Database,
+  },
+  {
+    title: "Insights",
+    url: "/insights",
+    icon: Sparkles,
   },
   {
     title: "Agent Architecture",

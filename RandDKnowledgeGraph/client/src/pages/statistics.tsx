@@ -121,6 +121,84 @@ function DocumentStatisticsCard({ document }: { document: any }) {
   const hasStats = statsData !== null && statsData !== undefined;
   const hasViz = vizData !== null && vizData !== undefined;
 
+  const handleExportCorrelationMatrix = () => {
+    if (!statsData?.correlations) {
+      toast({
+        title: "No correlation data",
+        description: "Correlation matrix is not available for this document.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Get all column names
+      const columns = Object.keys(statsData.correlations);
+      
+      // Build CSV content
+      let csvContent = "Column," + columns.join(",") + "\n";
+      
+      // Add each row (symmetric matrix - check both directions)
+      columns.forEach((col1) => {
+        const row = [col1];
+        columns.forEach((col2) => {
+          if (col1 === col2) {
+            row.push("1.000"); // Self-correlation (diagonal)
+          } else {
+            // Check both directions since matrix is symmetric
+            let corrValue = statsData.correlations[col1]?.[col2] ?? 
+                            statsData.correlations[col2]?.[col1] ?? 
+                            null;
+            
+            // Normalize correlation value if it appears to be scaled (e.g., 1000 instead of 1.0)
+            // Correlation values should be in range [-1, 1]
+            if (corrValue !== null && typeof corrValue === 'number') {
+              // If value is outside [-1, 1] range, it might be scaled
+              if (Math.abs(corrValue) > 1) {
+                // Normalize by dividing by 1000 (e.g., 1000 -> 1.0, -33 -> -0.033, -202 -> -0.202)
+                corrValue = corrValue / 1000;
+                // Clamp to [-1, 1] range
+                corrValue = Math.max(-1, Math.min(1, corrValue));
+              }
+            }
+            
+            row.push(corrValue !== null ? corrValue.toFixed(3) : "0.000");
+          }
+        });
+        csvContent += row.join(",") + "\n";
+      });
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined' || !window.document) {
+        throw new Error("Export is only available in browser environment");
+      }
+      
+      const link = window.document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${document.name || documentId}_correlation_matrix.csv`);
+      link.style.visibility = "hidden";
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export successful",
+        description: `Correlation matrix exported for ${columns.length} columns.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export correlation matrix",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportStatistics = async () => {
     try {
       toast({
@@ -309,41 +387,68 @@ function DocumentStatisticsCard({ document }: { document: any }) {
               })()}
 
               {/* Correlation Heatmap Table */}
-              <div className="overflow-x-auto">
-                <h4 className="text-md font-medium mb-3">Correlation Matrix</h4>
-                <div className="border rounded-lg overflow-hidden">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-md font-medium">
+                    Correlation Matrix ({Object.keys(statsData.correlations).length} columns)
+                  </h4>
+                  <Button
+                    onClick={handleExportCorrelationMatrix}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export to CSV
+                  </Button>
+                </div>
+                <div className="overflow-x-auto border rounded-lg max-h-[600px] overflow-y-auto">
                   <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="p-2 text-left font-medium sticky left-0 bg-muted z-10 border-r">
+                    <thead className="sticky top-0 bg-background z-20">
+                      <tr className="bg-muted border-b">
+                        <th className="p-2 text-left font-medium sticky left-0 bg-muted z-30 border-r">
                           Variable
                         </th>
-                        {Object.keys(statsData.correlations).slice(0, 10).map((col) => (
+                        {Object.keys(statsData.correlations).map((col) => (
                           <th
                             key={col}
                             className="p-2 text-center font-medium min-w-[80px]"
                             title={col}
                           >
-                            {col.length > 8 ? col.substring(0, 8) + "..." : col}
+                            {col.length > 12 ? col.substring(0, 12) + "..." : col}
                           </th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.keys(statsData.correlations).slice(0, 10).map((col1, i) => (
+                      {Object.keys(statsData.correlations).map((col1, i) => (
                         <tr key={col1} className="border-t hover:bg-muted/30">
                           <td
                             className="p-2 font-medium sticky left-0 bg-background z-10 border-r"
                             title={col1}
                           >
-                            {col1.length > 15 ? col1.substring(0, 15) + "..." : col1}
+                            {col1.length > 20 ? col1.substring(0, 20) + "..." : col1}
                           </td>
-                      {Object.keys(statsData.correlations).slice(0, 10).map((col2, j) => {
-                            const corrValue = statsData.correlations[col1]?.[col2] ?? null;
+                      {Object.keys(statsData.correlations).map((col2, j) => {
+                            // Get correlation value (check both directions for symmetric matrix)
+                            let corrValue = statsData.correlations[col1]?.[col2] ?? 
+                                            statsData.correlations[col2]?.[col1] ?? 
+                                            (i === j ? 1.0 : null);
+                            
+                            // Normalize correlation value if it appears to be scaled (e.g., 1000 instead of 1.0)
+                            if (corrValue !== null && typeof corrValue === 'number' && i !== j) {
+                              // If value is outside [-1, 1] range, it might be scaled
+                              if (Math.abs(corrValue) > 1) {
+                                // Normalize by dividing by 1000 (e.g., 1000 -> 1.0, -33 -> -0.033, -202 -> -0.202)
+                                corrValue = corrValue / 1000;
+                                // Clamp to [-1, 1] range
+                                corrValue = Math.max(-1, Math.min(1, corrValue));
+                              }
+                            }
+                            
                             if (i === j) {
                               return (
                                 <td key={col2} className="p-2 text-center bg-muted/50">
-                                  <span className="text-muted-foreground">—</span>
+                                  <span className="text-muted-foreground font-bold">1.00</span>
                                 </td>
                               );
                             }
@@ -404,6 +509,17 @@ function DocumentStatisticsCard({ document }: { document: any }) {
                   Values range from -1 (perfect negative) to +1 (perfect positive). 
                   Strong correlations (|r| &gt; 0.5) are highlighted.
                 </p>
+                <div className="mt-3">
+                  <Button
+                    onClick={handleExportCorrelationMatrix}
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Full Correlation Matrix to CSV
+                  </Button>
+                </div>
               </div>
             </div>
           )}

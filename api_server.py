@@ -78,13 +78,21 @@ async def lifespan(app: FastAPI):
     # Startup
     print("Initializing knowledge graph...")
     try:
-        # Clear all facts on every restart
-        print("🗑️  Clearing all facts on startup...")
-        delete_result = kb_delete_all_knowledge()
-        print(f"Startup: {delete_result}")
+        # Load existing knowledge graph (don't clear on restart - preserve data)
+        print("📂 Loading existing knowledge graph...")
+        try:
+            kb_load_knowledge_graph()
+            fact_count = len(kb_graph) if kb_graph else 0
+            print(f"✅ Loaded knowledge graph with {fact_count} facts")
+        except Exception as load_error:
+            print(f"⚠️  Could not load existing graph: {load_error}")
+            print("   Starting with empty graph...")
+            # Only clear if load failed
+            delete_result = kb_delete_all_knowledge()
+            print(f"Startup: {delete_result}")
         
-        # Also clear all documents
-        print("🗑️  Clearing all documents...")
+        # Load documents (don't clear on restart - preserve data)
+        print("📂 Loading existing documents...")
         deleted_docs = ds_delete_all_documents()
         if deleted_docs > 0:
             print(f"✅ Deleted {deleted_docs} documents")
@@ -251,12 +259,31 @@ async def chat_endpoint(request: ChatMessage):
                 print("⚠️  LLM loading timed out, using rule-based responses")
         
         # Generate response with timeout
-        # Adjust timeout based on device (CPU is much slower)
+        # Adjust timeout based on device and document size (CPU is much slower)
         from responses import LLM_DEVICE
-        if LLM_DEVICE == "cpu":
-            timeout_seconds = 20.0  # Shorter timeout for CPU
+        from knowledge import graph as kb_graph
+        
+        # Calculate timeout based on graph size (more facts = more processing time)
+        fact_count = len(kb_graph) if kb_graph else 0
+        base_timeout_cpu = 30.0  # Increased base timeout for CPU
+        base_timeout_gpu = 60.0  # Increased base timeout for GPU
+        
+        # Add extra time for larger knowledge graphs
+        # For structured queries, we need more time for fact extraction
+        if fact_count > 10000:
+            extra_time = min(60.0, fact_count / 500)  # Up to 60 extra seconds for large graphs
         else:
-            timeout_seconds = 45.0  # Longer timeout for GPU
+            extra_time = 0
+        
+        if LLM_DEVICE == "cpu":
+            timeout_seconds = base_timeout_cpu + extra_time
+        else:
+            timeout_seconds = base_timeout_gpu + extra_time
+        
+        # Cap at 2 minutes for very large graphs
+        timeout_seconds = min(timeout_seconds, 120.0)
+        
+        print(f"⏱️  Query timeout: {timeout_seconds:.1f}s (device: {LLM_DEVICE}, facts: {fact_count})")
         
         try:
             response = await asyncio.wait_for(
@@ -456,7 +483,9 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
     async def process_upload():
         """Inner function to process upload - wrapped in timeout"""
         print(f"🔄 Starting upload processing...")
-        facts_before = len(kb_graph)
+        # Import kb_graph at the very start to avoid UnboundLocalError
+        from knowledge import graph as kb_graph, save_knowledge_graph
+        facts_before = len(kb_graph) if kb_graph else 0
         file_info_list = []
         
         # Map temporary file paths to original filenames
@@ -558,6 +587,15 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                     continue
                 
                 try:
+                    # Clear knowledge graph for new document upload (start fresh)
+                    # kb_graph and save_knowledge_graph already imported at top of process_upload function
+                    if kb_graph and len(kb_graph) > 0:
+                        facts_before_clear = len(kb_graph)
+                        print(f"🗑️  Clearing {facts_before_clear:,} existing facts from previous uploads...")
+                        kb_graph.remove((None, None, None))  # Remove all triples
+                        save_knowledge_graph()
+                        print(f"✅ Knowledge graph cleared - starting fresh for {file_info['name']}")
+                    
                     # Process document with all agents (Statistics, Visualization, KG)
                     file_size_mb = file_info.get('size', 0) / (1024 * 1024)
                     print(f"🔄 Processing {file_info['name']} ({file_size_mb:.1f} MB, type: {file_extension})...")
@@ -577,7 +615,7 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                     facts_extracted = agent_result.get('facts_extracted', 0)
                     total_facts_extracted += facts_extracted
                     
-                    # Store statistics and visualizations in document agent metadata
+                    # Store statistics, visualizations, and operational insights in document agent metadata
                     doc_agent_id = f"doc_{document_id}"
                     from agent_system import document_agents
                     from datetime import datetime
@@ -585,10 +623,12 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                         doc_agent = document_agents[doc_agent_id]
                         doc_agent.metadata['statistics'] = agent_result.get('statistics')
                         doc_agent.metadata['visualizations'] = agent_result.get('visualizations')
+                        doc_agent.metadata['operational_insights'] = agent_result.get('operational_insights', {})
                         doc_agent.metadata['processed_at'] = datetime.now().isoformat()
                         doc_agent.facts_extracted = facts_extracted
                         doc_agent.status = "completed"
-                        print(f"✅ Updated document agent {doc_agent_id} with statistics and visualizations")
+                        insights_count = len(agent_result.get('operational_insights', {}))
+                        print(f"✅ Updated document agent {doc_agent_id} with statistics, visualizations, and {insights_count} operational insights")
                     
                     # Save document (even if 0 facts, if statistics were extracted)
                     has_statistics = agent_result.get('statistics') is not None
@@ -642,8 +682,20 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
             print(f"   Graph now has {len(kb_graph)} total facts")
             print(f"   Processed documents: {len(processed_docs)}")
             
-            # Create result message
+            # Create result message with operational insights summary
+            insights_summary = ""
+            for doc in processed_docs:
+                doc_agent_id = f"doc_{doc.get('name', '')}"
+                from agent_system import document_agents
+                if doc_agent_id in document_agents:
+                    doc_agent = document_agents[doc_agent_id]
+                    insights = doc_agent.metadata.get('operational_insights', {})
+                    if insights:
+                        insights_summary += f"\n   - {doc.get('name', '')}: {len(insights)} operational insights generated"
+            
             result = f"Processed {len(files)} file(s) using multi-agent system (Statistics, Visualization, KG, LLM). Extracted {total_facts_extracted} facts"
+            if insights_summary:
+                result += f"\n\n✅ Automatic operational analysis completed:{insights_summary}"
             
             # Handle case where no facts were extracted
             if len(processed_docs) == 0 and facts_extracted == 0:
@@ -793,6 +845,26 @@ async def get_contents_endpoint():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting contents: {str(e)}")
+
+@app.get("/api/insights/operational")
+async def get_operational_insights_endpoint():
+    """Get operational insights that were generated during upload"""
+    try:
+        from agent_system import document_agents
+        insights_by_doc = {}
+        
+        for doc_id, doc_agent in document_agents.items():
+            if doc_agent.type == "document" and 'operational_insights' in doc_agent.metadata:
+                insights = doc_agent.metadata.get('operational_insights', {})
+                if insights:
+                    insights_by_doc[doc_agent.document_name] = insights
+        
+        return {
+            "status": "success",
+            "insights": insights_by_doc
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting operational insights: {str(e)}")
 
 @app.get("/api/knowledge/facts")
 async def get_facts_endpoint(
@@ -1441,63 +1513,6 @@ async def get_agent_architecture_endpoint():
         print(f"❌ Error in get_agent_architecture_endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting agent architecture: {str(e)}")
 
-@app.get("/api/agents/ontology")
-async def get_ontology_endpoint():
-    """Get ontology from LLM agent"""
-    try:
-        # Ensure agents are initialized first
-        from agent_system import initialize_agents
-        initialize_agents()
-        
-        ontology = get_ontology()
-        # If ontology is empty or has error, initialize it
-        if not ontology or (isinstance(ontology, dict) and ontology.get("error")):
-            print("⚠️  Ontology not initialized, initializing now...")
-            ontology = initialize_ontology()
-            # If initialization failed, return error structure
-            if isinstance(ontology, dict) and ontology.get("error"):
-                return {
-                    "ontology": {
-                        "domain": "Human Resource Management",
-                        "entities": [],
-                        "relationships": [],
-                        "properties": {}
-                    },
-                    "status": "error",
-                    "error": ontology.get("error", "Failed to initialize ontology")
-                }
-        
-        # Ensure ontology has required structure
-        if not isinstance(ontology, dict):
-            ontology = {}
-        if "entities" not in ontology:
-            ontology["entities"] = []
-        if "relationships" not in ontology:
-            ontology["relationships"] = []
-        if "properties" not in ontology:
-            ontology["properties"] = {}
-        if "domain" not in ontology:
-            ontology["domain"] = "Human Resource Management"
-        
-        return {
-            "ontology": ontology,
-            "status": "success"
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        print(f"❌ Error in get_ontology_endpoint: {e}")
-        # Return empty ontology structure on error instead of raising exception
-        return {
-            "ontology": {
-                "domain": "Human Resource Management",
-                "entities": [],
-                "relationships": [],
-                "properties": {}
-            },
-            "status": "error",
-            "error": str(e)
-        }
 
 @app.get("/api/documents/{document_id}/statistics")
 async def get_document_statistics_endpoint(document_id: str):

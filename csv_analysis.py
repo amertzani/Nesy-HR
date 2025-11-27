@@ -2,14 +2,13 @@
 CSV Analysis Module
 ===================
 
-Evidence-based CSV analysis with statistics, patterns, and ontology enhancement.
+Evidence-based CSV analysis with statistics and patterns.
 
 Features:
 - Column type detection (numeric, categorical, datetime, text)
 - Statistical analysis (mean, median, mode, distributions, correlations)
 - Pattern detection (outliers, missing values, duplicates)
 - Evidence-based insights with traceability
-- Ontology enhancement suggestions based on column structure
 
 Author: Research Brain Team
 Last Updated: 2025-01-15
@@ -289,7 +288,7 @@ def generate_insights(analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
             "category": "relationships",
             "message": f"Found {len(strong_corrs)} strong correlation(s) between columns",
             "evidence": strong_corrs,
-            "recommendation": "These columns may represent related concepts in the ontology"
+            "recommendation": "These columns may represent related concepts"
         })
     
     # Categorical distribution insights
@@ -321,7 +320,6 @@ def analyze_csv(file_path: str) -> Dict[str, Any]:
         - columns: Per-column analysis
         - correlations: Column correlations
         - insights: Evidence-based insights
-        - ontology_suggestions: Suggested ontology enhancements
     """
     try:
         # Try to detect separator - check first line for common separators
@@ -362,12 +360,7 @@ def analyze_csv(file_path: str) -> Dict[str, Any]:
             },
             "columns": {},
             "correlations": {},
-            "insights": [],
-            "ontology_suggestions": {
-                "entities": [],
-                "relationships": [],
-                "properties": {}
-            }
+            "insights": []
         }
         
         # Analyze each column
@@ -398,9 +391,6 @@ def analyze_csv(file_path: str) -> Dict[str, Any]:
         # Generate insights
         analysis["insights"] = generate_insights(analysis)
         
-        # Generate ontology suggestions based on column structure
-        analysis["ontology_suggestions"] = suggest_ontology_from_csv(df, analysis)
-        
         return analysis
     
     except Exception as e:
@@ -410,193 +400,4 @@ def analyze_csv(file_path: str) -> Dict[str, Any]:
             "analyzed_at": datetime.now().isoformat()
         }
 
-def suggest_ontology_from_csv(df: pd.DataFrame, analysis: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Suggest ontology enhancements based on CSV structure
-    
-    Analyzes column names and data patterns to suggest:
-    - Entity types (based on ID columns, categorical columns)
-    - Relationships (based on foreign key patterns, correlations)
-    - Properties (based on column types and names)
-    """
-    suggestions = {
-        "entities": [],
-        "relationships": [],
-        "properties": {}
-    }
-    
-    column_names = df.columns.tolist()
-    
-    # Detect potential entity types from column names - MORE AGGRESSIVE
-    for col_name in column_names:
-        col_lower = col_name.lower().strip()
-        
-        # Skip if column name is too long or contains semicolons (likely parsing error)
-        if len(col_name) > 100 or ";" in col_name:
-            continue
-        
-        # Check if column name suggests an entity type (more comprehensive)
-        entity_patterns = {
-            "Employee": ["employee", "emp", "staff", "worker", "personnel", "attrition"],
-            "Person": ["person", "people", "individual", "user", "customer", "client"],
-            "Department": ["department", "dept", "division", "unit", "team", "group", "business"],
-            "Project": ["project", "task", "assignment", "initiative"],
-            "Skill": ["skill", "competency", "ability", "capability"],
-            "Position": ["position", "role", "job", "title", "jobrole"],
-            "Location": ["location", "office", "site", "place", "city", "country"],
-            "Company": ["company", "organization", "org", "firm", "business"],
-            "Education": ["education", "educationfield", "degree"],
-            "Environment": ["environmentsatisfaction", "environmentsatisfaction"],
-            "WorkLife": ["worklifebalance", "worklife"],
-            "JobSatisfaction": ["jobsatisfaction", "jobsatisfaction"],
-            "MaritalStatus": ["maritalstatus", "marital"],
-            "OverTime": ["overtime", "overtime"],
-        }
-        
-        for entity_name, keywords in entity_patterns.items():
-            if any(keyword in col_lower for keyword in keywords):
-                if entity_name not in suggestions["entities"]:
-                    suggestions["entities"].append(entity_name)
-                    print(f"  📌 Detected entity '{entity_name}' from column '{col_name}'")
-        
-        # Check for ID columns (potential entity identifiers) - MORE AGGRESSIVE
-        # Match any column ending with _id, id, or starting with id_
-        if ("_id" in col_lower or col_lower.endswith("id") or col_lower.startswith("id_") or 
-            "id" in col_lower.split("_") or col_lower.count("id") > 0):
-            # Extract base name - try multiple patterns
-            base_name = col_lower
-            for pattern in ["_id", "id_", "id"]:
-                if pattern in base_name:
-                    base_name = base_name.replace(pattern, " ").strip()
-            
-            # Clean up
-            base_name = base_name.replace("_", " ").strip()
-            if base_name and base_name not in ["", "id"] and len(base_name) > 1:
-                # Capitalize properly (handle snake_case and camelCase)
-                parts = base_name.split()
-                entity_name = "".join(word.capitalize() for word in parts)
-                if entity_name not in suggestions["entities"] and len(entity_name) > 1:
-                    suggestions["entities"].append(entity_name)
-                    print(f"  📌 Detected entity '{entity_name}' from ID column '{col_name}'")
-        
-        # Check for categorical columns that might represent entities - MORE AGGRESSIVE
-        col_stats = analysis.get("columns", {}).get(col_name, {})
-        if col_stats.get("type") == "categorical":
-            unique_count = col_stats.get("unique_count", 0)
-            # If categorical with reasonable number of unique values, might be an entity
-            if 2 <= unique_count <= 200:  # Increased threshold
-                # More lenient - if it's categorical and has a meaningful name, consider it
-                if len(col_name) > 3:  # Not too short
-                    # Extract entity name from column (capitalize properly)
-                    entity_name = col_name.replace("_", " ").replace("-", " ").title().replace(" ", "")
-                    # Clean up common suffixes
-                    for suffix in ["Id", "Id", "Type", "Category", "Status", "Level"]:
-                        if entity_name.endswith(suffix) and len(entity_name) > len(suffix):
-                            entity_name = entity_name[:-len(suffix)]
-                    
-                    if entity_name and entity_name not in suggestions["entities"] and len(entity_name) > 2:
-                        suggestions["entities"].append(entity_name)
-                        print(f"  📌 Detected entity '{entity_name}' from categorical column '{col_name}' ({unique_count} unique values)")
-        
-        # Also check column name patterns - if it looks like an entity name
-        # Skip if column name is too long or contains semicolons (parsing error)
-        if len(col_name) > 100 or ";" in col_name:
-            continue
-            
-        if col_lower not in ["id", "name", "value", "data", "column"]:
-            # If column name is capitalized or has multiple words, might be an entity
-            if col_name[0].isupper() or "_" in col_name or "-" in col_name:
-                # Check if it's not a common property name
-                property_keywords = ["age", "salary", "date", "time", "count", "total", "sum", "avg", "min", "max"]
-                if not any(prop in col_lower for prop in property_keywords):
-                    entity_name = col_name.replace("_", " ").replace("-", " ").title().replace(" ", "")
-                    # Filter out bad entity names (too long, contains special chars)
-                    if entity_name and entity_name not in suggestions["entities"] and len(entity_name) > 2 and len(entity_name) < 50:
-                        suggestions["entities"].append(entity_name)
-                        print(f"  📌 Detected entity '{entity_name}' from column name pattern '{col_name}'")
-    
-    # Detect relationships from column patterns
-    for col_name in column_names:
-        col_lower = col_name.lower().strip()
-        
-        # Foreign key patterns - more comprehensive
-        if "_id" in col_lower or col_lower.endswith("id") or col_lower.startswith("id_"):
-            base_name = col_lower.replace("_id", "").replace("id", "").replace("id_", "").strip()
-            if base_name and base_name not in ["", "id"] and len(base_name) > 1:
-                # Create relationship name
-                parts = base_name.split("_")
-                rel_base = "_".join(parts)
-                rel_name = f"has_{rel_base}"
-                if rel_name not in suggestions["relationships"]:
-                    suggestions["relationships"].append(rel_name)
-                    print(f"  🔗 Detected relationship '{rel_name}' from column '{col_name}'")
-        
-        # Relationship keywords - more comprehensive
-        relationship_keywords = [
-            "belongs_to", "works_in", "reports_to", "assigned_to", "manages",
-            "located_in", "part_of", "member_of", "owner_of", "has_"
-        ]
-        for keyword in relationship_keywords:
-            if keyword in col_lower:
-                rel_name = col_lower.replace("_", "_")  # Keep as is
-                if rel_name not in suggestions["relationships"]:
-                    suggestions["relationships"].append(rel_name)
-                    print(f"  🔗 Detected relationship '{rel_name}' from column '{col_name}'")
-        
-        # Check for correlation-based relationships
-        strong_corrs = analysis.get("correlations", {}).get("strong_correlations", [])
-        for corr in strong_corrs:
-            if col_name in [corr.get("column1"), corr.get("column2")]:
-                corr_strength = corr.get("strength", "")
-                if corr_strength == "strong":
-                    rel_name = f"strongly_correlates_with"
-                    if rel_name not in suggestions["relationships"]:
-                        suggestions["relationships"].append(rel_name)
-    
-    # Suggest properties based on column types
-    for col_name, col_stats in analysis.get("columns", {}).items():
-        col_type = col_stats.get("type")
-        col_lower = col_name.lower()
-        
-        # Skip ID columns
-        if col_lower.endswith("_id") or col_lower.endswith("id"):
-            continue
-        
-        # Map column types to property types
-        if col_type == "numeric":
-            if "salary" in col_lower or "price" in col_lower or "cost" in col_lower:
-                prop_type = "monetary"
-            elif "age" in col_lower or "year" in col_lower or "count" in col_lower:
-                prop_type = "integer"
-            else:
-                prop_type = "float"
-        elif col_type == "datetime":
-            prop_type = "datetime"
-        elif col_type == "categorical":
-            prop_type = "enum"
-        else:
-            prop_type = "string"
-        
-        # Group properties by potential entity (if we can infer it)
-        # For now, add to a general properties list
-        if "properties" not in suggestions:
-            suggestions["properties"] = {}
-        
-        # Try to infer entity from column name context
-        entity = "Entity"  # Default
-        for ent in suggestions["entities"]:
-            if ent.lower() in col_lower:
-                entity = ent
-                break
-        
-        if entity not in suggestions["properties"]:
-            suggestions["properties"][entity] = []
-        
-        suggestions["properties"][entity].append({
-            "name": col_name,
-            "type": prop_type,
-            "description": f"Column: {col_name}, Type: {col_type}"
-        })
-    
-    return suggestions
 
