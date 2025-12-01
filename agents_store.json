@@ -1,0 +1,124 @@
+{
+  "last_updated": "2025-12-01T17:18:29.627105",
+  "total_agents": 7,
+  "agents": {
+    "orchestrator_agent": {
+      "id": "orchestrator_agent",
+      "name": "Orchestrator Agent",
+      "type": "orchestrator",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626790",
+      "metadata": {
+        "description": "Coordinates queries and delegates tasks to appropriate agents",
+        "role": "query_coordination",
+        "capabilities": [
+          "query_routing",
+          "agent_delegation",
+          "result_aggregation",
+          "task_coordination"
+        ]
+      }
+    },
+    "statistics_agent": {
+      "id": "statistics_agent",
+      "name": "Statistics Agent",
+      "type": "statistics",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626810",
+      "metadata": {
+        "description": "Performs statistical analysis of documents (especially CSV files)",
+        "role": "statistical_analysis",
+        "capabilities": [
+          "descriptive_stats",
+          "correlations",
+          "data_quality",
+          "trends"
+        ]
+      }
+    },
+    "visualization_agent": {
+      "id": "visualization_agent",
+      "name": "Visualization Agent",
+      "type": "visualization",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626814",
+      "metadata": {
+        "description": "Creates user-friendly graphs/charts from statistics",
+        "role": "data_visualization",
+        "capabilities": [
+          "bar_charts",
+          "line_charts",
+          "scatter_plots",
+          "heatmaps"
+        ]
+      }
+    },
+    "kg_agent": {
+      "id": "kg_agent",
+      "name": "Knowledge Graph Agent",
+      "type": "kg",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626817",
+      "metadata": {
+        "description": "Extracts facts/knowledge from documents for traceability",
+        "role": "knowledge_extraction",
+        "capabilities": [
+          "fact_extraction",
+          "entity_recognition",
+          "relation_extraction"
+        ]
+      }
+    },
+    "llm_agent": {
+      "id": "llm_agent",
+      "name": "HR Assistant",
+      "type": "llm",
+      "status": "active",
+      "created_at": "2025-11-22T10:48:46.530536",
+      "metadata": {
+        "description": "Provides traceable answers using KG and statistics",
+        "role": "research_assistant",
+        "capabilities": [
+          "qa",
+          "insights",
+          "traceability"
+        ]
+      }
+    },
+    "strategic_query_agent": {
+      "id": "strategic_query_agent",
+      "name": "Strategic Query Agent",
+      "type": "strategic_query",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626941",
+      "metadata": {
+        "description": "Processes strategic-level multi-variable queries (S1, S2) using statistics and knowledge graph",
+        "role": "strategic_analysis",
+        "capabilities": [
+          "multi_variable_analysis",
+          "risk_detection",
+          "performance_monitoring",
+          "recruitment_analysis"
+        ]
+      }
+    },
+    "operational_query_agent": {
+      "id": "operational_query_agent",
+      "name": "Operational Query Agent",
+      "type": "operational_query",
+      "status": "active",
+      "created_at": "2025-12-01T17:18:29.626945",
+      "metadata": {
+        "description": "Processes operational-level multi-variable queries (O1, O2, O3) using statistics and knowledge graph",
+        "role": "operational_analysis",
+        "capabilities": [
+          "performance_monitoring",
+          "absence_tracking",
+          "engagement_monitoring",
+          "departmental_analysis"
+        ]
+      }
+    }
+  },
+  "note": "Document agents are ephemeral and not persisted"
+}

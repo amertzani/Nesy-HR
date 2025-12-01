@@ -1,0 +1,29 @@
+gradio>=4.0.0
+rdflib>=6.0.0
+huggingface_hub
+PyPDF2
+python-docx
+pandas
+networkx
+matplotlib
+plotly
+numpy<2.0  # NumPy 2.x incompatible with spaCy/thinc/torch compiled with NumPy 1.x
+fastapi>=0.100.0  # FastAPI 0.100+ required for Pydantic v2 compatibility
+uvicorn[standard]
+pydantic>=2.0.0  # Pydantic v2.x
+urllib3<2.0  # urllib3 2.x incompatible with boto3
+python-multipart
+requests>=2.31.0  # For Ollama API calls
+transformers>=4.30.0
+torch>=2.0.0
+accelerate>=0.20.0
+bitsandbytes>=0.41.0
+# NLP libraries (optional but recommended - install separately)
+# NOTE: Python 3.14 is very new - spaCy may require Visual Studio Build Tools
+# Install with: .\install_spacy_windows.bat OR follow instructions in SPACY_INSTALL.md
+spacy>=3.7.0
+clean-text>=0.6.0
+neuralcoref>=4.0.0
+OpenNRE>=2.0.0
+REL>=2.0.0
+blink-lite>=0.1.0
