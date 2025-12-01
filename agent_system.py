@@ -25,7 +25,7 @@ import os
 import json
 import pickle
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict, field
 import rdflib
 import copy

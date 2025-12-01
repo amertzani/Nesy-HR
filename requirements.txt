@@ -14,6 +14,7 @@ pydantic>=2.0.0  # Pydantic v2.x
 urllib3<2.0  # urllib3 2.x incompatible with boto3
 python-multipart
 requests>=2.31.0  # For Ollama API calls
+python-dotenv>=1.0.0  # For loading .env files
 transformers>=4.30.0
 torch>=2.0.0
 accelerate>=0.20.0

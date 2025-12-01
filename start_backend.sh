@@ -36,6 +36,14 @@ if [ ! -f "api_server.py" ]; then
     exit 1
 fi
 
+# Load environment variables from .env file if it exists
+if [ -f ".env" ]; then
+    echo "📝 Loading environment variables from .env file..."
+    set -a  # Automatically export all variables
+    source .env
+    set +a  # Stop automatically exporting
+fi
+
 # Set default port (8001 to match frontend)
 export API_PORT=${API_PORT:-8001}
 export API_HOST=${API_HOST:-0.0.0.0}

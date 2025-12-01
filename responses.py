@@ -1,5 +1,9 @@
 from knowledge import retrieve_context
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Try to import transformers for lightweight LLM
 try:
