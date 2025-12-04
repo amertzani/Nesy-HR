@@ -538,9 +538,10 @@ def process_strategic_query_with_agent(query_info: Dict[str, Any], question: str
                     uploaded_at=datetime.now().isoformat(),
                     agent_id=STRATEGIC_QUERY_AGENT_ID
                 )
-                print(f"✅ Stored strategic insight in knowledge graph for LLM access")
+                # Stored strategic insight in knowledge graph
             except Exception as e:
-                print(f"⚠️  Failed to store strategic insight: {e}")
+                # Failed to store strategic insight
+                pass
             
             # Extract and store statistics facts (correlations, distributions, min/max) in knowledge graph
             try:
@@ -552,10 +553,10 @@ def process_strategic_query_with_agent(query_info: Dict[str, Any], question: str
                         doc_id = stats.get("document_id", "")
                         if doc_id:
                             facts_count = extract_statistical_facts(stats, doc_name, doc_id)
-                            if facts_count > 0:
-                                print(f"✅ Extracted {facts_count} statistics facts for {doc_name}")
+                            # Statistics facts extracted and stored
             except Exception as e:
-                print(f"⚠️  Failed to extract statistics facts: {e}")
+                # Failed to extract statistics facts
+                pass
             
             return answer, evidence_facts, {
                 "strategy": "strategic_query_agent",

@@ -695,6 +695,12 @@ def extract_relations(text: str, sentences: List[str], entities: Dict[str, List[
     Returns:
         List of relation dictionaries with subject, predicate, object
     """
+    # Define verb_indicators and invalid_entities at function scope (used in multiple places)
+    invalid_entities = {'named', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 
+                      'the', 'a', 'an', 'this', 'that', 'these', 'those'}
+    verb_indicators = {'named', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 
+                      'becomes', 'represents', 'means', 'refers', 'denotes', 'equals'}
+    
     relations = []
     seen_relations = set()  # Track duplicates across methods
     
@@ -942,6 +948,13 @@ def extract_relations(text: str, sentences: List[str], entities: Dict[str, List[
         # "has been/have been" patterns
         (r'([A-Za-z][a-zA-Z0-9\s\-]+)\s+(?:has|have|had)\s+been\s+([A-Za-z][a-zA-Z0-9\s\-]+)', 'has_been'),
         
+        # Correlation patterns (high priority - statistical facts)
+        (r'[Cc]orrelation\s+between\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+and\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+is\s+([\-\d\.]+)', 'has_correlation'),
+        (r'[Tt]he\s+correlation\s+between\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+and\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+is\s+([\-\d\.]+)', 'has_correlation'),
+        (r'([A-Za-z][a-zA-Z0-9\s\-]+)\s+and\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+have\s+correlation\s+of\s+([\-\d\.]+)', 'has_correlation'),
+        (r'[Cc]orrelation\s+of\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+with\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+is\s+([\-\d\.]+)', 'has_correlation'),
+        (r'([A-Za-z][a-zA-Z0-9\s\-]+)\s+correlates\s+with\s+([A-Za-z][a-zA-Z0-9\s\-]+)\s+at\s+([\-\d\.]+)', 'has_correlation'),
+        
         # General "is" patterns (LOW priority - only if no compound predicate matched)
         # ENHANCED: Exclude "is named" and "is from" to avoid matching them as simple "is"
         (r'([A-Za-z][a-zA-Z0-9\s\-]+)\s+(?:is|are|was|were|becomes?|represents?|means?|refers?\s+to|denotes?|equals?|stands?\s+for)\s+(?!named\s)(?!from\s)([A-Za-z][a-zA-Z0-9\s\-]+)', 'is'),
@@ -1089,12 +1102,19 @@ def extract_relations(text: str, sentences: List[str], entities: Dict[str, List[
             else:
                 matches = re.finditer(pattern, resolved_sentence, re.IGNORECASE)
             for match in matches:
+                # Handle correlation patterns specially (they have 3 groups: col1, col2, value)
+                if predicate == "has_correlation" and match.lastindex >= 3:
+                    col1 = match.group(1).strip()
+                    col2 = match.group(2).strip()
+                    corr_value = match.group(3).strip()
+                    # Store as: (col1, has_correlation, col2) with value in details
+                    subject = col1
+                    object_ent = f"{col2} (correlation: {corr_value})"
+                else:
                 subject = match.group(1).strip()
                 object_ent = match.group(2).strip()
                 
-                # Debug logging for "is_named" pattern
-                if predicate == "is_named":
-                    print(f"    🔍 Matched 'is_named' pattern: '{subject}' -> '{object_ent}' from sentence: '{sentence[:80]}...'")
+                # Debug logging for "is_named" pattern (removed verbose logging)
                 
                 # ENHANCED: Filter out invalid entities (like "NAMED", "IS", etc.)
                 # Note: invalid_entities and verb_indicators are defined at function scope above
@@ -1256,12 +1276,6 @@ def extract_relations(text: str, sentences: List[str], entities: Dict[str, List[
                             "sentence": sentence,
                             "confidence": 0.6
                         })
-    
-    # Define verb_indicators and invalid_entities at function scope (used in multiple places)
-    invalid_entities = {'named', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 
-                      'the', 'a', 'an', 'this', 'that', 'these', 'those'}
-    verb_indicators = {'named', 'is', 'are', 'was', 'were', 'has', 'have', 'had', 
-                      'becomes', 'represents', 'means', 'refers', 'denotes', 'equals'}
     
     # Entity co-occurrence: Extract "related_to" relationships for entities that appear together
     # but only if no specific pattern matched and no specific predicate already exists
@@ -1723,7 +1737,7 @@ def post_process_triples(triples: List[Tuple],
             # Store with confidence
             unique_triples.append((subject, predicate, object_ent, details, confidence))
     
-    print(f"    Extracted {len(unique_triples)} unique facts from document")
+    # Extracted unique facts
     
     # Step 2: Separate inference pass - match facts with common subjects or objects
     # Create a mapping of facts to their sources for tracking
@@ -1743,12 +1757,12 @@ def post_process_triples(triples: List[Tuple],
         }
     
     # Infer relationships by matching facts with common subjects or objects
-    print(f"    Attempting to infer facts from {len(unique_triples)} unique triples...")
+    # Attempting to infer facts
     inferred_triples = infer_transitive_relations_with_sources(
         unique_triples, 
         fact_to_source
     )
-    print(f"    Inference found {len(inferred_triples)} inferred triples")
+    # Inference found triples
     
     # Mark original triples with full metadata: (subject, predicate, object, details, confidence, type, source, uploaded)
     original_triples_marked = []
@@ -1764,7 +1778,7 @@ def post_process_triples(triples: List[Tuple],
     # Mark inferred triples with full metadata
     # Inferred triples have lower confidence (multiply by 0.8) and type "inferred"
     inferred_triples_marked = []
-    print(f"    Processing {len(inferred_triples)} inferred triples...")
+    # Processing inferred triples
     for s, p, o, d in inferred_triples:
         # Lower confidence for inferred facts
         inferred_confidence = 0.6  # Base confidence for inferred facts
@@ -1772,11 +1786,8 @@ def post_process_triples(triples: List[Tuple],
         # For inferred facts, source and uploaded_at come from the original facts that led to the inference
         # We'll use the source_document and uploaded_at from the current document
         inferred_triples_marked.append((s, p, o, d, inferred_confidence, "inferred", source_document, uploaded_at or ""))
-        # Only log first 10 to avoid spam
-        if len(inferred_triples_marked) <= 10:
-            print(f"    ✓ Marked inferred fact: {s} -> {p} -> {o}")
     
-    print(f"    Total: {len(original_triples_marked)} original + {len(inferred_triples_marked)} inferred = {len(original_triples_marked) + len(inferred_triples_marked)} total")
+    # Total triples computed
     
     # Combine original and inferred
     all_triples = original_triples_marked + inferred_triples_marked
@@ -1804,9 +1815,6 @@ def post_process_triples(triples: List[Tuple],
                     # If existing is original and this is inferred, keep both (they're different)
                     if existing_type == "original":
                         final_triples.append(triple)
-                        # Only log first 10 to avoid spam
-                        if len(final_triples) <= 10:
-                            print(f"    ℹ️  Keeping both original and inferred: {triple[0]} -> {triple[1]} -> {triple[2]}")
     
     return final_triples  # Format: (subject, predicate, object, details, confidence, type, source, uploaded)
 
@@ -1914,13 +1922,10 @@ def infer_transitive_relations_with_sources(triples: List[Tuple],
                             inferred.append((obj1, "related_to", obj2, reasoning))
                             entity_inference_count[obj1.lower()] += 1
                             entity_inference_count[obj2.lower()] += 1
-                            # Only log first few to avoid spam
-                            if len(inferred) <= 10:
-                                print(f"  ✓ Inferred: {obj1} -> {obj2} (via common subject: {subject})")
                             
                             # Stop if we've hit the limit
                             if len(inferred) >= MAX_INFERRED_FACTS:
-                                print(f"  ⚠️  Reached maximum inference limit ({MAX_INFERRED_FACTS}), stopping...")
+                                # Reached maximum inference limit
                                 return inferred
     
     # Match facts with common objects
@@ -1979,13 +1984,10 @@ def infer_transitive_relations_with_sources(triples: List[Tuple],
                             inferred.append((subj1, "related_to", subj2, reasoning))
                             entity_inference_count[subj1.lower()] += 1
                             entity_inference_count[subj2.lower()] += 1
-                            # Only log first few to avoid spam
-                            if len(inferred) <= 10:
-                                print(f"  ✓ Inferred: {subj1} -> {subj2} (via common object: {object_ent})")
                             
                             # Stop if we've hit the limit
                             if len(inferred) >= MAX_INFERRED_FACTS:
-                                print(f"  ⚠️  Reached maximum inference limit ({MAX_INFERRED_FACTS}), stopping...")
+                                # Reached maximum inference limit
                                 return inferred
     
     # Also do traditional transitive inference (A->B, B->C => A->C) - but limit it too
@@ -1995,10 +1997,12 @@ def infer_transitive_relations_with_sources(triples: List[Tuple],
     if remaining_slots > 0:
         inferred.extend(transitive_inferred[:remaining_slots])
         if len(transitive_inferred) > remaining_slots:
-            print(f"  ⚠️  Limited transitive inferences to {remaining_slots} (out of {len(transitive_inferred)} found)")
+            # Limited transitive inferences
+            pass
     
     if len(inferred) >= MAX_INFERRED_FACTS:
-        print(f"  ⚠️  Reached maximum inference limit ({MAX_INFERRED_FACTS}), stopping...")
+        # Reached maximum inference limit
+        pass
     
     return inferred
 
@@ -2084,9 +2088,9 @@ def infer_transitive_relations(triples: List[Tuple[str, str, str, str]]) -> List
                         reasoning += f"\nFact 2 context: {fact2_details}"
                     
                     inferred.append((entity, "related_to", indirect, reasoning))
-                    print(f"  ✓ Inferred: {entity} -> {indirect} (via {intermediate})")
                 else:
-                    print(f"  ✗ Rejected inference: {entity} -> {indirect} (via {intermediate}) - doesn't make semantic sense")
+                    # Rejected inference - doesn't make semantic sense
+                    pass
     
     return inferred
 
@@ -2190,59 +2194,37 @@ def extract_knowledge_pipeline(text: str, source_document: str = "manual",
     if not text or not text.strip():
         return []
     
-    print("🔄 Starting knowledge graph construction pipeline...")
-    
     # Step 1: Preprocessing
-    print("  Step 1: Preprocessing...")
     preprocessed = preprocess_text(text)
     sentences = preprocessed["sentences"]
     
     if not sentences:
-        print("  ⚠️  No sentences found after preprocessing")
         return []
     
     # Step 2: Named Entity Recognition
-    print("  Step 2: Named Entity Recognition...")
     entities = extract_entities_ner(text, sentences)
-    entity_count = sum(len(ents) for ents in entities.values())
-    print(f"    Found {entity_count} entities")
-    if entity_count == 0:
-        print("    ⚠️  WARNING: No entities found! Extraction may fail.")
     
     # Step 3: Coreference Resolution
-    print("  Step 3: Coreference Resolution...")
     coref_map = resolve_coreferences(text, sentences, entities)
-    print(f"    Resolved {len(coref_map)} coreferences")
     
     # Step 4: Relation Extraction
-    print("  Step 4: Relation Extraction...")
     pos_tags = preprocessed.get("pos_tags", [])
     relations = extract_relations(text, sentences, entities, coref_map, pos_tags)
-    print(f"    Extracted {len(relations)} relations")
-    if len(relations) == 0:
-        print("    ⚠️  WARNING: No relations extracted! This may be due to:")
-        print("       - No entities found (check Step 2)")
-        print("       - No matching patterns in text")
-        print("       - spaCy not available (using fallback methods)")
     
     # Step 5: Entity Linking
-    print("  Step 5: Entity Linking...")
     entity_map = link_entities(entities, relations)
-    print(f"    Linked {len(entity_map)} entities")
     
     # Step 6: Knowledge Graph Construction
-    print("  Step 6: Knowledge Graph Construction...")
     if len(relations) == 0:
-        print("    ⚠️  WARNING: No relations to build triples from!")
+        # No relations to build triples from
         triples = []
     else:
         try:
             triples, rdf_graph = build_knowledge_graph(relations, entity_map, entities)
-            print(f"    Built {len(triples)} triples in RDFLib Graph")
+            # Built triples in RDFLib Graph
         except Exception as e:
-            print(f"⚠️  RDFLib Graph construction failed: {e}")
-            import traceback
-            traceback.print_exc()
+            # RDFLib Graph construction failed, using fallback
+            pass
             # Fallback: return triples without RDF graph
             triples = []
             for relation in relations:
@@ -2252,30 +2234,16 @@ def extract_knowledge_pipeline(text: str, source_document: str = "manual",
                 details = relation.get("sentence", "").strip()
                 confidence = relation.get("confidence", 0.7)  # Default confidence if not provided
                 triples.append((subject, predicate, object_ent, details, confidence))
-            print(f"    Built {len(triples)} triples (fallback mode)")
+            # Built triples (fallback mode)
     
     # Step 7: Post-processing / Reasoning
-    print("  Step 7: Post-processing / Reasoning...")
     if len(triples) == 0:
-        print("    ⚠️  WARNING: No triples to post-process!")
         final_triples = []
     else:
         try:
             final_triples = post_process_triples(triples, source_document, uploaded_at)
-            # Count inferred facts (those with type="inferred" as 6th element)
-            inferred_count = sum(1 for t in final_triples if len(t) >= 6 and t[5] == "inferred")
-            original_count = len(final_triples) - inferred_count
-            if inferred_count > 0:
-                print(f"    Inferred {inferred_count} additional facts (with validation)")
-            else:
-                print(f"    No valid transitive inferences found")
-            print(f"    Final: {original_count} original + {inferred_count} inferred = {len(final_triples)} total triples")
         except Exception as e:
-            print(f"    ⚠️  Post-processing failed: {e}")
-            import traceback
-            traceback.print_exc()
             # Fallback: return original triples without inference
-            print("    Falling back to original triples only (no inference)")
             final_triples = []
             for triple in triples:
                 if len(triple) == 5:
@@ -2285,16 +2253,6 @@ def extract_knowledge_pipeline(text: str, source_document: str = "manual",
                     conf = 0.7
                 # Format: (subject, predicate, object, details, confidence, type, source, uploaded)
                 final_triples.append((s, p, o, d, conf, "original", source_document, uploaded_at or ""))
-            print(f"    Fallback: {len(final_triples)} original triples")
-    
-    if len(final_triples) == 0:
-        print("❌ Pipeline completed but NO FACTS were extracted!")
-        print("   This may be due to:")
-        print("   - No entities found in text")
-        print("   - No relations extracted")
-        print("   - All facts filtered out (confidence threshold, validation)")
-    else:
-        print("✅ Pipeline completed successfully!")
     
     return final_triples
 

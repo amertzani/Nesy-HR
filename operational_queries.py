@@ -29,30 +29,38 @@ def sanitize_float(value: Any) -> Optional[float]:
         return None
 
 
-def compute_operational_insights(csv_file_path: Optional[str] = None) -> Dict[str, Any]:
+def compute_operational_insights(csv_file_path: Optional[str] = None, df: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
     """
     Compute operational insights by grouping data and calculating aggregations.
     Returns a dictionary with all computed insights organized by category.
     Focus: Manager-based insights and all departments.
     
-    Loads data directly from the original CSV file instead of reconstructing from facts.
+    Can use either a pre-loaded DataFrame (preferred, faster) or load from CSV file.
     This ensures no data is missed and can run in parallel with fact extraction.
     
     Args:
-        csv_file_path: Optional direct path to CSV file. If not provided, will try to find it.
+        csv_file_path: Optional direct path to CSV file. Used only if df is not provided.
+        df: Optional pre-loaded DataFrame. If provided, uses this instead of reading file.
     """
-    # Load DataFrame directly from CSV file (original source, not reconstructed from facts)
-    csv_path = csv_file_path
-    if csv_path is None:
-        csv_path = find_csv_file_path()
-    
-    if csv_path is None or not os.path.exists(csv_path):
-        return {}
-    
-    df = load_csv_data(csv_path)
-    
-    if df is None or len(df) == 0:
-        return {}
+    # Use pre-loaded DataFrame if available (preferred - no file I/O needed)
+    if df is not None and len(df) > 0:
+        print(f"✅ Using pre-loaded DataFrame for operational insights ({len(df)} rows)")
+    else:
+        # Load DataFrame directly from CSV file (fallback)
+        csv_path = csv_file_path
+        if csv_path is None:
+            csv_path = find_csv_file_path()
+        
+        if csv_path is None or not os.path.exists(csv_path):
+            print(f"⚠️  No CSV file path available and no DataFrame provided")
+            return {}
+        
+        print(f"📊 Loading DataFrame from CSV file: {csv_path}")
+        df = load_csv_data(csv_path)
+        
+        if df is None or len(df) == 0:
+            print(f"⚠️  Failed to load DataFrame from CSV file")
+            return {}
     insights = {}
     
     # Manager-based insights (consolidated into one table)
@@ -61,15 +69,16 @@ def compute_operational_insights(csv_file_path: Optional[str] = None) -> Dict[st
     # Department insights (all departments)
     insights['by_department'] = group_by_department(df)
     
-    # Employee-level insights
-    insights['top_absences'] = get_top_absences(df, top_n=5)
-    insights['bottom_engagement'] = get_bottom_engagement(df, bottom_n=5)
-    
     # Recruitment source insights
     insights['by_recruitment_source'] = group_by_recruitment_source(df)
     
-    # Additional aggregations
-    insights['additional'] = compute_additional_insights(df)
+    # Employee-level insights (only for active employees)
+    insights['top_performance'] = get_top_performance(df, top_n=5)
+    insights['bottom_performance'] = get_bottom_performance(df, bottom_n=5)
+    insights['top_absences'] = get_top_absences(df, top_n=5)
+    insights['bottom_engagement'] = get_bottom_engagement(df, bottom_n=5)
+    insights['top_special_projects'] = get_top_special_projects(df, top_n=5)
+    insights['top_salary'] = get_top_salary(df, top_n=5)
     
     # Store insights as facts for LLM access (so queries like "average salary in department 3" work)
     store_operational_insights_as_facts(insights)
@@ -321,31 +330,50 @@ def group_by_manager(df: pd.DataFrame) -> List[Dict[str, Any]]:
 
 
 def get_top_absences(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
-    """Get top N employees with max Absences"""
+    """Get top N employees with max Absences (only active employees)"""
     results = []
+    
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
     
     # Find absences column
     abs_col = normalize_column_name(df, "Absences")
-    if abs_col is None:
+    if abs_col is None or abs_col not in df_active.columns:
         return results
     
     # Find employee name column
-    emp_name_col = "Employee_Name" if "Employee_Name" in df.columns else None
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
     if emp_name_col is None:
-        # Try to find name column
-        for col in df.columns:
+        for col in df_active.columns:
             if 'name' in col.lower() and 'employee' in col.lower():
                 emp_name_col = col
                 break
     
-    if abs_col not in df.columns:
-        return results
-    
     # Convert to numeric
-    abs_series = pd.to_numeric(df[abs_col], errors='coerce')
+    abs_series = pd.to_numeric(df_active[abs_col], errors='coerce')
     
     # Get top N
     top_absences = abs_series.nlargest(top_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    salary_col = normalize_column_name(df_active, "Salary")
+    position_col = normalize_column_name(df_active, "Position")
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    eng_col = normalize_column_name(df_active, "EngagementSurvey")
+    sat_col = normalize_column_name(df_active, "EmpSatisfaction")
+    dayslate_col = normalize_column_name(df_active, "DaysLateLast30")
     
     for idx, value in top_absences.items():
         emp_data = {
@@ -353,16 +381,49 @@ def get_top_absences(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
             "rank": len(results) + 1
         }
         
-        if emp_name_col and emp_name_col in df.columns:
-            emp_data["employee_name"] = str(df.loc[idx, emp_name_col])
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
         else:
             emp_data["employee_name"] = f"Employee {idx}"
         
-        # Add other relevant info if available
-        if "Department" in df.columns:
-            emp_data["department"] = str(df.loc[idx, "Department"])
-        if "Position" in df.columns:
-            emp_data["position"] = str(df.loc[idx, "Position"])
+        # Add position (actual position name, not ID)
+        if position_col and position_col in df_active.columns:
+            pos_val = df_active.loc[idx, position_col]
+            if pd.notna(pos_val):
+                emp_data["position"] = str(pos_val).strip()
+        
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add salary
+        if salary_col and salary_col in df_active.columns:
+            salary_val = pd.to_numeric(df_active.loc[idx, salary_col], errors='coerce')
+            emp_data["salary"] = sanitize_float(salary_val) if not pd.isna(salary_val) else None
+        
+        # Add performance
+        if perf_col and perf_col in df_active.columns:
+            perf_val = pd.to_numeric(df_active.loc[idx, perf_col], errors='coerce')
+            emp_data["performance_score"] = sanitize_float(perf_val) if not pd.isna(perf_val) else None
+        
+        # Add engagement
+        if eng_col and eng_col in df_active.columns:
+            eng_val = pd.to_numeric(df_active.loc[idx, eng_col], errors='coerce')
+            emp_data["engagement_score"] = sanitize_float(eng_val) if not pd.isna(eng_val) else None
+        
+        # Add satisfaction
+        if sat_col and sat_col in df_active.columns:
+            sat_val = pd.to_numeric(df_active.loc[idx, sat_col], errors='coerce')
+            emp_data["satisfaction_score"] = sanitize_float(sat_val) if not pd.isna(sat_val) else None
+        
+        # Add DaysLateLast30
+        if dayslate_col and dayslate_col in df_active.columns:
+            dayslate_val = pd.to_numeric(df_active.loc[idx, dayslate_col], errors='coerce')
+            emp_data["days_late_last30"] = sanitize_float(dayslate_val) if not pd.isna(dayslate_val) else None
         
         results.append(emp_data)
     
@@ -370,31 +431,48 @@ def get_top_absences(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
 
 
 def get_bottom_engagement(df: pd.DataFrame, bottom_n: int = 5) -> List[Dict[str, Any]]:
-    """Get bottom N employees with min EngagementSurvey"""
+    """Get bottom N employees with min EngagementSurvey (only active employees)"""
     results = []
     
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
+    
     # Find engagement column
-    eng_col = normalize_column_name(df, "EngagementSurvey")
-    if eng_col is None:
+    eng_col = normalize_column_name(df_active, "EngagementSurvey")
+    if eng_col is None or eng_col not in df_active.columns:
         return results
     
     # Find employee name column
-    emp_name_col = "Employee_Name" if "Employee_Name" in df.columns else None
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
     if emp_name_col is None:
-        # Try to find name column
-        for col in df.columns:
+        for col in df_active.columns:
             if 'name' in col.lower() and 'employee' in col.lower():
                 emp_name_col = col
                 break
     
-    if eng_col not in df.columns:
-        return results
-    
     # Convert to numeric
-    eng_series = pd.to_numeric(df[eng_col], errors='coerce')
+    eng_series = pd.to_numeric(df_active[eng_col], errors='coerce')
     
     # Get bottom N
     bottom_engagement = eng_series.nsmallest(bottom_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    salary_col = normalize_column_name(df_active, "Salary")
+    abs_col = normalize_column_name(df_active, "Absences")
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    sat_col = normalize_column_name(df_active, "EmpSatisfaction")
     
     for idx, value in bottom_engagement.items():
         emp_data = {
@@ -402,18 +480,362 @@ def get_bottom_engagement(df: pd.DataFrame, bottom_n: int = 5) -> List[Dict[str,
             "rank": len(results) + 1
         }
         
-        if emp_name_col and emp_name_col in df.columns:
-            emp_data["employee_name"] = str(df.loc[idx, emp_name_col])
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
         else:
             emp_data["employee_name"] = f"Employee {idx}"
         
-        # Add other relevant info if available
-        if "Department" in df.columns:
-            emp_data["department"] = str(df.loc[idx, "Department"])
-        if "Position" in df.columns:
-            emp_data["position"] = str(df.loc[idx, "Position"])
-        if "ManagerName" in df.columns:
-            emp_data["manager"] = str(df.loc[idx, "ManagerName"])
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add salary
+        if salary_col and salary_col in df_active.columns:
+            salary_val = pd.to_numeric(df_active.loc[idx, salary_col], errors='coerce')
+            emp_data["salary"] = sanitize_float(salary_val) if not pd.isna(salary_val) else None
+        
+        # Add absences
+        if abs_col and abs_col in df_active.columns:
+            abs_val = pd.to_numeric(df_active.loc[idx, abs_col], errors='coerce')
+            emp_data["absences"] = sanitize_float(abs_val) if not pd.isna(abs_val) else None
+        
+        # Add performance
+        if perf_col and perf_col in df_active.columns:
+            perf_val = pd.to_numeric(df_active.loc[idx, perf_col], errors='coerce')
+            emp_data["performance_score"] = sanitize_float(perf_val) if not pd.isna(perf_val) else None
+        
+        # Add satisfaction
+        if sat_col and sat_col in df_active.columns:
+            sat_val = pd.to_numeric(df_active.loc[idx, sat_col], errors='coerce')
+            emp_data["satisfaction_score"] = sanitize_float(sat_val) if not pd.isna(sat_val) else None
+        
+        results.append(emp_data)
+    
+    return results
+
+
+def get_top_performance(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
+    """Get top N employees with max PerformanceScore (only active employees)"""
+    results = []
+    
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
+    
+    # Find performance column - prefer PerfScoreID (numeric) over PerformanceScore (text)
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    
+    if perf_col is None or perf_col not in df_active.columns:
+        return results
+    
+    # Find employee name column
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
+    if emp_name_col is None:
+        for col in df_active.columns:
+            if 'name' in col.lower() and 'employee' in col.lower():
+                emp_name_col = col
+                break
+    
+    # Convert to numeric
+    perf_series = pd.to_numeric(df_active[perf_col], errors='coerce')
+    
+    # Get top N
+    top_performance = perf_series.nlargest(top_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    salary_col = normalize_column_name(df_active, "Salary")
+    abs_col = normalize_column_name(df_active, "Absences")
+    
+    for idx, value in top_performance.items():
+        emp_data = {
+            "performance_score": sanitize_float(value) if not pd.isna(value) else None,
+            "rank": len(results) + 1
+        }
+        
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
+        else:
+            emp_data["employee_name"] = f"Employee {idx}"
+        
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add salary
+        if salary_col and salary_col in df_active.columns:
+            salary_val = pd.to_numeric(df_active.loc[idx, salary_col], errors='coerce')
+            emp_data["salary"] = sanitize_float(salary_val) if not pd.isna(salary_val) else None
+        
+        # Add absences
+        if abs_col and abs_col in df_active.columns:
+            abs_val = pd.to_numeric(df_active.loc[idx, abs_col], errors='coerce')
+            emp_data["absences"] = sanitize_float(abs_val) if not pd.isna(abs_val) else None
+        
+        results.append(emp_data)
+    
+    return results
+
+
+def get_bottom_performance(df: pd.DataFrame, bottom_n: int = 5) -> List[Dict[str, Any]]:
+    """Get bottom N employees with min PerformanceScore (only active employees)"""
+    results = []
+    
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
+    
+    # Find performance column - prefer PerfScoreID (numeric) over PerformanceScore (text)
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    
+    if perf_col is None or perf_col not in df_active.columns:
+        return results
+    
+    # Find employee name column
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
+    if emp_name_col is None:
+        for col in df_active.columns:
+            if 'name' in col.lower() and 'employee' in col.lower():
+                emp_name_col = col
+                break
+    
+    # Convert to numeric
+    perf_series = pd.to_numeric(df_active[perf_col], errors='coerce')
+    
+    # Get bottom N
+    bottom_performance = perf_series.nsmallest(bottom_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    salary_col = normalize_column_name(df_active, "Salary")
+    abs_col = normalize_column_name(df_active, "Absences")
+    
+    for idx, value in bottom_performance.items():
+        emp_data = {
+            "performance_score": sanitize_float(value) if not pd.isna(value) else None,
+            "rank": len(results) + 1
+        }
+        
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
+        else:
+            emp_data["employee_name"] = f"Employee {idx}"
+        
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add salary
+        if salary_col and salary_col in df_active.columns:
+            salary_val = pd.to_numeric(df_active.loc[idx, salary_col], errors='coerce')
+            emp_data["salary"] = sanitize_float(salary_val) if not pd.isna(salary_val) else None
+        
+        # Add absences
+        if abs_col and abs_col in df_active.columns:
+            abs_val = pd.to_numeric(df_active.loc[idx, abs_col], errors='coerce')
+            emp_data["absences"] = sanitize_float(abs_val) if not pd.isna(abs_val) else None
+        
+        results.append(emp_data)
+    
+    return results
+
+
+def get_top_special_projects(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
+    """Get top N employees with max SpecialProjectsCount (only active employees)"""
+    results = []
+    
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
+    
+    # Find special projects column
+    sp_col = normalize_column_name(df_active, "SpecialProjectsCount")
+    if sp_col is None or sp_col not in df_active.columns:
+        return results
+    
+    # Find employee name column
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
+    if emp_name_col is None:
+        for col in df_active.columns:
+            if 'name' in col.lower() and 'employee' in col.lower():
+                emp_name_col = col
+                break
+    
+    # Convert to numeric
+    sp_series = pd.to_numeric(df_active[sp_col], errors='coerce')
+    
+    # Get top N
+    top_special_projects = sp_series.nlargest(top_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    salary_col = normalize_column_name(df_active, "Salary")
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    eng_col = normalize_column_name(df_active, "EngagementSurvey")
+    sat_col = normalize_column_name(df_active, "EmpSatisfaction")
+    
+    for idx, value in top_special_projects.items():
+        emp_data = {
+            "special_projects_count": sanitize_float(value) if not pd.isna(value) else None,
+            "rank": len(results) + 1
+        }
+        
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
+        else:
+            emp_data["employee_name"] = f"Employee {idx}"
+        
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add salary
+        if salary_col and salary_col in df_active.columns:
+            salary_val = pd.to_numeric(df_active.loc[idx, salary_col], errors='coerce')
+            emp_data["salary"] = sanitize_float(salary_val) if not pd.isna(salary_val) else None
+        
+        # Add performance
+        if perf_col and perf_col in df_active.columns:
+            perf_val = pd.to_numeric(df_active.loc[idx, perf_col], errors='coerce')
+            emp_data["performance_score"] = sanitize_float(perf_val) if not pd.isna(perf_val) else None
+        
+        # Add engagement
+        if eng_col and eng_col in df_active.columns:
+            eng_val = pd.to_numeric(df_active.loc[idx, eng_col], errors='coerce')
+            emp_data["engagement_score"] = sanitize_float(eng_val) if not pd.isna(eng_val) else None
+        
+        # Add satisfaction
+        if sat_col and sat_col in df_active.columns:
+            sat_val = pd.to_numeric(df_active.loc[idx, sat_col], errors='coerce')
+            emp_data["satisfaction_score"] = sanitize_float(sat_val) if not pd.isna(sat_val) else None
+        
+        results.append(emp_data)
+    
+    return results
+
+
+def get_top_salary(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
+    """Get top N employees with max Salary (only active employees)"""
+    results = []
+    
+    # Filter for active employees only
+    status_col = normalize_column_name(df, "EmploymentStatus")
+    if status_col and status_col in df.columns:
+        active_mask = df[status_col].astype(str).str.lower().str.contains('active', na=False)
+        df_active = df[active_mask].copy()
+    else:
+        df_active = df.copy()
+    
+    if len(df_active) == 0:
+        return results
+    
+    # Find salary column
+    salary_col = normalize_column_name(df_active, "Salary")
+    if salary_col is None or salary_col not in df_active.columns:
+        return results
+    
+    # Find employee name column
+    emp_name_col = "Employee_Name" if "Employee_Name" in df_active.columns else None
+    if emp_name_col is None:
+        for col in df_active.columns:
+            if 'name' in col.lower() and 'employee' in col.lower():
+                emp_name_col = col
+                break
+    
+    # Convert to numeric
+    salary_series = pd.to_numeric(df_active[salary_col], errors='coerce')
+    
+    # Get top N
+    top_salary = salary_series.nlargest(top_n)
+    
+    # Find additional columns
+    dept_col = normalize_column_name(df_active, "Department")
+    mgr_col = find_manager_column(df_active)
+    perf_col = normalize_column_name(df_active, "PerfScoreID")
+    if perf_col is None:
+        perf_col = normalize_column_name(df_active, "PerformanceScore")
+    eng_col = normalize_column_name(df_active, "EngagementSurvey")
+    sat_col = normalize_column_name(df_active, "EmpSatisfaction")
+    
+    for idx, value in top_salary.items():
+        emp_data = {
+            "salary": sanitize_float(value) if not pd.isna(value) else None,
+            "rank": len(results) + 1
+        }
+        
+        if emp_name_col and emp_name_col in df_active.columns:
+            emp_data["employee_name"] = str(df_active.loc[idx, emp_name_col])
+        else:
+            emp_data["employee_name"] = f"Employee {idx}"
+        
+        # Add department
+        if dept_col and dept_col in df_active.columns:
+            emp_data["department"] = str(df_active.loc[idx, dept_col])
+        
+        # Add manager
+        if mgr_col and mgr_col in df_active.columns:
+            emp_data["manager"] = str(df_active.loc[idx, mgr_col])
+        
+        # Add performance
+        if perf_col and perf_col in df_active.columns:
+            perf_val = pd.to_numeric(df_active.loc[idx, perf_col], errors='coerce')
+            emp_data["performance_score"] = sanitize_float(perf_val) if not pd.isna(perf_val) else None
+        
+        # Add engagement
+        if eng_col and eng_col in df_active.columns:
+            eng_val = pd.to_numeric(df_active.loc[idx, eng_col], errors='coerce')
+            emp_data["engagement_score"] = sanitize_float(eng_val) if not pd.isna(eng_val) else None
+        
+        # Add satisfaction
+        if sat_col and sat_col in df_active.columns:
+            sat_val = pd.to_numeric(df_active.loc[idx, sat_col], errors='coerce')
+            emp_data["satisfaction_score"] = sanitize_float(sat_val) if not pd.isna(sat_val) else None
         
         results.append(emp_data)
     
@@ -486,6 +908,28 @@ def group_by_recruitment_source(df: pd.DataFrame) -> List[Dict[str, Any]]:
                 source_data["avg_absences"] = sanitize_float(abs_valid.mean())
             else:
                 source_data["avg_absences"] = None
+        
+        # Average Satisfaction
+        satisfaction_col = normalize_column_name(df, "Satisfaction")
+        if satisfaction_col is None:
+            satisfaction_col = normalize_column_name(df, "EmpSatisfaction")
+        if satisfaction_col and satisfaction_col in group_df.columns:
+            sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
+            sat_valid = sat_series.dropna()
+            if len(sat_valid) > 0:
+                source_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
+            else:
+                source_data["avg_satisfaction"] = None
+        
+        # Average Engagement
+        engagement_col = normalize_column_name(df, "EngagementSurvey")
+        if engagement_col and engagement_col in group_df.columns:
+            eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
+            eng_valid = eng_series.dropna()
+            if len(eng_valid) > 0:
+                source_data["avg_engagement"] = sanitize_float(eng_valid.mean())
+            else:
+                source_data["avg_engagement"] = None
         
         # Total number of active employees
         if status_col and status_col in group_df.columns:

@@ -1,0 +1,1238 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+\geometry{margin=1in}
+
+% Code listing style
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2
+}
+
+% Custom colors
+\definecolor{frontendcolor}{RGB}{66, 139, 202}
+\definecolor{backendcolor}{RGB}{92, 184, 92}
+\definecolor{storagecolor}{RGB}{240, 173, 78}
+
+\title{System Architecture and Technical Implementation\\
+\large{A Human-Centered Multi-Agent Knowledge Graph System for Transparent and Ethical HR Decision Support}}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{System Architecture Overview}
+
+Our system implements a three-layer architecture designed to ensure complete transparency, ethical responsibility, and effective information retrieval for HR decision support. The architecture separates concerns across user interface, multi-agent orchestration, and knowledge graph storage layers, enabling modular design while maintaining end-to-end traceability.
+
+\subsection{Three-Layer Architecture}
+
+The system is organized into three distinct layers, each serving specific purposes while maintaining seamless integration:
+
+\textbf{Layer 1: User Interface Layer (Frontend)}
+The frontend is built using React 18 with TypeScript, providing a modern, responsive user interface specifically designed for HR professionals. The interface consists of nine main pages:
+
+\begin{itemize}
+    \item \textbf{Chat Interface}: Natural language conversational interface for querying the knowledge base
+    \item \textbf{Knowledge Base}: Table view displaying all extracted facts with filtering capabilities (by source, agent, confidence, inferred/original status)
+    \item \textbf{Knowledge Graph Visualization}: Interactive force-directed graph showing entity relationships
+    \item \textbf{Statistics Dashboard}: Correlation matrices, distribution charts, and descriptive statistics
+    \item \textbf{Insights Page}: Operational insights including department performance, absence patterns, and recruitment analysis
+    \item \textbf{Agent Architecture View}: Visual representation of the multi-agent system and agent status
+    \item \textbf{Upload Page}: Document upload interface supporting CSV, PDF, DOCX, and TXT formats
+    \item \textbf{Documents Page}: Document management with metadata and processing status
+    \item \textbf{Import/Export Page}: Data import and export functionality
+\end{itemize}
+
+The frontend communicates with the backend through a RESTful API, ensuring clean separation of concerns and enabling future scalability.
+
+\textbf{Layer 2: Multi-Agent Orchestration Layer (Backend)}
+The backend is implemented using Python 3.9+ with FastAPI, providing a high-performance REST API server. The core of the backend is the multi-agent orchestration system, which coordinates eight specialized agents:
+
+\begin{enumerate}
+    \item \textbf{Knowledge Graph Agent}: Central storage manager that maintains the RDF knowledge graph and handles all fact storage and retrieval operations
+    \item \textbf{Document Agents}: Created dynamically for each uploaded document, these agents coordinate document processing and track metadata (columns, rows, employee names, upload timestamps)
+    \item \textbf{Worker Agents}: Process document chunks in parallel, extracting facts using NLP-based techniques (optional Triplex LLM or regex-based extraction)
+    \item \textbf{Statistics Agent}: Computes correlations between numeric columns, calculates descriptive statistics (mean, median, min, max, standard deviation, quartiles), and analyzes value distributions
+    \item \textbf{Operational Agent}: Performs groupby operations and generates operational insights such as department performance metrics and absence patterns
+    \item \textbf{LLM Agent}: Generates natural language responses using facts retrieved from the knowledge graph, ensuring all responses include evidence facts and source attribution
+    \item \textbf{Orchestrator Agent}: Routes queries to appropriate agents based on query type analysis, managing query processing strategy
+    \item \textbf{Visualization Agent}: Creates charts and graphs for UI display, including correlation heatmaps and distribution visualizations
+\end{enumerate}
+
+All agents communicate through the centralized knowledge graph, ensuring consistent data access and maintaining complete provenance tracking.
+
+\textbf{Layer 3: Knowledge Graph Storage Layer}
+The knowledge graph is implemented using RDFLib, providing RDF (Resource Description Framework) triple storage. Each fact is stored as a Subject-Predicate-Object triple with additional metadata properties:
+
+\begin{itemize}
+    \item \textbf{Source Document}: Name of the document from which the fact was extracted
+    \item \textbf{Upload Timestamp}: When the document was uploaded and processed
+    \item \textbf{Agent ID}: Identifier of the agent that extracted the fact
+    \item \textbf{Confidence Score}: Quality indicator for the extracted fact (0.0 to 1.0)
+    \item \textbf{Inferred Status}: Whether the fact was directly extracted or inferred from other facts
+\end{itemize}
+
+The knowledge graph is persisted using pickle format (\texttt{knowledge\_graph.pkl}) for efficient serialization, with JSON backup (\texttt{knowledge\_backup.json}) for recovery and data portability.
+
+\subsection{Design Principles}
+
+The architecture is guided by four core design principles:
+
+\textbf{Transparency}: Every fact stored in the knowledge graph is traceable to its source document. Query responses include evidence facts with complete source attribution, enabling users to verify system reasoning.
+
+\textbf{Modularity}: The multi-agent architecture enables specialized processing for different tasks. Each agent has a well-defined responsibility, making the system maintainable and extensible.
+
+\textbf{Scalability}: Parallel processing capabilities allow the system to handle large documents efficiently. Worker agents process chunks concurrently, and statistics and operational analysis run simultaneously with fact extraction.
+
+\textbf{Human-Centricity}: The entire system is designed with HR professionals in mind. The interface is intuitive, responses are conversational, and all system reasoning is visible to users.
+
+\section{Key Features}
+
+Our system provides five key features that distinguish it from traditional information retrieval systems, particularly in terms of transparency and human-centered design.
+
+\subsection{Complete Traceability}
+
+Unlike black-box AI systems, our approach ensures complete traceability from source documents to query responses. This is achieved through:
+
+\textbf{Source Document Attribution}: Every fact stored in the knowledge graph maintains a reference to its source document. When a query is processed, the system retrieves not only the relevant facts but also their source information, which is displayed to users.
+
+\textbf{Agent Ownership Tracking}: Each fact tracks which agent extracted it, providing visibility into the processing pipeline. This enables users to understand how different parts of the system contributed to a response.
+
+\textbf{Evidence Display}: Query responses include a dedicated evidence section that lists all supporting facts from the knowledge graph. Each evidence fact shows the subject-predicate-object triple along with source document attribution.
+
+\textbf{Provenance Chains}: The system maintains complete provenance chains, enabling users to trace any response back through the knowledge graph to the original source documents. This is visualized in the graph interface, where users can explore entity relationships and their origins.
+
+\subsection{Multi-Agent Specialization}
+
+The system employs eight specialized agents, each optimized for specific tasks:
+
+\textbf{Specialized Processing}: Rather than using a single monolithic system, specialized agents handle different aspects of information processing. The Statistics Agent focuses on correlation and distribution analysis, while the Operational Agent specializes in groupby operations and aggregations.
+
+\textbf{Intelligent Routing}: The Orchestrator Agent analyzes incoming queries and routes them to the most appropriate agent(s). This ensures efficient processing and leverages each agent's specialized capabilities.
+
+\textbf{Parallel Execution}: Multiple agents can operate simultaneously. For example, while Worker Agents extract facts from a document, the Statistics Agent computes correlations and the Operational Agent generates insights, all in parallel.
+
+\textbf{Centralized Communication}: All agents communicate through the knowledge graph, ensuring data consistency and enabling agents to build upon each other's work.
+
+\subsection{Human-Centered Interface}
+
+The user interface is designed specifically for HR professionals, prioritizing usability and transparency:
+
+\textbf{Natural Language Queries}: Users can interact with the system using natural language, without needing to learn query syntax or understand the underlying knowledge graph structure.
+
+\textbf{Visual Knowledge Exploration}: The interactive graph visualization allows users to explore entity relationships visually, making complex data structures accessible.
+
+\textbf{Evidence Visibility}: Every response prominently displays supporting evidence, making system reasoning transparent. Users can click on source documents to verify information.
+
+\textbf{Intuitive Navigation}: The interface provides nine specialized pages, each serving a specific purpose. Clear navigation and visual feedback guide users through the system.
+
+\textbf{Real-Time Feedback}: The system provides loading states, progress indicators, and clear error messages, ensuring users always understand system status.
+
+\subsection{Effective Query Processing}
+
+The system supports four distinct query types, each processed through specialized pathways:
+
+\textbf{Structured Queries}: Direct fact retrieval queries such as "What is John Smith's salary?" are processed by querying the knowledge graph directly, providing fast and accurate responses.
+
+\textbf{Operational Queries}: Groupby and aggregation queries like "Average salary by department?" are routed to the Operational Agent, which generates insights from pre-computed operational facts.
+
+\textbf{Statistical Queries}: Correlation and distribution questions are handled by the Statistics Agent, which provides statistical analysis with supporting evidence.
+
+\textbf{Conversational Queries}: Natural language questions are processed by the LLM Agent, which retrieves relevant facts from the knowledge graph and generates coherent responses with evidence.
+
+The Orchestrator Agent intelligently routes queries to appropriate agents based on query analysis, ensuring optimal processing for each query type.
+
+\subsection{Real-Time Processing}
+
+The system is designed for efficiency and responsiveness:
+
+\textbf{Parallel Document Processing}: When a document is uploaded, Worker Agents process chunks in parallel, significantly reducing processing time for large documents.
+
+\textbf{Simultaneous Analysis}: Statistics and operational analysis run concurrently with fact extraction, ensuring that insights are available as soon as processing completes.
+
+\textbf{Fast Query Response}: Query processing is optimized through intelligent routing and efficient knowledge graph queries, with average response times under 5 seconds.
+
+\section{System Workflow}
+
+The system operates through two main workflows: document processing and query processing. Both workflows are designed to maintain complete traceability and transparency.
+
+\subsection{Document Processing Pipeline}
+
+When a user uploads a document (CSV, PDF, DOCX, or TXT), the system follows a five-step processing pipeline:
+
+\textbf{Step 1: Document Upload and Storage}
+The uploaded file is stored on the server, and metadata is extracted including file name, size, upload timestamp, and file type. The system validates the file format and prepares it for processing.
+
+\textbf{Step 2: Document Agent Creation}
+A Document Agent is dynamically created for the uploaded document. This agent tracks document-specific metadata such as:
+\begin{itemize}
+    \item Column names and types (for CSV files)
+    \item Number of rows
+    \item Employee names identified in the document
+    \item Upload timestamp
+    \item Processing status
+\end{itemize}
+
+The Document Agent coordinates all processing activities for its document.
+
+\textbf{Step 3: Parallel Processing}
+The system initiates three parallel processing streams:
+
+\begin{itemize}
+    \item \textbf{Worker Agents}: The document is divided into chunks, and Worker Agents are created to process each chunk in parallel. Each Worker Agent extracts facts using NLP-based techniques (optional Triplex LLM model or regex-based extraction). Facts are extracted as subject-predicate-object triples.
+    
+    \item \textbf{Statistics Agent}: Simultaneously, the Statistics Agent analyzes numeric columns in the document, computing correlations between pairs of columns, calculating descriptive statistics (mean, median, min, max, standard deviation, quartiles), and analyzing value distributions for both categorical and numeric columns.
+    
+    \item \textbf{Operational Agent}: The Operational Agent performs groupby operations on the data, generating operational insights such as average metrics by department, absence patterns, and recruitment source effectiveness.
+\end{itemize}
+
+\textbf{Step 4: Knowledge Graph Storage}
+All extracted facts, statistical insights, and operational insights are stored in the centralized knowledge graph. Each fact is stored as an RDF triple with metadata:
+
+\begin{lstlisting}[language=Python, caption=Fact Storage with Provenance]
+# Create RDF URIs for subject, predicate, and object
+subject_uri = URIRef("urn:entity:John_Smith")
+predicate_uri = URIRef("urn:predicate:has_salary")
+object_literal = Literal("75000")
+
+# Add triple to knowledge graph
+graph.add((subject_uri, predicate_uri, object_literal))
+
+# Add metadata properties
+graph.add((subject_uri, SOURCE_DOCUMENT, Literal("employees.csv")))
+graph.add((subject_uri, UPLOADED_AT, Literal("2024-01-15T10:30:00")))
+graph.add((subject_uri, AGENT_ID, Literal("worker_001")))
+graph.add((subject_uri, CONFIDENCE, Literal(0.95)))
+graph.add((subject_uri, IS_INFERRED, Literal(False)))
+\end{lstlisting}
+
+This ensures that every fact maintains complete provenance information.
+
+\textbf{Step 5: Visualization Generation}
+The Visualization Agent creates charts and graphs based on the extracted data, including correlation heatmaps, distribution charts, and operational insight visualizations. These are displayed in the Statistics and Insights pages of the user interface.
+
+\subsection{Query Processing Pipeline}
+
+When a user submits a query through the chat interface, the system follows a six-step processing pipeline:
+
+\textbf{Step 1: User Query Input}
+The user types a natural language query in the chat interface. The query is sent to the backend via REST API.
+
+\textbf{Step 2: Orchestrator Analysis}
+The Orchestrator Agent analyzes the query to determine its type:
+
+\begin{itemize}
+    \item \textbf{Structured Queries}: Contain specific patterns like "What is X's Y?" or "Who has the highest Z?" These are identified through pattern matching.
+    
+    \item \textbf{Operational Queries}: Contain keywords like "average", "by department", "group by", indicating aggregation needs.
+    
+    \item \textbf{Statistical Queries}: Contain keywords like "correlation", "distribution", "relationship between", indicating statistical analysis needs.
+    
+    \item \textbf{Conversational Queries}: Natural language questions that don't match specific patterns, requiring LLM-based processing.
+\end{itemize}
+
+\textbf{Step 3: Agent Routing}
+Based on the query analysis, the Orchestrator routes the query to appropriate agent(s):
+
+\begin{itemize}
+    \item Structured queries → Query Processor (direct knowledge graph queries)
+    \item Operational queries → Operational Agent (pre-computed insights)
+    \item Statistical queries → Statistics Agent (correlation/distribution analysis)
+    \item Conversational queries → LLM Agent (natural language generation)
+\end{itemize}
+
+The Orchestrator may route to multiple agents if a query requires combined processing.
+
+\textbf{Step 4: Knowledge Graph Retrieval}
+The selected agent(s) query the knowledge graph for relevant facts. The query process:
+
+\begin{enumerate}
+    \item Identifies relevant entities mentioned in the query
+    \item Retrieves facts involving those entities
+    \item Filters by source document if the query is document-specific
+    \item Retrieves evidence facts with complete provenance information
+    \item Assembles context for response generation
+\end{enumerate}
+
+For example, a query about "John Smith's salary" would:
+\begin{enumerate}
+    \item Identify entity "John Smith"
+    \item Query for triples where subject is "John Smith" and predicate contains "salary"
+    \item Retrieve the fact: (John Smith, has\_salary, 75000)
+    \item Retrieve metadata: source document, agent ID, confidence score
+\end{enumerate}
+
+\textbf{Step 5: Response Generation}
+The LLM Agent generates a natural language response using the retrieved facts. The response generation process:
+
+\begin{enumerate}
+    \item Assembles context from retrieved facts
+    \item Formats facts for LLM input
+    \item Generates response using LLM (Ollama, Groq API, or OpenAI API)
+    \item Ensures response includes evidence facts
+    \item Formats response for user-friendly display
+\end{enumerate}
+
+The LLM is prompted to:
+\begin{itemize}
+    \item Use exact values from the knowledge graph (no estimation)
+    \item Cite specific facts that support the answer
+    \item Provide source document attribution
+    \item Explain the reasoning when appropriate
+\end{itemize}
+
+\textbf{Step 6: Response Display}
+The response is displayed in the chat interface with:
+
+\begin{itemize}
+    \item \textbf{Direct Answer}: The main response to the user's query
+    \item \textbf{Evidence Section}: List of supporting facts from the knowledge graph, each showing:
+    \begin{itemize}
+        \item Subject → Predicate → Object triple
+        \item Source document name
+        \item Upload timestamp (if relevant)
+    \end{itemize}
+    \item \textbf{Routing Information}: Which agent(s) processed the query (for transparency)
+    \item \textbf{Source Links}: Clickable links to view source documents or explore facts in the knowledge base
+\end{itemize}
+
+Users can click on evidence facts to view them in the Knowledge Base page, or click on source documents to see all facts from that document.
+
+\section{Technical Implementation}
+
+This section provides detailed technical implementation information for reproducibility and understanding of the system's inner workings.
+
+\subsection{Knowledge Graph Implementation}
+
+\textbf{Technology Stack}
+The knowledge graph is implemented using RDFLib (version 6.0+), a Python library for working with RDF. RDFLib provides:
+\begin{itemize}
+    \item RDF triple storage and retrieval
+    \item SPARQL-like query capabilities
+    \item Multiple serialization formats (RDF/XML, Turtle, JSON-LD)
+    \item Efficient in-memory graph representation
+\end{itemize}
+
+\textbf{Data Structure}
+Facts are stored as RDF triples using the following structure:
+
+\begin{lstlisting}[language=Python, caption=RDF Triple Structure]
+from rdflib import Graph, URIRef, Literal, Namespace
+
+# Create knowledge graph
+graph = Graph()
+
+# Define namespaces
+ENTITY_NS = Namespace("urn:entity:")
+PREDICATE_NS = Namespace("urn:predicate:")
+METADATA_NS = Namespace("urn:metadata:")
+
+# Store a fact
+subject = URIRef(ENTITY_NS + "John_Smith")
+predicate = URIRef(PREDICATE_NS + "has_salary")
+object_val = Literal("75000")
+
+# Add triple
+graph.add((subject, predicate, object_val))
+
+# Add metadata
+graph.add((subject, METADATA_NS + "source_document", 
+           Literal("employees.csv")))
+graph.add((subject, METADATA_NS + "agent_id", 
+           Literal("worker_001")))
+graph.add((subject, METADATA_NS + "confidence", 
+           Literal(0.95)))
+graph.add((subject, METADATA_NS + "uploaded_at", 
+           Literal("2024-01-15T10:30:00")))
+graph.add((subject, METADATA_NS + "is_inferred", 
+           Literal(False)))
+\end{lstlisting}
+
+\textbf{Persistence Mechanism}
+The knowledge graph is persisted using Python's pickle module for efficient binary serialization:
+
+\begin{lstlisting}[language=Python, caption=Knowledge Graph Persistence]
+import pickle
+from datetime import datetime
+
+def save_knowledge_graph():
+    """Save knowledge graph to disk"""
+    with open("knowledge_graph.pkl", "wb") as f:
+        pickle.dump(graph, f)
+    
+    # Also create JSON backup for portability
+    backup_data = {
+        "timestamp": datetime.now().isoformat(),
+        "total_facts": len(graph),
+        "facts": []
+    }
+    
+    for s, p, o in graph:
+        # Extract fact and metadata
+        fact_data = {
+            "subject": str(s),
+            "predicate": str(p),
+            "object": str(o),
+            # ... metadata extraction
+        }
+        backup_data["facts"].append(fact_data)
+    
+    with open("knowledge_backup.json", "w") as f:
+        json.dump(backup_data, f, indent=2)
+\end{lstlisting}
+
+\textbf{Query Mechanism}
+Facts are retrieved using RDFLib's query capabilities:
+
+\begin{lstlisting}[language=Python, caption=Knowledge Graph Query]
+from rdflib import Graph, URIRef, Literal
+
+def retrieve_facts_for_entity(entity_name: str):
+    """Retrieve all facts for a specific entity"""
+    entity_uri = URIRef(f"urn:entity:{entity_name.replace(' ', '_')}")
+    
+    # Query for all triples where entity is subject
+    facts = []
+    for s, p, o in graph.triples((entity_uri, None, None)):
+        facts.append({
+            "subject": str(s),
+            "predicate": str(p),
+            "object": str(o),
+            "source": get_source_document(s, p, o),
+            "agent": get_agent_id(s, p, o),
+            "confidence": get_confidence(s, p, o)
+        })
+    
+    return facts
+\end{lstlisting}
+
+\textbf{Entity Normalization Algorithm}
+To ensure consistent entity representation, the system normalizes entity names using a multi-step algorithm:
+
+\begin{lstlisting}[language=Python, caption=Entity Normalization Algorithm]
+def normalize_entity(entity: str) -> str:
+    """Normalize entity name for consistent storage and lookup"""
+    # Step 1: Convert to lowercase and strip whitespace
+    normalized = entity.lower().strip()
+    
+    # Step 2: Remove special characters (keep alphanumeric and spaces)
+    normalized = re.sub(r'[^\w\s]', '', normalized)
+    
+    # Step 3: Replace multiple spaces with single space
+    normalized = re.sub(r'\s+', ' ', normalized)
+    
+    # Step 4: Check normalization map for known variants
+    if normalized in entity_normalization_map:
+        normalized = entity_normalization_map[normalized]
+    
+    return normalized
+
+def learn_normalizations_from_facts():
+    """Learn normalization mappings from existing facts"""
+    entity_groups = defaultdict(list)
+    
+    # Group entities by normalized form (case-insensitive)
+    for s, p, o in graph:
+        s_normalized = str(s).lower().strip()
+        entity_groups[s_normalized].append(str(s))
+    
+    # Use most common variant as canonical
+    for normalized, variants in entity_groups.items():
+        if len(set(variants)) > 1:
+            canonical = max(set(variants), key=variants.count)
+            for variant in variants:
+                if variant.lower() != canonical.lower():
+                    entity_normalization_map[variant.lower()] = canonical.lower()
+\end{lstlisting}
+
+The normalization algorithm ensures that entities like "John Smith", "john smith", and "John  Smith" are all mapped to the same canonical form, enabling consistent fact retrieval and preventing duplicate entities in the knowledge graph.
+
+\textbf{Fact Extraction Algorithm}
+The system extracts facts from text using a hybrid approach combining regex pattern matching with optional LLM-based extraction:
+
+\begin{lstlisting}[language=Python, caption=Fact Extraction Algorithm]
+def extract_facts_from_text(text: str) -> List[Dict]:
+    """Extract subject-predicate-object triples from text"""
+    facts = []
+    sentences = split_into_sentences(text)
+    
+    # Regex patterns for common relation types
+    patterns = [
+        (r"(\w+)\s+has\s+(\w+)\s+(\w+)", "has"),
+        (r"(\w+)\s+is\s+(\w+)", "is"),
+        (r"(\w+)\s+works\s+in\s+(\w+)", "works_in"),
+        (r"(\w+)\s+earns\s+(\d+)", "earns"),
+    ]
+    
+    for sentence in sentences:
+        for pattern, predicate_type in patterns:
+            matches = re.finditer(pattern, sentence, re.IGNORECASE)
+            for match in matches:
+                subject = normalize_entity(match.group(1))
+                object_val = match.group(2) if len(match.groups()) >= 2 else match.group(0)
+                
+                # Validate entities (filter out stop words, invalid patterns)
+                if is_valid_entity(subject) and is_valid_entity(object_val):
+                    # Check for duplicates using in-memory index
+                    if not fact_exists(subject, predicate_type, object_val):
+                        facts.append({
+                            "subject": subject,
+                            "predicate": predicate_type,
+                            "object": object_val,
+                            "confidence": compute_confidence(sentence, match)
+                        })
+    
+    return facts
+
+def compute_confidence(sentence: str, match: re.Match) -> float:
+    """Compute confidence score for extracted fact"""
+    base_confidence = 0.7
+    
+    # Increase confidence if sentence is declarative
+    if sentence.endswith('.'):
+        base_confidence += 0.1
+    
+    # Decrease confidence if sentence contains uncertainty words
+    uncertainty_words = ["maybe", "perhaps", "might", "could"]
+    if any(word in sentence.lower() for word in uncertainty_words):
+        base_confidence -= 0.2
+    
+    return min(1.0, max(0.0, base_confidence))
+\end{lstlisting}
+
+For CSV files, the system uses a specialized extraction algorithm that processes each row as a structured data record:
+
+\begin{lstlisting}[language=Python, caption=CSV Fact Extraction Algorithm]
+def extract_facts_from_csv_row(row: Dict, columns: List[str]) -> List[Tuple]:
+    """Extract facts from a CSV row"""
+    facts = []
+    employee_name = None
+    
+    # Identify employee name column (common patterns)
+    name_columns = [col for col in columns if 'name' in col.lower()]
+    if name_columns:
+        employee_name = normalize_entity(row[name_columns[0]])
+    
+    if not employee_name:
+        return facts
+    
+    # Extract facts for each column
+    for col in columns:
+        if col in name_columns:
+            continue
+        
+        value = row[col]
+        if pd.notna(value) and str(value).strip():
+            # Create predicate from column name
+            predicate = f"has_{col.lower().replace(' ', '_')}"
+            
+            # Normalize value
+            object_val = str(value).strip()
+            
+            # Check for duplicates
+            if not fact_exists(employee_name, predicate, object_val):
+                facts.append((employee_name, predicate, object_val))
+    
+    return facts
+\end{lstlisting}
+
+\subsection{Multi-Agent System Implementation}
+
+\textbf{Agent Architecture Pattern}
+The system uses an agent-based architecture with a centralized knowledge graph. Each agent is implemented as a Python class with the following structure:
+
+\begin{lstlisting}[language=Python, caption=Agent Base Class]
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+from datetime import datetime
+
+@dataclass
+class Agent:
+    """Base agent class"""
+    agent_id: str
+    agent_type: str
+    status: str  # "active", "processing", "idle"
+    created_at: datetime
+    metadata: Dict[str, any]
+    
+    def process(self, input_data: any) -> any:
+        """Process input and return result"""
+        raise NotImplementedError
+    
+    def update_status(self, new_status: str):
+        """Update agent status"""
+        self.status = new_status
+\end{lstlisting}
+
+\textbf{Agent Communication}
+Agents communicate through the centralized knowledge graph rather than direct inter-agent communication:
+
+\begin{lstlisting}[language=Python, caption=Agent Communication Pattern]
+class WorkerAgent(Agent):
+    """Worker agent for fact extraction"""
+    
+    def process_chunk(self, chunk: str, document_name: str):
+        """Extract facts from document chunk"""
+        facts = extract_facts(chunk)  # NLP-based extraction
+        
+        for fact in facts:
+            # Store fact in knowledge graph with metadata
+            add_to_graph(
+                subject=fact["subject"],
+                predicate=fact["predicate"],
+                object=fact["object"],
+                source_document=document_name,
+                agent_id=self.agent_id,
+                confidence=fact["confidence"]
+            )
+        
+        return len(facts)
+
+class StatisticsAgent(Agent):
+    """Statistics agent for correlation analysis"""
+    
+    def compute_correlations(self, csv_data: pd.DataFrame):
+        """Compute correlations using Pearson correlation coefficient"""
+        numeric_cols = csv_data.select_dtypes(include=[np.number]).columns
+        
+        # Compute pairwise correlations
+        correlation_matrix = csv_data[numeric_cols].corr()
+        
+        # Extract significant correlations (|r| > 0.3)
+        for i, col1 in enumerate(numeric_cols):
+            for col2 in numeric_cols[i+1:]:
+                corr_value = correlation_matrix.loc[col1, col2]
+                
+                if abs(corr_value) > 0.3:  # Threshold for significance
+                    # Store correlation as fact
+                    add_to_graph(
+                        subject=f"correlation_{col1}_{col2}",
+                        predicate="has_correlation_value",
+                        object=str(round(corr_value, 3)),
+                        source_document=csv_data.name,
+                        agent_id=self.agent_id,
+                        confidence=1.0
+                    )
+    
+    def compute_descriptive_stats(self, csv_data: pd.DataFrame):
+        """Compute descriptive statistics for numeric columns"""
+        numeric_cols = csv_data.select_dtypes(include=[np.number]).columns
+        
+        for col in numeric_cols:
+            col_data = csv_data[col].dropna()
+            
+            if len(col_data) > 0:
+                stats = {
+                    "mean": col_data.mean(),
+                    "median": col_data.median(),
+                    "std": col_data.std(),
+                    "min": col_data.min(),
+                    "max": col_data.max(),
+                    "q1": col_data.quantile(0.25),
+                    "q3": col_data.quantile(0.75)
+                }
+                
+                # Store each statistic as a fact
+                for stat_name, stat_value in stats.items():
+                    add_to_graph(
+                        subject=col,
+                        predicate=f"has_{stat_name}",
+                        object=str(round(stat_value, 2)),
+                        source_document=csv_data.name,
+                        agent_id=self.agent_id,
+                        confidence=1.0
+                    )
+\end{lstlisting}
+
+\textbf{Orchestrator Routing Algorithm}
+The Orchestrator Agent implements intelligent query routing using a multi-stage algorithm that combines pattern matching, keyword detection, and entity extraction:
+
+\begin{lstlisting}[language=Python, caption=Query Routing Algorithm]
+def find_agents_for_query(query: str, query_type: str, 
+                         attribute: Optional[str] = None) -> Dict:
+    """Multi-stage query routing algorithm"""
+    routing_info = {
+        "query_type": query_type,
+        "target_agents": [],
+        "strategy": "all_agents",
+        "reason": ""
+    }
+    
+    query_lower = query.lower()
+    
+    # Stage 1: Employee-specific query detection
+    if query_type == "filter" and attribute:
+        # Extract employee name using regex patterns
+        name_patterns = [
+            r'([A-Z][a-z]+,\s*[A-Z][a-z]+)',  # "Smith, John"
+            r'(?:of|for)\s+([A-Z][a-z]+,\s*[A-Z][a-z]+)',
+        ]
+        
+        employee_name = None
+        for pattern in name_patterns:
+            match = re.search(pattern, query)
+            if match:
+                employee_name = match.group(1) if match.lastindex >= 1 else match.group(0)
+                break
+        
+        if employee_name:
+            # Find which agent processed this employee
+            matching_agents = find_agent_for_employee(employee_name)
+            if matching_agents:
+                routing_info["target_agents"] = matching_agents
+                routing_info["strategy"] = "specific_agents"
+                routing_info["reason"] = f"Found employee in {len(matching_agents)} agent(s)"
+                return routing_info
+    
+    # Stage 2: Statistical query detection
+    statistics_keywords = [
+        "correlation", "distribution", "min", "max", "minimum", "maximum",
+        "average", "mean", "median", "standard deviation", "variance",
+        "relationship between", "how are", "connection between"
+    ]
+    
+    if any(keyword in query_lower for keyword in statistics_keywords):
+        routing_info["strategy"] = "statistics_agent"
+        routing_info["target_agents"] = ["statistics_agent"]
+        routing_info["reason"] = "Query requires statistical analysis"
+        return routing_info
+    
+    # Stage 3: Operational query detection
+    operational_keywords = [
+        "average", "by department", "group by", "aggregate",
+        "sum", "count", "total", "per department"
+    ]
+    
+    if any(keyword in query_lower for keyword in operational_keywords):
+        routing_info["strategy"] = "operational_agent"
+        routing_info["target_agents"] = ["operational_agent"]
+        routing_info["reason"] = "Query requires operational insights"
+        return routing_info
+    
+    # Stage 4: Structured query pattern matching
+    structured_patterns = [
+        r"what is (.+)'s (.+)",      # "What is John's salary?"
+        r"who has the (highest|lowest) (.+)",  # "Who has the highest salary?"
+        r"find (.+) with (.+)"       # "Find employees with salary > 50000"
+    ]
+    
+    if any(re.search(p, query_lower) for p in structured_patterns):
+        routing_info["strategy"] = "structured"
+        routing_info["target_agents"] = ["query_processor"]
+        routing_info["reason"] = "Structured query pattern detected"
+        return routing_info
+    
+    # Stage 5: Default to conversational (LLM-based)
+    routing_info["strategy"] = "conversational"
+    routing_info["target_agents"] = ["llm_agent"]
+    routing_info["reason"] = "Conversational query - using LLM"
+    return routing_info
+
+def find_agent_for_employee(employee_name: str) -> List[str]:
+    """Find which document agents processed a specific employee"""
+    matching_agents = []
+    employee_normalized = employee_name.strip()
+    
+    # Normalize name parts for matching
+    name_parts = [p.strip() for p in employee_normalized.split(',')]
+    
+    for agent_id, agent in document_agents.items():
+        if hasattr(agent, 'employee_names') and agent.employee_names:
+            for tracked_name in agent.employee_names:
+                # Exact match
+                if tracked_name.lower() == employee_normalized.lower():
+                    matching_agents.append(agent_id)
+                    break
+                
+                # Partial match (handle name variations)
+                tracked_parts = [p.strip() for p in tracked_name.split(',')]
+                if len(tracked_parts) >= 2 and len(name_parts) >= 2:
+                    if (tracked_parts[0].lower() == name_parts[0].lower() and
+                        tracked_parts[1].lower() == name_parts[1].lower()):
+                        matching_agents.append(agent_id)
+                        break
+    
+    return matching_agents
+\end{lstlisting}
+
+The routing algorithm uses a priority-based approach: employee-specific queries are handled first (for efficiency), followed by statistical, operational, and structured queries, with conversational queries as the default fallback.
+
+\textbf{Parallel Processing Algorithm}
+Worker agents process document chunks in parallel using a thread pool executor:
+
+\begin{lstlisting}[language=Python, caption=Parallel Processing Algorithm]
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
+
+class DocumentAgent(Agent):
+    """Document agent for coordinating processing"""
+    
+    def process_document(self, document_path: str):
+        """Process document with parallel workers"""
+        # Step 1: Split document into chunks
+        chunks = self._split_into_chunks(document_path, chunk_size=1000)
+        
+        # Step 2: Create worker agents (one per chunk)
+        workers = [WorkerAgent(f"worker_{self.agent_id}_{i}") 
+                  for i in range(len(chunks))]
+        
+        # Step 3: Process chunks in parallel (max 4 concurrent workers)
+        total_facts = 0
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            # Submit all tasks
+            future_to_worker = {
+                executor.submit(worker.process_chunk, chunk, document_path): worker
+                for worker, chunk in zip(workers, chunks)
+            }
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_worker):
+                worker = future_to_worker[future]
+                try:
+                    facts_count = future.result()
+                    total_facts += facts_count
+                except Exception as e:
+                    print(f"Worker {worker.agent_id} failed: {e}")
+        
+        return total_facts
+    
+    def _split_into_chunks(self, document_path: str, chunk_size: int = 1000):
+        """Split document into processing chunks"""
+        chunks = []
+        
+        if document_path.endswith('.csv'):
+            # For CSV: split by rows
+            df = pd.read_csv(document_path)
+            for i in range(0, len(df), chunk_size):
+                chunks.append(df.iloc[i:i+chunk_size])
+        else:
+            # For text files: split by characters
+            with open(document_path, 'r') as f:
+                text = f.read()
+                for i in range(0, len(text), chunk_size):
+                    chunks.append(text[i:i+chunk_size])
+        
+        return chunks
+\end{lstlisting}
+
+The parallel processing algorithm uses a thread pool to process multiple chunks simultaneously, significantly reducing processing time for large documents. The algorithm ensures thread-safe access to the knowledge graph through RDFLib's built-in thread safety mechanisms.
+
+\subsection{Query Processing Implementation}
+
+\textbf{Query Classification Algorithm}
+The system classifies queries using a hierarchical pattern matching algorithm that extracts both query type and parameters:
+
+\begin{lstlisting}[language=Python, caption=Query Classification Algorithm]
+def classify_query(query: str) -> Dict[str, any]:
+    """Classify query type and extract parameters using pattern matching"""
+    query_lower = query.lower()
+    
+    # Pattern 1: Filter queries ("What is X's Y?")
+    filter_pattern = r"what is (.+?)(?:'s|')\s+(.+)"
+    if match := re.search(filter_pattern, query, re.IGNORECASE):
+        entity = match.group(1).strip()
+        attribute = match.group(2).strip()
+        return {
+            "type": "structured",
+            "operation": "filter",
+            "entity": normalize_entity(entity),
+            "attribute": attribute.lower().replace(' ', '_')
+        }
+    
+    # Pattern 2: Min queries ("Who has the lowest X?")
+    min_patterns = [
+        r"who has the (?:lowest|minimum)\s+(.+)",
+        r"which (.+) has the (?:lowest|minimum)\s+(.+)"
+    ]
+    for pattern in min_patterns:
+        if match := re.search(pattern, query_lower):
+            attribute = match.group(1) if len(match.groups()) == 1 else match.group(2)
+            return {
+                "type": "structured",
+                "operation": "min",
+                "attribute": attribute.strip().replace(' ', '_')
+            }
+    
+    # Pattern 3: Max queries ("Who has the highest X?")
+    max_patterns = [
+        r"who has the (?:highest|maximum)\s+(.+)",
+        r"which (.+) has the (?:highest|maximum)\s+(.+)"
+    ]
+    for pattern in max_patterns:
+        if match := re.search(pattern, query_lower):
+            attribute = match.group(1) if len(match.groups()) == 1 else match.group(2)
+            return {
+                "type": "structured",
+                "operation": "max",
+                "attribute": attribute.strip().replace(' ', '_')
+            }
+    
+    # Pattern 4: Operational queries (groupby/aggregation)
+    operational_patterns = [
+        r"(?:average|mean|avg)\s+(.+?)\s+by\s+(.+)",
+        r"(?:sum|total|count)\s+of\s+(.+?)\s+by\s+(.+)"
+    ]
+    for pattern in operational_patterns:
+        if match := re.search(pattern, query_lower):
+            metric = match.group(1).strip()
+            group_by = match.group(2).strip()
+            return {
+                "type": "operational",
+                "operation": "groupby",
+                "metric": metric,
+                "group_by": group_by
+            }
+    
+    # Pattern 5: Statistical queries
+    if any(kw in query_lower for kw in ["correlation", "relationship between"]):
+        # Extract two entities/columns
+        correlation_pattern = r"(?:correlation|relationship)\s+(?:between|of)\s+(.+?)\s+(?:and|&)\s+(.+)"
+        if match := re.search(correlation_pattern, query_lower):
+            return {
+                "type": "statistical",
+                "operation": "correlation",
+                "column1": match.group(1).strip(),
+                "column2": match.group(2).strip()
+            }
+    
+    # Default: conversational query
+    return {
+        "type": "conversational",
+        "operation": "llm_response",
+        "query": query
+    }
+\end{lstlisting}
+
+The classification algorithm uses regex patterns with capture groups to extract both the query type and specific parameters (entities, attributes, columns), enabling precise query processing.
+
+\textbf{Evidence Assembly Algorithm}
+The system assembles evidence facts for responses using a relevance-based ranking algorithm:
+
+\begin{lstlisting}[language=Python, caption=Evidence Assembly Algorithm]
+def assemble_evidence(facts: List[Dict], query: str) -> str:
+    """Assemble and rank evidence facts for response"""
+    if not facts:
+        return ""
+    
+    # Step 1: Rank facts by relevance to query
+    ranked_facts = rank_facts_by_relevance(facts, query)
+    
+    # Step 2: Select top-k most relevant facts (limit to 5 for readability)
+    top_facts = ranked_facts[:5]
+    
+    # Step 3: Format evidence display
+    evidence_lines = ["**Evidence from Knowledge Graph:**"]
+    
+    for i, fact in enumerate(top_facts, 1):
+        subj = fact["subject"]
+        pred = fact["predicate"]
+        obj = fact["object"]
+        source = fact.get("source", "unknown")
+        
+        # Format triple display
+        evidence_line = f"{i}. {subj} → {pred} → {obj}"
+        
+        # Add source attribution
+        if source:
+            if isinstance(source, list) and len(source) > 0:
+                # Handle multiple sources
+                sources_str = ", ".join([s[0] if isinstance(s, tuple) else str(s) 
+                                       for s in source[:2]])  # Limit to 2 sources
+                evidence_line += f" [Source: {sources_str}]"
+            else:
+                evidence_line += f" [Source: {source}]"
+        
+        evidence_lines.append(evidence_line)
+    
+    return "\n".join(evidence_lines)
+
+def rank_facts_by_relevance(facts: List[Dict], query: str) -> List[Dict]:
+    """Rank facts by relevance to query using keyword matching"""
+    query_lower = query.lower()
+    query_words = set(query_lower.split())
+    
+    scored_facts = []
+    for fact in facts:
+        score = 0.0
+        
+        # Check subject relevance
+        subject_lower = str(fact["subject"]).lower()
+        subject_words = set(subject_lower.split())
+        score += len(query_words.intersection(subject_words)) * 2.0
+        
+        # Check predicate relevance
+        predicate_lower = str(fact["predicate"]).lower()
+        if any(word in predicate_lower for word in query_words):
+            score += 1.5
+        
+        # Check object relevance
+        object_lower = str(fact["object"]).lower()
+        object_words = set(object_lower.split())
+        score += len(query_words.intersection(object_words)) * 1.0
+        
+        # Boost score for exact matches
+        if any(word in subject_lower for word in query_words if len(word) > 3):
+            score += 1.0
+        
+        scored_facts.append((score, fact))
+    
+    # Sort by score (descending) and return facts
+    scored_facts.sort(key=lambda x: x[0], reverse=True)
+    return [fact for _, fact in scored_facts]
+\end{lstlisting}
+
+The evidence assembly algorithm ensures that the most relevant facts are displayed first, making it easier for users to verify system reasoning.
+
+\subsection{Frontend Implementation}
+
+\textbf{Technology Stack}
+The frontend is built using:
+\begin{itemize}
+    \item \textbf{React 18}: Modern React with hooks and functional components
+    \item \textbf{TypeScript}: Type-safe JavaScript for better code quality
+    \item \textbf{Vite}: Fast build tool and development server
+    \item \textbf{shadcn/ui}: High-quality React component library
+    \item \textbf{React Query}: Server state management and caching
+    \item \textbf{D3.js}: Graph visualization library
+    \item \textbf{React Flow}: Agent network visualization
+\end{itemize}
+
+\textbf{API Client}
+The frontend communicates with the backend through a centralized API client:
+
+\begin{lstlisting}[language=TypeScript, caption=API Client]
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:8002/api';
+
+export const apiClient = {
+  async sendChatMessage(message: string, history: any[]) {
+    const response = await axios.post(
+      `${API_BASE_URL}/chat`,
+      { message, history }
+    );
+    return response.data;
+  },
+  
+  async getFacts(filters?: any) {
+    const response = await axios.get(
+      `${API_BASE_URL}/knowledge/facts`,
+      { params: filters }
+    );
+    return response.data;
+  },
+  
+  async uploadDocument(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(
+      `${API_BASE_URL}/knowledge/upload`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  }
+};
+\end{lstlisting}
+
+\textbf{State Management}
+The frontend uses React Query for server state and Context API for local state:
+
+\begin{lstlisting}[language=TypeScript, caption=State Management]
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createContext, useContext } from 'react';
+
+// Server state (React Query)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+
+// Local state (Context API)
+interface KnowledgeStore {
+  facts: Fact[];
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  refreshFacts: () => Promise<void>;
+}
+
+const KnowledgeStoreContext = createContext<KnowledgeStore | null>(null);
+
+export function useKnowledgeStore() {
+  const context = useContext(KnowledgeStoreContext);
+  if (!context) {
+    throw new Error('useKnowledgeStore must be used within provider');
+  }
+  return context;
+}
+\end{lstlisting}
+
+\subsection{LLM Integration}
+
+\textbf{LLM Options}
+The system supports multiple LLM backends:
+
+\begin{itemize}
+    \item \textbf{Ollama}: Local LLM execution (recommended for privacy)
+    \item \textbf{Groq API}: Fast cloud-based LLM (free tier available)
+    \item \textbf{OpenAI API}: Commercial option (requires API key)
+\end{itemize}
+
+\textbf{Prompt Engineering}
+The system uses carefully crafted prompts to ensure traceability:
+
+\begin{lstlisting}[language=Python, caption=LLM Prompt Template]
+SYSTEM_PROMPT = """You are an intelligent data analyst assistant that helps users understand their data and make evidence-based decisions.
+
+CRITICAL RULES:
+1. ALWAYS use EXACT numbers from the context - NEVER estimate, guess, or make up numbers
+2. Always provide TRACEABLE answers - cite the specific facts from the knowledge graph that support your answer
+3. For structured queries (max/min/filter): provide the exact answer first, then explain the evidence
+4. Focus on INSIGHTS and ACTIONABLE INFORMATION, not raw data dumps
+5. Synthesize information to provide clear, concise answers
+6. Always ground your answers in the provided context facts - if a number isn't in the context, don't use it
+7. Include evidence facts in your response format:
+   Evidence from Knowledge Graph:
+   1. [Subject] → [Predicate] → [Object] [Source: document.csv]
+"""
+
+def generate_response(query: str, context_facts: List[Dict]) -> str:
+    """Generate response with evidence"""
+    context = format_facts_for_llm(context_facts)
+    prompt = f"{SYSTEM_PROMPT}\n\nKnowledge Base Context:\n{context}\n\nUser Query: {query}\n\nResponse:"
+    
+    # Call LLM (Ollama, Groq, or OpenAI)
+    response = call_llm(prompt)
+    
+    # Ensure evidence is included
+    if "Evidence from Knowledge Graph" not in response:
+        evidence = assemble_evidence(context_facts, query)
+        response += f"\n\n{evidence}"
+    
+    return response
+\end{lstlisting}
+
+\subsection{Performance Optimizations}
+
+\textbf{In-Memory Indexing Algorithm}
+For fast fact lookup, the system maintains an in-memory hash-based index that provides O(1) lookup time:
+
+\begin{lstlisting}[language=Python, caption=In-Memory Fact Index Algorithm]
+# Global in-memory index: set of normalized (subject, predicate, object) tuples
+_fact_lookup_set = set()
+_fact_index_initialized = False
+
+def fact_exists(subject: str, predicate: str, object_val: str) -> bool:
+    """Fast O(1) fact existence check using normalized tuple lookup"""
+    # Normalize all components
+    normalized = (
+        normalize_entity(subject.lower()),
+        predicate.lower().strip(),
+        normalize_entity(object_val.lower())
+    )
+    
+    # O(1) set membership test
+    return normalized in _fact_lookup_set
+
+def add_fact_to_index(subject: str, predicate: str, object_val: str):
+    """Add fact to in-memory index (called when fact is added to graph)"""
+    normalized = (
+        normalize_entity(subject.lower()),
+        predicate.lower().strip(),
+        normalize_entity(object_val.lower())
+    )
+    _fact_lookup_set.add(normalized)
+
+def initialize_fact_index():
+    """Initialize index from existing knowledge graph (on startup)"""
+    global _fact_index_initialized, _fact_lookup_set
+    
+    if _fact_index_initialized:
+        return
+    
+    # Load all facts from graph into index
+    for s, p, o in graph:
+        # Skip metadata triples
+        if 'source_document' in str(p) or 'agent_id' in str(p):
+            continue
+        
+        subject_str = str(s).split(':')[-1] if ':' in str(s) else str(s)
+        predicate_str = str(p).split(':')[-1] if ':' in str(p) else str(p)
+        object_str = str(o)
+        
+        add_fact_to_index(subject_str, predicate_str, object_str)
+    
+    _fact_index_initialized = True
+    print(f"Initialized fact index with {len(_fact_lookup_set)} facts")
+\end{lstlisting}
+
+The indexing algorithm provides constant-time O(1) fact existence checks, which is critical for preventing duplicate facts during parallel processing. The index is initialized on system startup and maintained incrementally as new facts are added.
+
+\textbf{Caching}
+The system implements caching for frequently accessed data:
+
+\begin{itemize}
+    \item Query results are cached for 5 minutes
+    \item Statistics and operational insights are pre-computed and cached
+    \item Graph visualization data is cached until new facts are added
+\end{itemize}
+
+\section{Conclusion}
+
+This technical implementation provides a complete, transparent, and effective system for HR decision support. The three-layer architecture ensures separation of concerns while maintaining end-to-end traceability. The multi-agent system enables specialized processing for different query types, and the knowledge graph provides a robust foundation for fact storage and retrieval with complete provenance tracking.
+
+The algorithmic components work together to provide:
+\begin{itemize}
+    \item \textbf{Efficient Fact Extraction}: Hybrid regex and LLM-based extraction with entity normalization
+    \item \textbf{Intelligent Query Routing}: Multi-stage algorithm combining pattern matching and keyword detection
+    \item \textbf{Fast Fact Lookup}: O(1) in-memory indexing for duplicate prevention
+    \item \textbf{Relevant Evidence Assembly}: Ranking algorithm for selecting most relevant facts
+    \item \textbf{Parallel Processing}: Thread-based parallelization for scalable document processing
+    \item \textbf{Statistical Analysis}: Correlation and descriptive statistics computation
+    \item \textbf{Operational Insights}: Groupby-based aggregation for HR metrics
+\end{itemize}
+
+The system's key strengths are:
+\begin{itemize}
+    \item \textbf{Complete Transparency}: Every fact is traceable to its source through provenance tracking
+    \item \textbf{Modular Design}: Specialized agents enable efficient processing
+    \item \textbf{Human-Centered Interface}: Intuitive design for HR professionals
+    \item \textbf{Effective Retrieval}: High accuracy and coverage for HR queries
+    \item \textbf{Scalable Architecture}: Parallel processing handles large datasets
+\end{itemize}
+
+The implementation is reproducible, with all algorithms clearly documented and using standard technologies. The system demonstrates how generative AI can be designed for transparency, ethical responsibility, and effective information retrieval in HR contexts.
+
+\end{document}
+

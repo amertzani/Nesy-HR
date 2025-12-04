@@ -596,17 +596,58 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                         save_knowledge_graph()
                         print(f"✅ Knowledge graph cleared - starting fresh for {file_info['name']}")
                     
-                    # Process document with all agents (Statistics, Visualization, KG)
+                    # Process document: Document Agent → Worker Agents → KG Agent → Knowledge Graph
+                    # Simultaneously: Statistics Agent, Operational Agent, Visualization Agent
                     file_size_mb = file_info.get('size', 0) / (1024 * 1024)
-                    print(f"🔄 Processing {file_info['name']} ({file_size_mb:.1f} MB, type: {file_extension})...")
-                    print(f"   This may take several minutes for large files...")
+                    print(f"📄 Processing: {file_info['name']} ({file_size_mb:.1f} MB)")
+                    
+                    # CRITICAL: Ensure file_path is valid and stored for CSV files
+                    csv_file_path = file_path
+                    if file_extension.lower() == '.csv':
+                        # Verify file exists, if not try to find it
+                        if not csv_file_path or not os.path.exists(csv_file_path):
+                            import glob
+                            temp_dir = tempfile.gettempdir()
+                            possible_paths = [
+                                os.path.join(temp_dir, file_info['name']),
+                                os.path.join('/tmp', file_info['name']),
+                                file_info['name'],
+                            ]
+                            for temp_path in [temp_dir, '/tmp', '/var/tmp']:
+                                if os.path.exists(temp_path):
+                                    pattern = os.path.join(temp_path, f'*{file_info["name"]}*')
+                                    matches = glob.glob(pattern)
+                                    possible_paths.extend(matches)
+                            
+                            for path in possible_paths:
+                                if path and os.path.exists(path) and path.endswith('.csv'):
+                                    csv_file_path = path
+                                    print(f"✅ Found CSV file: {csv_file_path}")
+                                    break
+                        
+                        if not csv_file_path or not os.path.exists(csv_file_path):
+                            print(f"❌ ERROR: Could not find CSV file for {file_info['name']}")
+                            print(f"   Searched paths: {possible_paths[:5]}")
+                            continue  # Skip this file if we can't find it
+                    
+                    # Process document with agents (this creates the document agent internally)
                     agent_result = process_document_with_agents(
                         document_id=document_id,
                         document_name=file_info['name'],
                         document_type=file_extension,
-                        file_path=file_path,
+                        file_path=csv_file_path,  # Use verified file path
                         extracted_text=extracted_text or ""
                     )
+                    
+                    # After processing, store file_path in document agent for background processing
+                    doc_agent_id = f"doc_{document_id}"
+                    from agent_system import document_agents
+                    from datetime import datetime
+                    
+                    if doc_agent_id in document_agents and file_extension.lower() == '.csv' and csv_file_path:
+                        doc_agent = document_agents[doc_agent_id]
+                        doc_agent.file_path = csv_file_path
+                        print(f"✅ Stored file_path in document agent for background processing: {csv_file_path}")
                     
                     if not agent_result:
                         print(f"⚠️  No result returned from process_document_with_agents for {file_info['name']}")
@@ -616,38 +657,30 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                     total_facts_extracted += facts_extracted
                     
                     # Store statistics, visualizations, and operational insights in document agent metadata
-                    doc_agent_id = f"doc_{document_id}"
-                    from agent_system import document_agents
-                    from datetime import datetime
-                    if doc_agent_id in document_agents:
-                        doc_agent = document_agents[doc_agent_id]
-                        doc_agent.metadata['statistics'] = agent_result.get('statistics')
-                        doc_agent.metadata['visualizations'] = agent_result.get('visualizations')
-                        
-                        # Compute and store operational insights during upload (while file is still available)
-                        if file_extension == '.csv' and os.path.exists(file_path):
-                            try:
-                                from operational_queries import compute_operational_insights
-                                print(f"💡 Computing operational insights during upload (file still available at {file_path})...")
-                                # Pass file_path directly to avoid file lookup issues
-                                operational_insights = compute_operational_insights(csv_file_path=file_path)
-                                if operational_insights:
-                                    doc_agent.metadata['operational_insights'] = operational_insights
-                                    print(f"✅ Computed operational insights: {len(operational_insights)} categories")
-                                    if not hasattr(doc_agent, 'file_path') or not doc_agent.file_path:
-                                        doc_agent.file_path = file_path
-                                else:
-                                    doc_agent.metadata['operational_insights'] = {}
-                            except Exception as insights_error:
-                                print(f"⚠️  Could not compute operational insights during upload: {insights_error}")
-                                import traceback
-                                traceback.print_exc()
-                                doc_agent.metadata['operational_insights'] = {}
-                        else:
-                            doc_agent.metadata['operational_insights'] = agent_result.get('operational_insights', {})
-                        
-                        doc_agent.metadata['processed_at'] = datetime.now().isoformat()
-                        doc_agent.facts_extracted = facts_extracted
+                    doc_agent = document_agents[doc_agent_id]
+                    
+                    doc_agent.metadata['statistics'] = agent_result.get('statistics')
+                    doc_agent.metadata['visualizations'] = agent_result.get('visualizations')
+                    
+                    # Operational insights are now computed in background (async)
+                    # Check if they're already available from background processing
+                    if 'operational_insights' in agent_result:
+                        doc_agent.metadata['operational_insights'] = agent_result.get('operational_insights', {})
+                    else:
+                        # Initialize as empty - will be populated by background thread
+                        doc_agent.metadata['operational_insights'] = {}
+                    
+                    # Store processing status for frontend to check
+                    if 'processing_status' in agent_result:
+                        doc_agent.metadata['processing_status'] = agent_result['processing_status']
+                    
+                    print(f"✅ Document ready: KG facts available, background processing continues")
+                    
+                    doc_agent.metadata['processed_at'] = datetime.now().isoformat()
+                    doc_agent.facts_extracted = facts_extracted
+                    # Status is set by process_document_with_agents ("ready" when KG is available)
+                    # Don't override if it's already "ready" (background processing continues)
+                    if doc_agent.status != "ready":
                         doc_agent.status = "completed"
                     
                     # Save document (even if 0 facts, if statistics were extracted)
@@ -661,20 +694,12 @@ async def upload_file_endpoint(files: List[UploadFile] = File(...)):
                             agent_id=doc_agent_id
                         )
                         if doc:
-                            # If we computed operational insights, persist them now (document is now in store)
-                            if doc_agent_id in document_agents:
-                                doc_agent = document_agents[doc_agent_id]
-                                if 'operational_insights' in doc_agent.metadata and doc_agent.metadata['operational_insights']:
-                                    from documents_store import load_documents, save_documents
-                                    documents = load_documents()
-                                    doc_in_store = next((d for d in documents if d.get('name') == file_info['name']), None)
-                                    if doc_in_store:
-                                        doc_in_store['operational_insights'] = doc_agent.metadata['operational_insights']
-                                        save_documents(documents)
-                                        print(f"✅ Persisted operational insights to documents_store.json")
+                            # Note: Operational insights are stored in document agent metadata only
+                            # They are NOT persisted to documents_store.json - will be recomputed on restart or on-demand
+                            # This ensures they're always up-to-date with the current CSV data
                             
                             processed_docs.append(doc)
-                            print(f"✅ Processed {file_info['name']}: {facts_extracted} facts, statistics: {'yes' if has_statistics else 'no'}, visualizations: {'yes' if agent_result.get('visualizations') else 'no'}")
+                            print(f"✅ Completed: {file_info['name']} ({facts_extracted:,} facts in KG)")
                         else:
                             print(f"⚠️  Failed to save document {file_info['name']}")
                     else:
@@ -893,51 +918,213 @@ async def get_contents_endpoint():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting contents: {str(e)}")
 
+@app.get("/api/document/processing-status")
+async def get_processing_status_endpoint():
+    """Get processing status for documents (check if background tasks are complete)"""
+    try:
+        from agent_system import document_agents
+        
+        statuses = []
+        for agent_id, agent in document_agents.items():
+            if hasattr(agent, 'document_type') and agent.document_type.lower() == '.csv':
+                metadata = getattr(agent, 'metadata', {})
+                processing_status = metadata.get('processing_status', {})
+                statuses.append({
+                    "document_id": agent.document_id,
+                    "document_name": agent.document_name,
+                    "status": agent.status,
+                    "processing_status": processing_status,
+                    "background_complete": metadata.get('background_processing_complete', False),
+                    "background_completed_at": metadata.get('background_processing_completed_at'),
+                    "facts_extracted": agent.facts_extracted
+                })
+        
+        return {
+            "success": True,
+            "documents": statuses
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting processing status: {str(e)}")
+
 @app.get("/api/insights/operational")
 async def get_operational_insights_endpoint():
     """Get operational insights computed from data aggregations"""
     try:
         from agent_system import document_agents
         
-        # First, try to get cached insights from document agents (computed during upload, if server hasn't restarted)
+        # First, try to get cached insights from document agents (computed during upload or background processing)
         cached_insights = None
+        processing_status_info = None
+        print(f"🔍 Checking {len(document_agents)} document agents for operational insights...")
         for agent_id, agent in document_agents.items():
             if hasattr(agent, 'document_type') and agent.document_type.lower() == '.csv':
                 metadata = getattr(agent, 'metadata', {})
+                processing_status = metadata.get('processing_status', {})
+                print(f"  📄 Agent {agent_id}: type={getattr(agent, 'document_type', 'unknown')}, has metadata={bool(metadata)}")
+                print(f"  📊 Metadata keys: {list(metadata.keys())}")
+                
+                # Check if operational insights are available
                 if 'operational_insights' in metadata:
                     cached_insights = metadata.get('operational_insights')
+                    print(f"  ✅ Found operational_insights in metadata: type={type(cached_insights)}, len={len(cached_insights) if isinstance(cached_insights, dict) else 'N/A'}")
                     if cached_insights and isinstance(cached_insights, dict) and len(cached_insights) > 0:
-                        print(f"✅ Using cached operational insights from document agent")
+                        print(f"✅ Using cached operational insights from document agent ({len(cached_insights)} keys: {list(cached_insights.keys())[:10]})")
+                        # Verify we have structured insights
+                        has_structured = any(key in cached_insights for key in ['by_department', 'by_manager', 'by_recruitment_source'])
+                        if has_structured:
+                            print(f"   ✅ Contains structured insights (by_department, by_manager, etc.)")
+                        else:
+                            print(f"   ⚠️  Missing structured insights - only has: {list(cached_insights.keys())}")
                         return {
-                            "insights": cached_insights
+                            "success": True,
+                            "data": {
+                                "insights": cached_insights,
+                                "processing_status": processing_status.get('operational_insights', 'completed')
+                            }
                         }
-        
-        # Second, try to get persisted insights from documents_store.json (survives server restarts)
-        from documents_store import get_all_documents
-        documents = get_all_documents()
-        csv_docs = [d for d in documents if d.get('type', '').lower() == 'csv']
-        
-        if csv_docs:
-            latest_csv = csv_docs[-1]
-            if 'operational_insights' in latest_csv:
-                cached_insights = latest_csv.get('operational_insights')
-                if cached_insights and isinstance(cached_insights, dict) and len(cached_insights) > 0:
-                    print(f"✅ Using persisted operational insights from documents_store.json")
-                    return {
-                        "insights": cached_insights
+                
+                # Check processing status - if insights are not ready yet
+                ops_status = processing_status.get('operational_insights', 'unknown')
+                background_complete = metadata.get('background_processing_complete', False)
+                
+                # If background processing is not complete and status is processing/pending, return status
+                if not background_complete and (ops_status == 'processing' or ops_status == 'pending'):
+                    processing_status_info = {
+                        "status": "processing",
+                        "message": "Operational insights are being computed in the background. Please check again in a few moments."
                     }
         
+        # If still processing, return status message
+        if processing_status_info:
+            return {
+                "success": True,
+                "data": {
+                    "insights": {},
+                    "processing_status": processing_status_info["status"],
+                    "message": processing_status_info["message"]
+                }
+            }
+        
+        # Note: Operational insights are NOT persisted to documents_store.json
+        # They are computed fresh on server restart or on-demand via API
+        # This ensures they're always up-to-date with the current CSV data
+        
         # If no cached insights, try to compute from CSV file
+        # First, try to find CSV file path from document agents
+        csv_file_path = None
+        for agent_id, agent in document_agents.items():
+            if hasattr(agent, 'document_type') and agent.document_type.lower() == '.csv':
+                if hasattr(agent, 'file_path') and agent.file_path and os.path.exists(agent.file_path):
+                    csv_file_path = agent.file_path
+                    print(f"📁 Found CSV file in agent: {csv_file_path}")
+                    break
+        
+        # If not found in agents, try to find from documents_store or temp directory
+        if not csv_file_path:
+            from documents_store import get_all_documents
+            documents = get_all_documents()
+            csv_docs = [d for d in documents if d.get('type', '').lower() == 'csv' or d.get('file_type', '').lower() == 'csv']
+            
+            if csv_docs:
+                latest_doc = csv_docs[-1]
+                doc_name = latest_doc.get('name', '')
+                # Check temp directory (where files are uploaded)
+                import glob
+                temp_dir = tempfile.gettempdir()
+                possible_paths = [
+                    os.path.join(temp_dir, doc_name),
+                    os.path.join('/tmp', doc_name),
+                    doc_name,  # Try direct path
+                    latest_doc.get('file_path'),  # Try file_path from document store
+                    latest_doc.get('path'),  # Try path from document store
+                ]
+                # Also search for any CSV with matching name
+                for temp_path in [temp_dir, '/tmp', '/var/tmp']:
+                    if os.path.exists(temp_path):
+                        pattern = os.path.join(temp_path, f'*{doc_name}*')
+                        matches = glob.glob(pattern)
+                        possible_paths.extend(matches)
+                
+                for path in possible_paths:
+                    if path and os.path.exists(path) and path.endswith('.csv'):
+                        csv_file_path = path
+                        print(f"📁 Found CSV file: {csv_file_path}")
+                        break
+        
         from operational_queries import compute_operational_insights
         
         try:
-            insights = compute_operational_insights()
+            if not csv_file_path:
+                print(f"⚠️  No CSV file path available to compute insights")
+                return {
+                    "success": True,
+                    "data": {
+                        "insights": {},
+                        "message": "No CSV file available. Please upload a CSV file first."
+                    }
+                }
+            
+            if not os.path.exists(csv_file_path):
+                print(f"⚠️  CSV file path does not exist: {csv_file_path}")
+                return {
+                    "success": True,
+                    "data": {
+                        "insights": {},
+                        "message": f"CSV file not found at: {csv_file_path}"
+                    }
+                }
+            
+            print(f"📊 Computing operational insights on-demand from: {csv_file_path}")
+            insights = compute_operational_insights(csv_file_path=csv_file_path)
+            
             if not insights or (isinstance(insights, dict) and len(insights) == 0):
-                return {"insights": {}}
-            return {"insights": insights}
+                print(f"⚠️  No operational insights computed (empty result)")
+                return {
+                    "success": True,
+                    "data": {
+                        "insights": {},
+                        "message": "Operational insights computation returned empty results."
+                    }
+                }
+            
+            print(f"✅ Computed operational insights: {len(insights)} keys: {list(insights.keys())[:10]}")
+            # Verify we have structured insights
+            has_structured = any(key in insights for key in ['by_department', 'by_manager', 'by_recruitment_source'])
+            if has_structured:
+                print(f"   ✅ Contains structured insights (by_department, by_manager, etc.)")
+            else:
+                print(f"   ⚠️  Missing structured insights - only has: {list(insights.keys())}")
+            
+            # CRITICAL: Store computed insights in document agent metadata so they're available for future requests
+            if insights and isinstance(insights, dict) and len(insights) > 0:
+                for agent_id, agent in document_agents.items():
+                    if hasattr(agent, 'document_type') and agent.document_type.lower() == '.csv':
+                        agent.metadata['operational_insights'] = insights
+                        agent.metadata['processing_status'] = agent.metadata.get('processing_status', {})
+                        agent.metadata['processing_status']['operational_insights'] = 'completed'
+                        print(f"✅ Stored computed insights in document agent {agent_id} metadata")
+                        break
+            
+            # Note: Operational insights are NOT persisted - they're computed fresh each time
+            # This ensures they're always up-to-date with the current CSV data
+            
+            return {
+                "success": True,
+                "data": {
+                    "insights": insights
+                }
+            }
         except Exception as compute_error:
             print(f"❌ Error computing insights: {compute_error}")
-            return {"insights": {}}
+            import traceback
+            traceback.print_exc()
+            return {
+                "success": True,
+                "data": {
+                    "insights": {},
+                    "message": f"Error computing insights: {str(compute_error)}"
+                }
+            }
     except ImportError as e:
         import traceback
         traceback.print_exc()
@@ -1127,7 +1314,7 @@ async def get_facts_endpoint(
                         matching_uri = stored_uri
                         break
                 if matching_uri:
-                    print(f"⚠️  Fact ID URI mismatch: expected '{fact_id_uri}', found '{matching_uri}'")
+                    # Mismatch handled by fallback lookup - no need to log
                     metadata = metadata_map.get(matching_uri, {})
             
             # Get all sources for this fact
@@ -1747,8 +1934,10 @@ if __name__ == "__main__":
     port = int(os.getenv("API_PORT", 8001))
     host = os.getenv("API_HOST", "0.0.0.0")  # Bind to all interfaces for external access
     
-    # Check if the requested port is available, if not try alternatives
+    # Check if the requested port is available, kill existing processes if needed
     import socket
+    import subprocess
+    
     def is_port_available(check_port):
         """Check if a port is available by trying to bind to it"""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1760,9 +1949,39 @@ if __name__ == "__main__":
         except OSError:
             return False
     
-    # Try the requested port first, then alternatives if needed
+    def kill_processes_on_port(check_port):
+        """Kill processes using the specified port"""
+        try:
+            # Try to find processes using the port (works on macOS/Linux)
+            result = subprocess.run(
+                ['lsof', '-ti', f':{check_port}'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                pids = result.stdout.strip().split('\n')
+                print(f"⚠️  Port {check_port} is in use by process(es): {', '.join(pids)}")
+                print(f"🔧 Killing existing process(es)...")
+                for pid in pids:
+                    try:
+                        subprocess.run(['kill', '-9', pid], check=False, timeout=1)
+                    except:
+                        pass
+                import time
+                time.sleep(1)  # Wait for processes to terminate
+                return True
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            # lsof might not be available or command failed
+            pass
+        return False
+    
+    # Try to free the requested port first
     if not is_port_available(port):
-        print(f"⚠️  Port {port} is busy, trying alternatives...")
+        kill_processes_on_port(port)
+        # Check again after killing
+        if not is_port_available(port):
+            print(f"⚠️  Port {port} is still busy, trying alternatives...")
         for attempt_port in [8001, 8002, 8003, 8004]:
             if attempt_port != port and is_port_available(attempt_port):
                 port = attempt_port

@@ -40,7 +40,6 @@ export default function AgentsPage() {
   const visualizationAgents = architectureData?.visualization_agents || [];
   const kgAgents = architectureData?.kg_agents || [];
   const llmAgents = architectureData?.llm_agents || [];
-  const strategicQueryAgents = architectureData?.strategic_query_agents || [];
   const operationalQueryAgents = architectureData?.operational_query_agents || [];
   const documentAgents = architectureData?.document_agents || [];
 
@@ -87,7 +86,6 @@ export default function AgentsPage() {
         visualizationAgents={visualizationAgents}
         kgAgents={kgAgents}
         llmAgents={llmAgents}
-        strategicQueryAgents={strategicQueryAgents}
         operationalQueryAgents={operationalQueryAgents}
         documentAgents={documentAgents}
       />
@@ -176,49 +174,6 @@ export default function AgentsPage() {
         ))}
       </div>
 
-      {/* Strategic Query Agents */}
-      {strategicQueryAgents.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Strategic Query Agents ({strategicQueryAgents.length})
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {strategicQueryAgents.map((agent: any) => (
-              <Card key={agent.id} className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-amber-500" />
-                    <h3 className="font-semibold">{agent.name}</h3>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`${getStatusColor(agent.status)} text-white border-0`}
-                  >
-                    <span className="flex items-center gap-1">
-                      {getStatusIcon(agent.status)}
-                      {agent.status}
-                    </span>
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {agent.metadata?.description || "Processes multi-variable strategic queries"}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {(agent.metadata?.capabilities || []).map((cap: string) => (
-                    <Badge key={cap} variant="secondary" className="text-xs">
-                      {cap}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Created: {new Date(agent.created_at).toLocaleString()}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Operational Query Agents */}
       {operationalQueryAgents.length > 0 && (

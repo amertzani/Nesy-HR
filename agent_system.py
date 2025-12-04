@@ -5,17 +5,80 @@ Multi-Agent System for HR Decision Support
 This module implements a focused multi-agent architecture for HR professionals
 to make informed, evidence-based decisions.
 
-Architecture:
-- Statistics Agent: Performs statistical analysis of documents (especially CSV files)
-- Visualization Agent: Creates user-friendly graphs/charts from statistics
-- Knowledge Graph Agent: Extracts facts/knowledge from documents for traceability
-- LLM Agent: Provides traceable answers using KG and statistics
+AGENT ROLES & RESPONSIBILITIES:
+================================
 
-Communication Flow:
-- Statistics Agent ↔ Visualization Agent
-- Statistics Agent ↔ KG Agent
-- LLM Agent ↔ KG Agent
-- LLM Agent ↔ Statistics Agent
+1. KNOWLEDGE GRAPH (KG) AGENT:
+   - Maintains and manages the knowledge graph (main storage system)
+   - Stores all facts extracted from documents
+   - Provides fact retrieval for LLM queries
+   - The knowledge graph is the central storage of the system
+
+2. DOCUMENT AGENTS:
+   - Created per uploaded document
+   - Provide overview and coordination for document processing
+   - Break down documents into chunks for worker agents
+   - Track document metadata (columns, rows, employee names, etc.)
+
+3. WORKER AGENTS:
+   - Created by document agents to process document chunks
+   - Extract facts from their assigned chunks
+   - Direct extracted facts to the knowledge graph (via KG agent)
+   - Run in parallel for efficient processing
+
+4. STATISTICS AGENT:
+   - Computes correlations between numeric columns
+   - Calculates descriptive statistics (mean, median, min, max, std, quartiles)
+   - Analyzes value distributions (categorical and numeric)
+   - Creates statistical facts that are stored in the knowledge graph
+   - Provides statistics context to LLM for correlation/distribution queries
+
+5. OPERATIONAL QUERY AGENT:
+   - Analyzes relations between columns (groupby operations)
+   - Generates operational insights (department performance, absence patterns, etc.)
+   - Creates operational facts that are stored in the knowledge graph
+   - Provides operational insights to LLM for groupby/aggregation queries
+
+6. VISUALIZATION AGENT:
+   - Creates charts and graphs from statistics
+   - Generates correlation heatmaps
+   - Provides visualizations for UI display
+
+7. LLM AGENT:
+   - Communicates with all agents to provide evidence-based responses
+   - Retrieves facts from knowledge graph
+   - Uses statistics context for correlation/distribution questions
+   - Uses operational insights for groupby/aggregation questions
+   - Provides traceable, accurate answers to user queries
+
+8. ORCHESTRATOR AGENT:
+   - Routes queries from LLM to appropriate agents
+   - Determines which agent(s) should handle a query
+   - Coordinates multi-agent responses
+   - Manages query routing strategy
+
+PROCESSING FLOW:
+================
+
+When a file is uploaded:
+1. Document Agent is created for the file
+2. Document Agent breaks file into chunks → Worker Agents extract facts → Facts stored in KG
+3. Simultaneously:
+   - Statistics Agent analyzes data → Creates correlation/distribution facts → Stored in KG
+   - Operational Agent generates groupby insights → Creates operational facts → Stored in KG
+   - Visualization Agent creates charts → Displayed in UI
+4. All facts are stored in the Knowledge Graph (main storage)
+5. LLM queries the Knowledge Graph and agents for evidence-based responses
+
+COMMUNICATION FLOW:
+===================
+- Document Agents → Worker Agents → KG Agent → Knowledge Graph
+- Statistics Agent → KG Agent → Knowledge Graph (statistical facts)
+- Operational Agent → KG Agent → Knowledge Graph (operational facts)
+- LLM Agent ↔ Knowledge Graph (fact retrieval)
+- LLM Agent ↔ Statistics Agent (correlation/distribution queries)
+- LLM Agent ↔ Operational Agent (groupby/aggregation queries)
+- Orchestrator Agent → Routes queries to appropriate agents
 
 Author: Research Brain Team
 Last Updated: 2025-01-20
@@ -76,7 +139,6 @@ STATISTICS_AGENT_ID = "statistics_agent"
 VISUALIZATION_AGENT_ID = "visualization_agent"
 KG_AGENT_ID = "kg_agent"
 LLM_AGENT_ID = "llm_agent"
-STRATEGIC_QUERY_AGENT_ID = "strategic_query_agent"
 OPERATIONAL_QUERY_AGENT_ID = "operational_query_agent"
 
 # Document-specific agents (created per document)
@@ -231,21 +293,7 @@ def initialize_agents(clear_document_agents: bool = True):
             }
         )
     
-    # Strategic Query Agent (handles S1, S2 queries)
-    agents_store[STRATEGIC_QUERY_AGENT_ID] = Agent(
-        id=STRATEGIC_QUERY_AGENT_ID,
-        name="Strategic Query Agent",
-        type="strategic_query",
-        status="active",
-        created_at=datetime.now().isoformat(),
-        metadata={
-            "description": "Processes strategic-level multi-variable queries (S1, S2) using statistics and knowledge graph",
-            "role": "strategic_analysis",
-            "capabilities": ["multi_variable_analysis", "risk_detection", "performance_monitoring", "recruitment_analysis"]
-        }
-    )
-    
-    # Operational Query Agent (handles O1, O2, O3 queries)
+    # Operational Query Agent (handles O1, O2, O3 queries and operational insights)
     agents_store[OPERATIONAL_QUERY_AGENT_ID] = Agent(
         id=OPERATIONAL_QUERY_AGENT_ID,
         name="Operational Query Agent",
@@ -268,7 +316,6 @@ def initialize_agents(clear_document_agents: bool = True):
     print(f"   - Visualization Agent")
     print(f"   - Knowledge Graph Agent")
     print(f"   - HR Assistant (LLM)")
-    print(f"   - Strategic Query Agent")
     print(f"   - Operational Query Agent")
     print(f"   Document agents will be created when documents are uploaded")
 
@@ -318,6 +365,13 @@ def process_document_with_agents(document_id: str, document_name: str, document_
     doc_agent_id = create_document_agent(document_name, document_id, document_type, file_path=file_path)
     doc_agent = document_agents[doc_agent_id]
     
+    # CRITICAL: Ensure file_path is stored in doc_agent for background processing
+    # This must be done BEFORE background thread starts
+    import os
+    if file_path and os.path.exists(file_path):
+        doc_agent.file_path = file_path
+        print(f"✅ Stored file_path in doc_agent for all processes: {file_path}")
+    
     results = {
         "document_id": document_id,
         "document_name": document_name,
@@ -334,8 +388,7 @@ def process_document_with_agents(document_id: str, document_name: str, document_
     if document_type.lower() == '.csv':
         try:
             import pandas as pd
-            print(f"📖 Reading CSV file once (will be reused by all agents)...")
-            # Detect separator
+            # Detect separator and read CSV file once (reused by all agents)
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 first_line = f.readline()
                 comma_count = first_line.count(',')
@@ -352,8 +405,6 @@ def process_document_with_agents(document_id: str, document_name: str, document_
             df = pd.read_csv(file_path, sep=sep, encoding='utf-8', on_bad_lines='skip', engine='python')
             if len(df.columns) == 1:
                 df = pd.read_csv(file_path, sep=';', encoding='utf-8', on_bad_lines='skip', engine='python')
-            
-            print(f"✅ CSV loaded: {len(df)} rows × {len(df.columns)} columns")
         except Exception as csv_read_error:
             print(f"⚠️  Error reading CSV: {csv_read_error}")
             df = None
@@ -368,9 +419,10 @@ def process_document_with_agents(document_id: str, document_name: str, document_
             import time
             start_time = time.time()
             
-            print(f"🚀 Running Statistics, Visualization, and KG text preparation in parallel...")
-            
-            # Prepare KG text extraction (doesn't depend on statistics) - uses DataFrame
+            # Run Statistics Agent, Visualization Agent, and KG text preparation in parallel
+            # Statistics Agent: computes correlations, distributions, descriptive stats → stores facts in KG
+            # Visualization Agent: creates charts from statistics → displays in UI
+            # KG text preparation: prepares text for fact extraction
             def prepare_kg_text():
                 """Extract comprehensive text from CSV for KG agent - uses pre-loaded DataFrame"""
                 try:
@@ -419,8 +471,10 @@ def process_document_with_agents(document_id: str, document_name: str, document_
                     return f"CSV Dataset: {document_name}\nColumns: {', '.join(df.columns.tolist()) if df is not None else 'unknown'}"
             
             # Run Statistics and KG text preparation in parallel - both use pre-loaded DataFrame
+            # PARALLEL PROCESSING: Statistics and KG text prep run simultaneously
             with ThreadPoolExecutor(max_workers=2) as executor:
                 # Submit statistics agent and KG text preparation in parallel (both use DataFrame)
+                # No file re-reading - both use the same pre-loaded DataFrame (df)
                 stats_future = executor.submit(process_with_statistics_agent_from_df, df, document_name)
                 kg_text_future = executor.submit(prepare_kg_text)
                 
@@ -435,7 +489,10 @@ def process_document_with_agents(document_id: str, document_name: str, document_
                     results["visualizations"] = visualizations
             
             elapsed = time.time() - start_time
-            print(f"✅ Statistics, KG text preparation, and Visualization completed in {elapsed:.1f}s")
+            print(f"✅ Statistics & Visualization (parallel): {elapsed:.1f}s")
+            print(f"   - Statistics: ✅ (used DataFrame)")
+            print(f"   - KG text prep: ✅ (used DataFrame)")
+            print(f"   - Visualization: ✅ (used statistics results)")
             
         except Exception as stats_error:
             print(f"⚠️  Statistics/Visualization/KG preparation error: {stats_error}")
@@ -455,254 +512,382 @@ def process_document_with_agents(document_id: str, document_name: str, document_
             import time
             start_time = time.time()
             
-            # Use pre-loaded DataFrame for fact extraction
+            # Document Agent → Worker Agents: Extract facts from CSV → Store in KG
             total_rows = len(df)
             total_cols = len(df.columns)
-            complexity = total_rows * total_cols
             
-            print(f"📊 CSV Fact Extraction Starting: {total_rows:,} rows × {total_cols} cols = {complexity:,} data points")
-            
-            # OPTIMIZED: Adaptive chunking with more aggressive parallelization
-            # Target: ~500-1000 facts per chunk for better parallelization
-            # Use more workers for larger files to maximize throughput
-            if complexity < 5000:
+            # Adaptive parallelization based on file size
+            if total_rows * total_cols < 5000:
                 num_workers = 2
                 chunk_size = max(25, total_rows // num_workers)
-            elif complexity < 50000:
-                # For medium files, use 4-6 workers
-                num_workers = min(6, max(4, total_rows // 75))  # More workers, smaller chunks
-                chunk_size = max(20, total_rows // num_workers)  # Smaller chunks for better load balancing
+            elif total_rows * total_cols < 50000:
+                num_workers = min(6, max(4, total_rows // 75))
+                chunk_size = max(20, total_rows // num_workers)
             else:
-                # For large files, use 8-12 workers (if CPU cores allow)
                 import os
                 cpu_count = os.cpu_count() or 4
-                max_workers = min(12, max(8, cpu_count))  # Use more workers if available
-                num_workers = min(max_workers, max(6, total_rows // 150))  # More aggressive parallelization
-                chunk_size = max(50, total_rows // num_workers)  # Smaller chunks for large files
-            
-            estimated_chunks = (total_rows + chunk_size - 1) // chunk_size
-            print(f"🔄 Extracting facts using parallel processing:")
-            print(f"   - Workers: {num_workers}")
-            print(f"   - Chunk size: {chunk_size} rows")
-            print(f"   - Estimated chunks: {estimated_chunks}")
-            print(f"   - Data complexity: {complexity:,} data points")
-            print(f"   - Started at: {time.strftime('%H:%M:%S')}")
+                max_workers = min(12, max(8, cpu_count))
+                num_workers = min(max_workers, max(6, total_rows // 150))
+                chunk_size = max(50, total_rows // num_workers)
             
             csv_facts_count = extract_csv_facts_directly_parallel_from_df(df, document_name, document_id, num_workers=num_workers, chunk_size=chunk_size, document_type=document_type)
             
             elapsed_time = time.time() - start_time
-            print(f"✅ CSV extraction completed: {csv_facts_count} facts in {elapsed_time/60:.1f} minutes ({elapsed_time:.1f} seconds)")
+            print(f"✅ Facts extracted: {csv_facts_count:,} facts ({elapsed_time:.1f}s)")
         except Exception as csv_facts_error:
             elapsed_time = time.time() - start_time if 'start_time' in locals() else 0
             print(f"⚠️  Error in CSV fact extraction after {elapsed_time/60:.1f} minutes: {csv_facts_error}")
             import traceback
             traceback.print_exc()
     
-    # Step 3b: Extract statistical facts directly from statistics (for CSV files)
+    # Statistics Agent: Extract correlation/distribution facts → Store in KG
     stats_facts_count = 0
     if document_type.lower() == '.csv' and results.get("statistics"):
         try:
             stats_facts_count = extract_statistical_facts(results["statistics"], document_name, document_id)
-            print(f"📊 Extracted {stats_facts_count} statistical facts from correlations and statistics")
-        except Exception as stats_facts_error:
-            print(f"⚠️  Error extracting statistical facts: {stats_facts_error}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
+            pass
     
-    # Step 3c: Skip redundant KG text processing for CSV files
-    # Workers already construct triples directly from DataFrame rows
-    # KG text processing is only needed for non-CSV files (PDF, DOCX, TXT)
+    # KG Agent: Extract facts from text (for non-CSV files like PDF, DOCX, TXT)
     kg_result_facts = 0
     if document_type.lower() != '.csv' and kg_text and len(kg_text.strip()) > 10:
         try:
-            print(f"🔄 Running KG agent for text extraction (non-CSV file)...")
             kg_result = process_with_kg_agent(kg_text, document_name, document_id)
             kg_result_facts = kg_result.get("facts_extracted", 0)
             results["kg_result"] = kg_result.get("result", "")
-            print(f"✅ KG agent extracted {kg_result_facts} facts from text")
         except Exception as kg_error:
             print(f"⚠️  KG agent error: {kg_error}")
             import traceback
             traceback.print_exc()
-    elif document_type.lower() == '.csv':
-        print(f"⏭️  Skipping KG text processing for CSV (workers already construct triples directly)")
     
-    # Total facts = direct CSV facts + statistical facts + text extraction facts (for non-CSV)
+    # All facts stored in Knowledge Graph (main storage)
     results["facts_extracted"] = csv_facts_count + stats_facts_count + kg_result_facts
-    print(f"📊 Total facts extracted: {results['facts_extracted']} (CSV: {csv_facts_count}, Stats: {stats_facts_count}, Text: {kg_result_facts})")
     
-    # Step 4: Generate groupby insights and run operational queries in parallel
-    operational_insights = {}
-    groupby_insights = {}
-    if document_type.lower() == '.csv' and results["facts_extracted"] > 0:
-        try:
-            print(f"🔄 Generating groupby insights and running operational queries in parallel...")
-            from concurrent.futures import ThreadPoolExecutor
-            import pandas as pd
-            import time
-            start_time = time.time()
+    # Mark KG as ready - document is processable now
+    results["kg_ready"] = True
+    results["processing_status"] = {
+        "kg_facts": "completed",
+        "statistics_facts": "pending",
+        "visualizations": "pending",
+        "operational_insights": "pending"
+    }
+    
+    # Store initial status in metadata
+    if not hasattr(doc_agent, 'metadata') or doc_agent.metadata is None:
+        doc_agent.metadata = {}
+    doc_agent.metadata["processing_status"] = results["processing_status"].copy()
+    
+    # Start background tasks for statistics facts, visualizations, and operational insights
+    # These run asynchronously after KG is ready - document is usable immediately!
+    # CRITICAL: Capture DataFrame in closure for background processing (like statistics does)
+    if document_type.lower() == '.csv' and df is not None and results["facts_extracted"] > 0:
+        from threading import Thread
+        from datetime import datetime
+        
+        # Capture DataFrame in closure for background processing
+        background_df = df.copy()  # Make a copy to avoid issues with thread safety
+        
+        def background_processing():
+            """Process statistics facts, visualizations, and insights in background"""
+            import os  # Import os at function level to avoid scoping issues
+            import tempfile
+            import glob
             
-            # Use pre-loaded DataFrame for groupby insights
-            if df is not None:
+            try:
+                # PARALLEL PROCESSING: Background thread for statistics facts, visualizations, and operational insights
+                # Capture file_path from outer scope for use in background thread
+                # Priority: 1) doc_agent.file_path (set before this thread starts), 2) file_path parameter, 3) try to find from document store
+                background_file_path = None
+                if hasattr(doc_agent, 'file_path') and doc_agent.file_path and os.path.exists(doc_agent.file_path):
+                    background_file_path = doc_agent.file_path
+                    print(f"✅ Background: Using doc_agent.file_path for operational insights: {background_file_path}")
+                elif file_path and os.path.exists(file_path):
+                    background_file_path = file_path
+                    # Also store it in doc_agent for future use
+                    doc_agent.file_path = file_path
+                    print(f"✅ Background: Using file_path parameter for operational insights: {background_file_path}")
+                else:
+                    # Try to find CSV file from document store or temp directories
+                    temp_dir = tempfile.gettempdir()
+                    possible_paths = [
+                        os.path.join(temp_dir, document_name),
+                        os.path.join('/tmp', document_name),
+                        document_name,  # Try direct path
+                    ]
+                    # Also try glob patterns
+                    for temp_path in [temp_dir, '/tmp', '/var/tmp']:
+                        if os.path.exists(temp_path):
+                            pattern = os.path.join(temp_path, f'*{document_name}*')
+                            matches = glob.glob(pattern)
+                            possible_paths.extend(matches)
+                    
+                    for path in possible_paths:
+                        if path and os.path.exists(path) and path.endswith('.csv'):
+                            background_file_path = path
+                            doc_agent.file_path = path
+                            print(f"✅ Background: Found CSV file for operational insights: {path}")
+                            break
+                
+                if not background_file_path:
+                    print(f"⚠️  WARNING: No file path available for background processing. Operational insights may fail.")
+                    print(f"   Document name: {document_name}, doc_agent.file_path: {getattr(doc_agent, 'file_path', 'None')}")
+                    print(f"   file_path parameter: {file_path}")
+                    # Don't return early - let it try to compute anyway, might work with on-demand computation
+                
+                # Update status
+                doc_agent.metadata["processing_status"] = {
+                    "kg_facts": "completed",
+                    "statistics_facts": "processing",
+                    "visualizations": "processing",
+                    "operational_insights": "processing"
+                }
+                
+                # 1. Extract statistics facts (if statistics were computed)
+                if results.get("statistics"):
+                    try:
+                        stats_facts_count = extract_statistical_facts(results["statistics"], document_name, document_id)
+                        doc_agent.metadata["processing_status"]["statistics_facts"] = "completed"
+                        doc_agent.metadata["statistics_facts_count"] = stats_facts_count
+                    except Exception:
+                        doc_agent.metadata["processing_status"]["statistics_facts"] = "error"
+                
+                # 2. Generate visualizations (if statistics were computed)
+                if results.get("statistics"):
+                    try:
+                        visualizations = process_with_visualization_agent(results["statistics"], document_name)
+                        if visualizations:
+                            results["visualizations"] = visualizations
+                            doc_agent.metadata["visualizations"] = visualizations
+                        doc_agent.metadata["processing_status"]["visualizations"] = "completed"
+                    except Exception:
+                        doc_agent.metadata["processing_status"]["visualizations"] = "error"
+                
+                # 3. Generate operational insights
                 try:
-                    def generate_groupby_insights():
-                        """Generate insights using groupby operations - runs in parallel"""
-                        insights = {}
-                        numeric_cols = ['Salary', 'EmpSatisfaction', 'Absences', 'PerfScoreID', 'PerformanceScore', 'EngagementSurvey']
-                        groupby_cols = ['Department', 'RecruitmentSource', 'ManagerName', 'EmploymentStatus']
-                        
-                        # Find actual column names (case-insensitive)
-                        actual_numeric = []
-                        for col in df.columns:
-                            for nc in numeric_cols:
-                                if nc.lower() in col.lower() or col.lower() in nc.lower():
-                                    actual_numeric.append(col)
-                                    break
-                        
-                        actual_groupby = []
-                        for col in df.columns:
-                            for gc in groupby_cols:
-                                if gc.lower() in col.lower() or col.lower() in gc.lower():
-                                    actual_groupby.append(col)
-                                    break
-                        
-                        print(f"📊 Generating groupby insights: {len(actual_groupby)} grouping columns × {len(actual_numeric)} numeric columns")
-                        
-                        for group_col in actual_groupby:
-                            if group_col not in df.columns:
-                                continue
-                            
-                            group_insights = {}
-                            for num_col in actual_numeric:
-                                if num_col not in df.columns:
-                                    continue
+                    from concurrent.futures import ThreadPoolExecutor
+                    import pandas as pd
+                    import time
+                    import os  # Ensure os is imported at function level
+                    start_time = time.time()
+                    
+                    # Use pre-loaded DataFrame for groupby insights
+                    if df is not None:
+                        try:
+                            def generate_groupby_insights():
+                                """Generate insights using groupby operations - runs in parallel"""
+                                insights = {}
+                                numeric_cols = ['Salary', 'EmpSatisfaction', 'Absences', 'PerfScoreID', 'PerformanceScore', 'EngagementSurvey']
+                                groupby_cols = ['Department', 'RecruitmentSource', 'ManagerName', 'EmploymentStatus']
                                 
+                                # Find actual column names (case-insensitive)
+                                actual_numeric = []
+                                for col in df.columns:
+                                    for nc in numeric_cols:
+                                        if nc.lower() in col.lower() or col.lower() in nc.lower():
+                                            actual_numeric.append(col)
+                                            break
+                                
+                                actual_groupby = []
+                                for col in df.columns:
+                                    for gc in groupby_cols:
+                                        if gc.lower() in col.lower() or col.lower() in gc.lower():
+                                            actual_groupby.append(col)
+                                            break
+                                
+                                for group_col in actual_groupby:
+                                    if group_col not in df.columns:
+                                        continue
+                                    
+                                    group_insights = {}
+                                    for num_col in actual_numeric:
+                                        if num_col not in df.columns:
+                                            continue
+                                        
+                                        try:
+                                            # Convert to numeric
+                                            df[num_col] = pd.to_numeric(df[num_col], errors='coerce')
+                                            # Group by and calculate statistics
+                                            grouped = df.groupby(group_col)[num_col].agg(['mean', 'min', 'max', 'count']).round(2)
+                                            group_insights[num_col] = grouped.to_dict('index')
+                                        except Exception:
+                                            pass
+                                    
+                                    if group_insights:
+                                        insights[group_col] = group_insights
+                                
+                                return insights
+                            
+                            def compute_full_operational_insights():
+                                """Compute full operational insights (by_department, by_manager, etc.)"""
                                 try:
-                                    # Convert to numeric
-                                    df[num_col] = pd.to_numeric(df[num_col], errors='coerce')
-                                    # Group by and calculate statistics
-                                    grouped = df.groupby(group_col)[num_col].agg(['mean', 'min', 'max', 'count']).round(2)
-                                    group_insights[num_col] = grouped.to_dict('index')
+                                    # Use pre-loaded DataFrame from closure (like statistics does) - no file I/O needed!
+                                    # This is the same approach as statistics agent - uses DataFrame directly
+                                    if background_df is not None and len(background_df) > 0:
+                                        print(f"✅ Computing operational insights using pre-loaded DataFrame ({len(background_df)} rows)")
+                                        from operational_queries import compute_operational_insights
+                                        insights = compute_operational_insights(df=background_df)
+                                    else:
+                                        # Fallback: Try to use file_path if DataFrame not available
+                                        file_path_to_use = background_file_path
+                                        print(f"🔍 compute_full_operational_insights: background_file_path={background_file_path}")
+                                        
+                                        # Try multiple sources for file path
+                                        if not file_path_to_use or not os.path.exists(file_path_to_use):
+                                            if hasattr(doc_agent, 'file_path') and doc_agent.file_path and os.path.exists(doc_agent.file_path):
+                                                file_path_to_use = doc_agent.file_path
+                                                print(f"🔍 Using doc_agent.file_path: {file_path_to_use}")
+                                        
+                                        if not file_path_to_use or not os.path.exists(file_path_to_use):
+                                            print(f"❌ No valid file path or DataFrame available for compute_full_operational_insights")
+                                            print(f"   background_file_path: {background_file_path}")
+                                            print(f"   doc_agent.file_path: {getattr(doc_agent, 'file_path', 'not set')}")
+                                            print(f"   background_df: {'available' if background_df is not None else 'not available'}")
+                                            return {}
+                                        
+                                        print(f"✅ Computing full operational insights from file: {file_path_to_use}")
+                                        from operational_queries import compute_operational_insights
+                                        insights = compute_operational_insights(csv_file_path=file_path_to_use)
+                                    
+                                    if insights and len(insights) > 0:
+                                        print(f"✅ Computed full insights: {len(insights)} keys: {list(insights.keys())}")
+                                        # Verify we have the expected structured insights
+                                        has_by_manager = 'by_manager' in insights and len(insights.get('by_manager', [])) > 0
+                                        has_by_department = 'by_department' in insights and len(insights.get('by_department', [])) > 0
+                                        has_by_recruitment = 'by_recruitment_source' in insights and len(insights.get('by_recruitment_source', [])) > 0
+                                        print(f"   - by_manager: {has_by_manager} ({len(insights.get('by_manager', []))} items)")
+                                        print(f"   - by_department: {has_by_department} ({len(insights.get('by_department', []))} items)")
+                                        print(f"   - by_recruitment_source: {has_by_recruitment} ({len(insights.get('by_recruitment_source', []))} items)")
+                                        
+                                        # Store insights as facts
+                                        from operational_queries import store_operational_insights_as_facts
+                                        store_operational_insights_as_facts(insights)
+                                        print(f"✅ Stored operational insights as facts in KG")
+                                    else:
+                                        print(f"❌ No insights computed from {file_path_to_use} - returned empty dict")
+                                    
+                                    return insights if insights else {}
                                 except Exception as e:
-                                    print(f"⚠️  Error grouping {group_col} by {num_col}: {e}")
+                                    # Error computing full operational insights
+                                    import traceback
+                                    print(f"❌ Error in compute_full_operational_insights: {e}")
+                                    traceback.print_exc()
+                                    return {}
+                            
+                            with ThreadPoolExecutor(max_workers=2) as executor:
+                                groupby_future = executor.submit(generate_groupby_insights)
+                                full_insights_future = executor.submit(compute_full_operational_insights)
+                                
+                                # Get results
+                                groupby_insights = groupby_future.result()
+                                full_operational_insights = full_insights_future.result()
+                                
+                                # Use full_operational_insights as the main operational insights
+                                operational_insights = full_operational_insights if full_operational_insights else {}
+                            
+                            elapsed = time.time() - start_time
+                            
+                            # Store groupby insights in KG for LLM access
+                            if groupby_insights:
+                                try:
+                                    from knowledge import add_to_graph
+                                    from datetime import datetime
+                                    
+                                    for group_col, metrics in groupby_insights.items():
+                                        for metric_col, group_data in metrics.items():
+                                            insight_text = f"Groupby Analysis: {group_col} × {metric_col}\n"
+                                            insight_text += f"Statistics by {group_col}:\n"
+                                            for group_val, stats in group_data.items():
+                                                insight_text += f"- {group_val}: mean={stats.get('mean', 'N/A')}, min={stats.get('min', 'N/A')}, max={stats.get('max', 'N/A')}, count={stats.get('count', 'N/A')}\n"
+                                            
+                                            add_to_graph(
+                                                insight_text,
+                                                source_document="groupby_insights",
+                                                uploaded_at=datetime.now().isoformat(),
+                                                agent_id="groupby_agent"
+                                            )
+                                except Exception:
                                     pass
                             
-                            if group_insights:
-                                insights[group_col] = group_insights
-                        
-                        return insights
-                    
-                    def run_operational_queries():
-                        """Run operational queries - uses pre-loaded DataFrame instead of reconstructing from KG"""
-                        ops_insights = {}
-                    from strategic_query_agent import process_o1_1, process_o1_2, process_o2_1, process_o3_1
-                    from strategic_query_agent import normalize_column_name
-                    
-                    queries = [
-                        ("O1.1", process_o1_1, ["PerformanceScore", "PerfScoreID", "Department"]),
-                        ("O1.2", process_o1_2, ["PerformanceScore", "PerfScoreID", "Department"]),
-                        ("O2.1", process_o2_1, ["Absences", "EmploymentStatus", "Department", "Position"]),
-                        ("O3.1", process_o3_1, ["EngagementSurvey", "ManagerName", "ManagerID"]),
-                    ]
-                    
-                    for query_id, process_func, required_cols in queries:
-                        try:
-                            # Find actual column names
-                            columns = {}
-                            for var in required_cols:
-                                actual_col = normalize_column_name(df, var)
-                                if actual_col:
-                                    columns[var] = actual_col
-                            
-                            # Check if all required columns are found
-                            if len(columns) >= 2:  # At least 2 columns needed for operational queries
-                                answer_parts, evidence_facts = process_func(df, columns)
-                                answer = "".join(answer_parts) if isinstance(answer_parts, list) else str(answer_parts)
-                                
-                                if answer and len(answer) > 50 and "error" not in answer.lower() and "couldn't" not in answer.lower():
-                                    ops_insights[query_id] = answer
-                                    print(f"✅ {query_id} completed")
-                                    
-                                    # Store insight in knowledge graph for LLM access
-                                    try:
-                                        from knowledge import add_to_graph
-                                        from datetime import datetime
-                                        add_to_graph(
-                                            f"Operational Insight {query_id}:\n{answer}",
-                                            source_document="operational_insights",
-                                            uploaded_at=datetime.now().isoformat(),
-                                            agent_id="operational_query_agent"
-                                        )
-                                        print(f"✅ Stored operational insight in knowledge graph for LLM access")
-                                    except Exception as store_error:
-                                        print(f"⚠️  Error storing insight: {store_error}")
+                            # Operational insights are now directly from compute_full_operational_insights
+                            if operational_insights:
+                                print(f"✅ Operational insights computed: {len(operational_insights)} keys: {list(operational_insights.keys())}")
+                                # Verify we have structured insights
+                                has_by_manager = 'by_manager' in operational_insights
+                                has_by_department = 'by_department' in operational_insights
+                                has_by_recruitment = 'by_recruitment_source' in operational_insights
+                                print(f"   - by_manager: {has_by_manager}, by_department: {has_by_department}, by_recruitment_source: {has_by_recruitment}")
                             else:
-                                print(f"⚠️  {query_id}: Missing required columns (found {len(columns)}/{len(required_cols)})")
-                        except Exception as e:
-                            print(f"⚠️  {query_id} query failed: {e}")
+                                print(f"⚠️  operational_insights is empty or None - compute_full_operational_insights may have failed")
+                            
+                            # Store operational insights
+                            if operational_insights and len(operational_insights) > 0:
+                                print(f"✅ Storing operational insights in doc_agent.metadata: {len(operational_insights)} keys: {list(operational_insights.keys())}")
+                                results["operational_insights"] = operational_insights
+                                doc_agent.metadata["operational_insights"] = operational_insights
+                                
+                                # Verify we have the required structured insights
+                                required_keys = ['by_department', 'by_manager', 'by_recruitment_source']
+                                has_required = all(key in operational_insights for key in required_keys)
+                                if has_required:
+                                    print(f"✅ All required structured insights present: {required_keys}")
+                                else:
+                                    missing = [k for k in required_keys if k not in operational_insights]
+                                    print(f"⚠️  Missing required insights: {missing}")
+                                
+                                # Store operational insights as facts in KG for LLM access
+                                try:
+                                    from operational_queries import store_operational_insights_as_facts
+                                    store_operational_insights_as_facts(operational_insights)
+                                    print(f"✅ Stored operational insights as facts in KG")
+                                except Exception as e:
+                                    print(f"⚠️  Error storing operational insights as facts: {e}")
+                                    import traceback
+                                    traceback.print_exc()
+                            else:
+                                print(f"❌ operational_insights is empty or None - compute_full_operational_insights failed!")
+                                print(f"   background_file_path: {background_file_path if 'background_file_path' in locals() else 'not set'}")
+                                print(f"   doc_agent.file_path: {getattr(doc_agent, 'file_path', 'not set')}")
+                            
+                            doc_agent.metadata["processing_status"]["operational_insights"] = "completed"
+                            print(f"✅ Operational insights processing completed")
+                        except Exception as df_error:
+                            print(f"⚠️  Error in operational insights background processing: {df_error}")
                             import traceback
                             traceback.print_exc()
-                    
-                    return ops_insights
-                
-                    # Run groupby insights and operational queries in parallel
-                    with ThreadPoolExecutor(max_workers=2) as executor:
-                        groupby_future = executor.submit(generate_groupby_insights)
-                        ops_future = executor.submit(run_operational_queries)
-                        
-                        # Get results
-                        groupby_insights = groupby_future.result()
-                        operational_insights = ops_future.result()
-                    
-                    elapsed = time.time() - start_time
-                    print(f"✅ Groupby insights and operational queries completed in {elapsed:.1f}s")
-                    print(f"   Groupby insights: {len(groupby_insights)} grouping columns")
-                    print(f"   Operational insights: {len(operational_insights)} queries")
-                    
-                    # Store groupby insights in results
-                    results["groupby_insights"] = groupby_insights
-                    
-                    # Store groupby insights in knowledge graph for LLM access
-                    if groupby_insights:
-                        try:
-                            from knowledge import add_to_graph
-                            from datetime import datetime
-                            
-                            for group_col, metrics in groupby_insights.items():
-                                for metric_col, group_data in metrics.items():
-                                    insight_text = f"Groupby Analysis: {group_col} × {metric_col}\n"
-                                    insight_text += f"Statistics by {group_col}:\n"
-                                    for group_val, stats in group_data.items():
-                                        insight_text += f"- {group_val}: mean={stats.get('mean', 'N/A')}, min={stats.get('min', 'N/A')}, max={stats.get('max', 'N/A')}, count={stats.get('count', 'N/A')}\n"
-                                    
-                                    add_to_graph(
-                                        insight_text,
-                                        source_document="groupby_insights",
-                                        uploaded_at=datetime.now().isoformat(),
-                                        agent_id="groupby_agent"
-                                    )
-                            
-                            print(f"✅ Stored {sum(len(m) for m in groupby_insights.values())} groupby insights in knowledge graph")
-                        except Exception as e:
-                            print(f"⚠️  Error storing groupby insights: {e}")
-                    
-                    if operational_insights:
-                        results["operational_insights"] = operational_insights
-                        print(f"✅ Generated {len(operational_insights)} operational insights")
-                    else:
-                        print(f"⚠️  No operational insights generated (queries may have failed or data missing)")
-                
-                except Exception as df_error:
-                    print(f"⚠️  Error in groupby/operational insights: {df_error}")
+                            doc_agent.metadata["processing_status"]["operational_insights"] = "error"
+                except Exception as outer_error:
+                    print(f"⚠️  Error in operational insights outer processing: {outer_error}")
                     import traceback
                     traceback.print_exc()
+                    doc_agent.metadata["processing_status"]["operational_insights"] = "error"
                 
-        except Exception as auto_query_error:
-            print(f"⚠️  Error running insights generation: {auto_query_error}")
-            import traceback
-            traceback.print_exc()
+                    # Mark all background processing as complete
+                    doc_agent.metadata["background_processing_complete"] = True
+                    doc_agent.metadata["background_processing_completed_at"] = datetime.now().isoformat()
+                    print(f"✅ Background processing completed at {doc_agent.metadata['background_processing_completed_at']}")
+                    
+                    # Note: Operational insights are stored in document agent metadata only
+                    # They are NOT persisted to documents_store.json - will be recomputed on restart or on-demand
+                    
+            except Exception as bg_error:
+                # Error in background processing
+                import traceback
+                print(f"❌ Error in background processing: {bg_error}")
+                traceback.print_exc()
+                doc_agent.metadata["background_processing_error"] = str(bg_error)
+                doc_agent.metadata["background_processing_complete"] = True  # Mark as complete even on error
+        
+        # Start background thread
+        bg_thread = Thread(target=background_processing, daemon=True)
+        bg_thread.start()
+        print(f"✅ Background processing started for statistics, visualizations, and insights")
     
-    doc_agent.status = "completed"
+    # Store statistics in document agent metadata for retrieval
+    if results.get("statistics"):
+        doc_agent.metadata["statistics"] = results["statistics"]
+    
+    # Mark document as ready (KG facts are available, background processing continues)
+    doc_agent.status = "ready"  # Changed from "completed" to "ready" to indicate KG is available
     return results
 
 def process_with_statistics_agent(file_path: str, document_name: str) -> Optional[Dict[str, Any]]:
@@ -745,16 +930,12 @@ def process_with_statistics_agent(file_path: str, document_name: str) -> Optiona
             stats_agent.status = "active"
             return None
         except Exception as e:
-            print(f"⚠️  Error in statistics agent: {e}")
+            # Error in statistics agent (silently handled)
             stats_agent.status = "active"
-            import traceback
-            traceback.print_exc()
             return None
     except Exception as e:
-        print(f"⚠️  Error in statistics agent (outer): {e}")
+        # Error in statistics agent (silently handled)
         stats_agent.status = "active"
-        import traceback
-        traceback.print_exc()
         return None
 
 def process_with_statistics_agent_from_df(df, document_name: str) -> Optional[Dict[str, Any]]:
@@ -768,10 +949,8 @@ def process_with_statistics_agent_from_df(df, document_name: str) -> Optional[Di
     try:
         return _process_statistics_from_df(df, document_name, stats_agent)
     except Exception as e:
-        print(f"⚠️  Error in statistics agent: {e}")
+        # Error in statistics agent (silently handled)
         stats_agent.status = "active"
-        import traceback
-        traceback.print_exc()
         return None
 
 def _process_statistics_from_df(df, document_name: str, stats_agent) -> Optional[Dict[str, Any]]:
@@ -834,16 +1013,11 @@ def _process_statistics_from_df(df, document_name: str, stats_agent) -> Optional
                 }
                 for col in numeric_cols
             }
-            print(f"📊 Computed correlation matrix for {len(numeric_cols)} numeric columns")
-        
         stats_agent.status = "active"
-        print(f"✅ Statistics Agent analyzed {document_name}: {len(df)} rows, {len(df.columns)} columns")
         return analysis
     except Exception as e:
-        print(f"⚠️  Error processing statistics from DataFrame: {e}")
+        # Error processing statistics from DataFrame (silently handled)
         stats_agent.status = "active"
-        import traceback
-        traceback.print_exc()
         return None
 
 def process_with_visualization_agent(statistics: Dict[str, Any], document_name: str) -> Dict[str, Any]:
@@ -2265,12 +2439,13 @@ def extract_statistical_facts(statistics: Dict[str, Any], document_name: str, do
     
     from knowledge import add_to_graph as kb_add_to_graph
     from datetime import datetime
+    import pandas as pd
     
     timestamp = datetime.now().isoformat()
     facts_count = 0
     
     try:
-        # Extract facts about correlations
+        # Extract facts about correlations - store ALL correlations for queryability
         correlations = statistics.get("correlations", {})
         if correlations:
             correlation_text = []
@@ -2278,25 +2453,97 @@ def extract_statistical_facts(statistics: Dict[str, Any], document_name: str, do
             correlation_text.append("")
             
             strong_correlations = []
+            all_correlations = []  # Store all correlations for queryability
+            
             for col1, corr_dict in correlations.items():
                 for col2, corr_value in corr_dict.items():
-                    if col1 != col2 and abs(corr_value) > 0.5:  # Only strong correlations
-                        strong_correlations.append((col1, col2, corr_value))
-                        strength = "strong" if abs(corr_value) > 0.7 else "moderate"
-                        direction = "positive" if corr_value > 0 else "negative"
-                        correlation_text.append(f"{col1} has {strength} {direction} correlation ({corr_value:.3f}) with {col2}")
+                    if col1 != col2:
+                        # Check if value is NaN
+                        try:
+                            if pd.isna(corr_value):
+                                continue
+                        except:
+                            # If pandas not available or value is not a number, check manually
+                            if corr_value is None or (isinstance(corr_value, float) and str(corr_value) == 'nan'):
+                                continue
+                        all_correlations.append((col1, col2, corr_value))
+                        if abs(corr_value) > 0.5:  # Strong correlations for summary
+                            strong_correlations.append((col1, col2, corr_value))
+                            strength = "strong" if abs(corr_value) > 0.7 else "moderate"
+                            direction = "positive" if corr_value > 0 else "negative"
+                            correlation_text.append(f"{col1} has {strength} {direction} correlation ({corr_value:.3f}) with {col2}")
             
             if correlation_text:
                 correlation_text.append("")
                 correlation_text.append("These correlations indicate relationships between employee attributes that can inform HR decisions.")
                 corr_facts = kb_add_to_graph(
                     "\n".join(correlation_text),
-                    source_document=document_name,
+                    source_document="statistical_analysis",  # Use special source for better retrieval
                     uploaded_at=timestamp,
                     agent_id=KG_AGENT_ID
                 )
-                # Count facts from correlation text
-                facts_count += len([line for line in correlation_text if 'correlation' in line.lower()])
+            
+            # Store ALL correlations in a single batch for efficiency
+            # This allows queries like "correlation between salary and departmentID" to work
+            # Store in multiple queryable formats but as a single batch to avoid pipeline overhead
+            if all_correlations:
+                correlation_facts_text = []
+                correlation_facts_text.append(f"Correlation Matrix for {document_name}:")
+                correlation_facts_text.append("")
+                
+                for col1, col2, corr_value in all_correlations:
+                    # Store in multiple formats for better queryability (all in one batch)
+                    correlation_facts_text.append(f"Correlation between {col1} and {col2} is {corr_value:.3f}")
+                    correlation_facts_text.append(f"The correlation between {col1} and {col2} is {corr_value:.3f}")
+                    correlation_facts_text.append(f"{col1} and {col2} have correlation of {corr_value:.3f}")
+                    correlation_facts_text.append(f"Correlation of {col1} with {col2} is {corr_value:.3f}")
+                    correlation_facts_text.append(f"{col1} correlates with {col2} at {corr_value:.3f}")
+                
+                # Store all correlations directly to graph (bypass pipeline for speed)
+                # This is much faster than going through the full extraction pipeline
+                from knowledge import graph, fact_exists, add_fact_source_document, _fact_lookup_set, normalize_entity
+                import rdflib
+                from urllib.parse import quote
+                
+                # Add correlation facts directly to graph in proper format
+                # Format: 'Termd' and 'FromDiversityJobFairID' -> 'has correlation' -> '-0.218'
+                for col1, col2, corr_value in all_correlations:
+                    # Store correlation in proper triple format
+                    # Subject: Both column names combined with 'and'
+                    subject = normalize_entity(f"{col1} and {col2}")
+                    # Predicate: "has correlation"
+                    predicate = "has correlation"
+                    # Object: Just the correlation value
+                    object_val = f"{corr_value:.3f}"
+                    
+                    # Normalize for fact existence check
+                    subject_norm = normalize_entity(subject.lower())
+                    predicate_norm = "has correlation"
+                    object_norm = normalize_entity(object_val.lower())
+                    
+                    # Check if fact exists
+                    if not (subject_norm, predicate_norm, object_norm) in _fact_lookup_set:
+                        # Add directly to graph
+                        subject_clean = subject.replace(' ', '_')
+                        predicate_clean = predicate.replace(' ', '_')
+                        object_clean = object_val
+                        
+                        subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+                        predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+                        object_literal = rdflib.Literal(object_clean)
+                        
+                        graph.add((subject_uri, predicate_uri, object_literal))
+                        
+                        # Update lookup index
+                        _fact_lookup_set.add((subject_norm, predicate_norm, object_norm))
+                        
+                        # Add source document (CRITICAL for keyword-based filtering)
+                        add_fact_source_document(subject, predicate, object_clean, "statistical_analysis", timestamp)
+                        
+                        # Add agent ID (statistics agent computed this)
+                        from knowledge import add_fact_agent_id
+                        add_fact_agent_id(subject, predicate, object_clean, STATISTICS_AGENT_ID)
+                facts_count = len(all_correlations)  # Count unique correlations, not individual fact texts
         
         # Extract facts about statistical summaries
         descriptive_stats = statistics.get("descriptive_stats", {})
@@ -2361,7 +2608,7 @@ def extract_statistical_facts(statistics: Dict[str, Any], document_name: str, do
             if len(stats_text) > 2:  # More than just header
                 stats_facts = kb_add_to_graph(
                     "\n".join(stats_text),
-                    source_document=document_name,
+                    source_document="statistical_analysis",  # Use special source for better retrieval
                     uploaded_at=timestamp,
                     agent_id=KG_AGENT_ID
                 )
@@ -2371,9 +2618,7 @@ def extract_statistical_facts(statistics: Dict[str, Any], document_name: str, do
         return facts_count
         
     except Exception as e:
-        print(f"⚠️  Error in extract_statistical_facts: {e}")
-        import traceback
-        traceback.print_exc()
+        # Error in extract_statistical_facts (silently handled)
         return 0
 
 def process_with_kg_agent(extracted_text: str, document_name: str, document_id: str) -> Dict[str, Any]:
@@ -2436,7 +2681,6 @@ def get_agent_architecture() -> Dict[str, Any]:
         "visualization_agents": [],
         "kg_agents": [],
         "llm_agents": [],
-        "strategic_query_agents": [],
         "operational_query_agents": [],
         "document_agents": []
     }
@@ -2454,8 +2698,6 @@ def get_agent_architecture() -> Dict[str, Any]:
             architecture["kg_agents"].append(agent_dict)
         elif agent.type == "llm":
             architecture["llm_agents"].append(agent_dict)
-        elif agent.type == "strategic_query":
-            architecture["strategic_query_agents"].append(agent_dict)
         elif agent.type == "operational_query":
             architecture["operational_query_agents"].append(agent_dict)
     

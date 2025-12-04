@@ -25,7 +25,6 @@ interface AgentNetworkProps {
   visualizationAgents: any[];
   kgAgents: any[];
   llmAgents: any[];
-  strategicQueryAgents: any[];
   operationalQueryAgents: any[];
   documentAgents: any[];
 }
@@ -36,7 +35,6 @@ export function AgentNetwork({
   visualizationAgents,
   kgAgents,
   llmAgents,
-  strategicQueryAgents,
   operationalQueryAgents,
   documentAgents,
 }: AgentNetworkProps) {
@@ -49,8 +47,7 @@ export function AgentNetwork({
     // Spread out more to show all agents clearly with names visible
     const corePositions = {
       orchestrator: { x: 400, y: 40 },        // Top center
-      strategic_query: { x: 150, y: 140 },    // Left, below orchestrator (more space)
-      operational_query: { x: 650, y: 140 },  // Right, below orchestrator (more space)
+      operational_query: { x: 400, y: 140 },  // Center, below orchestrator
       statistics: { x: 80, y: 280 },          // Far left (more space from strategic)
       visualization: { x: 720, y: 280 },      // Far right (more space from operational)
       kg: { x: 80, y: 420 },                  // Far left bottom (more space)
@@ -122,18 +119,6 @@ export function AgentNetwork({
       });
     }
     
-    // Add Strategic Query Agent (left of center, below orchestrator)
-    if (strategicQueryAgents.length > 0) {
-      const agent = strategicQueryAgents[0];
-      nodeMap.set(agent.id, {
-        id: agent.id,
-        name: agent.name,
-        type: "strategic_query",
-        ...corePositions.strategic_query,
-        icon: Target,
-        color: "#f59e0b", // amber/orange
-      });
-    }
     
     // Add Operational Query Agent (right of center, below orchestrator)
     if (operationalQueryAgents && operationalQueryAgents.length > 0) {
@@ -207,17 +192,6 @@ export function AgentNetwork({
     // LLM → Orchestrator (queries go through orchestrator)
     if (llmId && orchId) {
       conns.push({ from: llmId, to: orchId });
-    }
-    
-    // Strategic Query Agent connections
-    const strategicId = strategicQueryAgents[0]?.id;
-    if (strategicId) {
-      // Orchestrator → Strategic Query Agent (orchestrator routes strategic queries)
-      if (orchId) conns.push({ from: orchId, to: strategicId });
-      // Strategic Query Agent → Statistics Agent (uses statistics)
-      if (statsId) conns.push({ from: strategicId, to: statsId });
-      // Strategic Query Agent → KG Agent (uses knowledge graph)
-      if (kgId) conns.push({ from: strategicId, to: kgId });
     }
     
     // Operational Query Agent connections
@@ -419,7 +393,6 @@ export function AgentNetwork({
                     style={{ fontSize: '9px' }}
                   >
                     {node.type === "orchestrator" ? "Coordinates queries" :
-                     node.type === "strategic_query" ? "Strategic analysis" :
                      node.type === "operational_query" ? "Operational analysis" :
                      node.type === "statistics" ? "Statistical analysis" :
                      node.type === "visualization" ? "Data visualization" :
@@ -452,8 +425,8 @@ export function AgentNetwork({
           <span>LLM Agent</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-amber-500"></div>
-          <span>Strategic Query Agent</span>
+          <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+          <span>Operational Query Agent</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-indigo-500"></div>

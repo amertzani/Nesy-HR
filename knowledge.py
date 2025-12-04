@@ -194,7 +194,8 @@ def load_knowledge_graph():
                 save_knowledge_graph()  # Save the cleaned version
             else:
                 # No invalid URIs found - graph already has all facts
-                print(f"✅ All {original_count} facts have valid URIs")
+                # All facts have valid URIs
+                pass
             
             final_count = len(graph)
             
@@ -215,7 +216,7 @@ def load_knowledge_graph():
                 graph.remove((None, None, None))
                 for triple in loaded_graph:
                     graph.add(triple)
-                print(f"✅ Restored {len(graph)} facts from loaded_graph")
+                # Restored facts from loaded graph
                 return f"📂 Loaded {len(graph)} facts from storage (restored after empty graph error)"
             
             return f"📂 Loaded {len(graph)} facts from storage"
@@ -788,11 +789,10 @@ def load_triplex_model():
             TRIPLEX_MODEL = TRIPLEX_MODEL.to(TRIPLEX_DEVICE)
         
         TRIPLEX_MODEL.eval()
-        print(f"✅ Triplex model loaded successfully on {TRIPLEX_DEVICE}")
+        # Triplex model loaded
         return True
     except Exception as e:
-        print(f"⚠️  Failed to load Triplex model: {e}")
-        print("   Falling back to regex-based extraction")
+        # Failed to load Triplex model, falling back to regex-based extraction
         return False
 
 def extract_with_triplex(text, entity_types=None, predicates=None):
@@ -1288,7 +1288,7 @@ def _initialize_fact_lookup_index():
         _fact_lookup_set.add((s_decoded, p_decoded, o_decoded))
     
     _fact_index_initialized = True
-    print(f"✅ Fact lookup index initialized with {len(_fact_lookup_set)} facts")
+    # Fact lookup index initialized
 
 def fact_exists(subject: str, predicate: str, object_val: str) -> bool:
     """
@@ -1343,26 +1343,15 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
     # Try new pipeline first
     try:
         from kg_pipeline import extract_knowledge_pipeline
-        print(f"🔄 Attempting pipeline extraction from text (length: {len(text)} chars)...")
         pipeline_triples = extract_knowledge_pipeline(text, source_document, uploaded_at)
-        print(f"📊 Pipeline returned {len(pipeline_triples) if pipeline_triples else 0} triples")
         
         if pipeline_triples:
-            print(f"✅ Pipeline extracted {len(pipeline_triples)} triples")
             # Process pipeline triples
             added_count = 0
             skipped_count = 0
             error_count = 0
             
-            # Progress logging for large batches
-            progress_interval = max(100, len(pipeline_triples) // 10)  # Log every 10% or every 100 triples
-            if len(pipeline_triples) > 500:
-                print(f"   ⏳ Processing {len(pipeline_triples)} triples (this may take a moment for large files)...")
-            
             for idx, triple in enumerate(pipeline_triples):
-                # Progress logging
-                if idx > 0 and idx % progress_interval == 0:
-                    print(f"   📊 Processing progress: {idx}/{len(pipeline_triples)} triples ({added_count} added, {skipped_count} skipped)")
                 try:
                     # Handle formats: 
                     # - 8 elements: (subject, predicate, object, details, confidence, type, source, uploaded)
@@ -1503,7 +1492,8 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
                         graph.remove((eq_subject_uri, eq_predicate_uri, rdflib.Literal(eq_object_clean)))
                         
                         # Remove all metadata triples for the old fact
-                        eq_fact_id = f"{eq_subject}|{eq_predicate}|{eq_object}"
+                        eq_normalized_object = _normalize_object_for_fact_id(eq_object)
+                        eq_fact_id = f"{eq_subject}|{eq_predicate}|{eq_normalized_object}"
                         eq_fact_id_clean = eq_fact_id.strip().replace(' ', '_')
                         eq_fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(eq_fact_id_clean, safe='')}")
                         
@@ -1576,21 +1566,21 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
             if error_count > 0:
                 print(f"⚠️  Processed {len(pipeline_triples)} triples: {added_count} added, {skipped_count} skipped, {error_count} errors")
             else:
-                print(f"✅ Processed {len(pipeline_triples)} triples: {added_count} added, {skipped_count} skipped")
+                # Processed triples
+                pass
             
-            print(f"💾 Saving knowledge graph to disk...")
+            # Saving knowledge graph to disk
             save_knowledge_graph()
-            print(f"✅ Knowledge graph saved successfully")
             
             if skipped_count > 0:
                 return f"pipeline\n Added {added_count} new triples, skipped {skipped_count} duplicates. Total facts stored: {len(graph)}.\n Saved"
             return f"pipeline\n Added {added_count} new triples. Total facts stored: {len(graph)}.\n Saved"
     except ImportError:
-        print("⚠️  Pipeline module not found, using legacy extraction")
+        # Pipeline module not found, using legacy extraction
+        pass
     except Exception as e:
-        print(f"⚠️  Pipeline extraction failed: {e}, falling back to legacy methods")
-        import traceback
-        traceback.print_exc()
+        # Pipeline extraction failed, falling back to legacy methods (silently)
+        pass
     
     # Fallback to legacy extraction methods
     # Track which extraction method was used
@@ -1613,7 +1603,7 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
         improved_triples = extract_with_improved_patterns(text)
         if improved_triples:
             improved_count = len(improved_triples)
-            print(f"✅ Improved patterns extracted {improved_count} triples")
+            # Improved patterns extracted triples
         else:
             improved_triples = []
     except Exception as e:
@@ -1624,9 +1614,7 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
     # This complements improved patterns by finding different types of relationships
     try:
         new_triples_with_context = extract_triples_with_context(text)
-        if new_triples_with_context:
-            print(f"✅ Context extraction found {len(new_triples_with_context)} triples")
-        else:
+        if not new_triples_with_context:
             new_triples_with_context = []
     except Exception as e:
         print(f"⚠️  Context extraction failed: {e}")
@@ -1641,7 +1629,7 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
             if triplex_triples and len(triplex_triples) > 0:
                 triplex_count = len(triplex_triples)
                 extraction_method = "triplex"
-                print(f"✅ TRIPLEX: Extracted {triplex_count} triples using LLM")
+                # TRIPLEX extracted triples
             else:
                 triplex_triples = []
         except Exception as e:
@@ -1652,8 +1640,8 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
     if not improved_triples and not triplex_triples and not new_triples_with_context:
         try:
             new_triples = extract_triples(text)
-            if new_triples:
-                print(f"✅ Fallback extraction found {len(new_triples)} triples")
+            if not new_triples:
+                new_triples = []
         except Exception as e:
             print(f"⚠️  Fallback extraction failed: {e}")
             new_triples = []
@@ -1871,7 +1859,7 @@ def add_to_graph(text, source_document: str = "manual", uploaded_at: str = None,
     import os
     if os.path.exists("knowledge_graph.pkl"):
         file_size = os.path.getsize("knowledge_graph.pkl")
-        print(f"✅ Graph saved - file size: {file_size} bytes, facts in memory: {len(graph)}")
+        # Graph saved
     
     # Build status message with extraction method info
     method_info = f"[{extraction_method.upper()}]"
@@ -1907,8 +1895,8 @@ def retrieve_context(question, limit=None):
     from knowledge import get_fact_details
     
     # Determine limit EARLY to prevent processing all facts
+    graph_size = len(graph) if graph else 0
     if limit is None:
-        graph_size = len(graph) if graph else 0
         if graph_size > 5000:  # Large document (1000+ rows typically = 5000+ facts)
             limit = 500  # Limit to top 100 most relevant facts
         elif graph_size > 2000:  # Medium document
@@ -1918,6 +1906,11 @@ def retrieve_context(question, limit=None):
     
     # For very large graphs, use early exit to avoid processing all facts
     early_exit_threshold = limit * 3 if graph_size > 10000 else None  # Get 3x candidates, then sort and take top N
+    
+    # Check for source document filtering keywords
+    question_lower = question.lower()
+    filter_to_statistical = 'statistical analysis' in question_lower or 'statistical' in question_lower and 'analysis' in question_lower
+    filter_to_operational = 'operational insights' in question_lower or 'operational' in question_lower and 'insights' in question_lower
     
     # Extract meaningful keywords from question (remove stopwords)
     stopwords = {
@@ -1960,10 +1953,12 @@ def retrieve_context(question, limit=None):
     if graph_size > 10000:
         # Only check first 20,000 facts (enough to find top matches)
         max_facts_to_check = 20000
-        print(f"📊 Large graph detected ({graph_size} facts), limiting check to first {max_facts_to_check} facts")
+        # Large graph - limit checking silently
+        pass
     elif graph_size > 5000:
         max_facts_to_check = 10000
-        print(f"📊 Medium-large graph ({graph_size} facts), limiting check to first {max_facts_to_check} facts")
+        # Medium-large graph - limit checking silently
+        pass
     
     for s, p, o in graph:
         # Early exit if we've checked enough facts
@@ -2007,30 +2002,62 @@ def retrieve_context(question, limit=None):
         # Boost score for operational/strategic insights - check source document
         source_doc = None
         try:
-            # Try to get source document from metadata
-            fact_id = f"urn:fact:{subject}|{predicate}|{object_val}"
-            for s2, p2, o2 in graph:
-                if str(s2) == fact_id and 'source_document' in str(p2).lower():
-                    source_doc = str(o2).lower()
-                    break
+            # Try to get source document from metadata using get_fact_source_document
+            from knowledge import get_fact_source_document
+            source_doc_result = get_fact_source_document(subject, predicate, object_val)
+            if source_doc_result:
+                source_doc = source_doc_result.lower()
         except:
-            pass
+            # Fallback: Try to get source document from metadata triples
+            try:
+                normalized_object = _normalize_object_for_fact_id(object_val)
+                fact_id = f"urn:fact:{subject}|{predicate}|{normalized_object}"
+                for s2, p2, o2 in graph:
+                    if str(s2) == fact_id and 'source_document' in str(p2).lower():
+                        source_doc = str(o2).lower()
+                        break
+            except:
+                pass
         
-        # Check if this fact is from operational_insights source
+        # Check if this fact is from operational_insights or statistical_analysis source
         is_operational_insight = (source_doc and 'operational_insights' in source_doc)
+        is_statistical_insight = (source_doc and 'statistical_analysis' in source_doc)
         is_insight = ('operational' in fact_text or 'strategic' in fact_text or 
                      'operational_insights' in str(s).lower() or 'strategic_insights' in str(s).lower() or
                      'operational_insights' in str(p).lower() or 'strategic_insights' in str(p).lower() or
                      (source_doc and ('operational' in source_doc or 'strategic' in source_doc or 'insight' in source_doc)))
         
+        # Apply source document filtering based on keywords
+        # If user specifies "statistical analysis", only return statistical facts
+        # BUT: Also check if the fact itself contains correlation/statistical keywords
+        fact_has_statistical_keywords = ('correlation' in fact_text or 'statistic' in fact_text or 
+                                        'mean' in fact_text or 'min' in fact_text or 'max' in fact_text or
+                                        'distribution' in fact_text or 'average' in fact_text)
+        
+        if filter_to_statistical:
+            # Allow if it's a statistical insight OR if it has statistical keywords (correlation facts)
+            if not is_statistical_insight and not fact_has_statistical_keywords:
+                continue  # Skip non-statistical facts when filtering to statistical
+        
+        # If user specifies "operational insights", only return operational facts
+        if filter_to_operational and not is_operational_insight:
+            continue  # Skip non-operational facts when filtering to operational
+        
         # Calculate relevance score with improved matching
         # Strong boost for operational insights (especially when query contains "operational")
         if is_operational_insight and ('operational' in question.lower() or 'absence' in question.lower() or 'engagement' in question.lower() or 'top' in question.lower() or 'bottom' in question.lower()):
             score = 20  # Very strong boost for operational insights when query matches
+        elif is_statistical_insight and ('correlation' in question.lower() or 'statistic' in question.lower() or 'distribution' in question.lower() or 'average' in question.lower() or 'mean' in question.lower() or 'min' in question.lower() or 'max' in question.lower()):
+            score = 20  # Very strong boost for statistical facts when query matches
         elif is_insight:
             score = 10  # Strong boost for insights
         else:
             score = 0
+        
+        # Boost for correlation queries - check if question asks about correlation
+        question_lower = question.lower()
+        if 'correlation' in question_lower and 'correlation' in fact_text:
+            score += 15  # Strong boost for correlation facts when correlation is asked
         
         # Exact word matches
         for word in qwords:
@@ -2147,7 +2174,8 @@ def retrieve_context(question, limit=None):
                 # Sort what we have so far and check if top N are high-scoring
                 temp_sorted = sorted(scored_matches, key=lambda x: x[0], reverse=True)
                 if len(temp_sorted) >= limit and temp_sorted[limit-1][0] >= 5:  # Top N have score >= 5
-                    print(f"📊 Early exit: Found {len(scored_matches)} matches after checking {facts_processed} facts")
+                    # Early exit - found enough matches
+                    pass
                     break
     
     # Sort by score (highest first) - but return ALL matches, not just top N
@@ -2188,7 +2216,8 @@ def retrieve_context(question, limit=None):
     # Apply limit to unique_matches
     if limit and len(unique_matches) > limit:
         unique_matches = unique_matches[:limit]
-        print(f"📊 Limiting context to top {limit} most relevant facts (out of {len(scored_matches)} matches) to prevent LLM timeout")
+        # Limiting context to top facts
+        pass
     
     if unique_matches:
         # If we have multiple documents, organize by document
@@ -2407,9 +2436,12 @@ def add_fact_details(subject: str, predicate: str, object_val: str, details: str
     if not details or not details.strip():
         return
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create a unique identifier for this fact to link details to it
     # We'll use a combination of subject, predicate, and object as the identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2434,6 +2466,11 @@ def add_fact_details(subject: str, predicate: str, object_val: str, details: str
     graph.add((fact_id_uri, rdflib.URIRef("urn:fact_predicate"), predicate_uri))
     graph.add((fact_id_uri, rdflib.URIRef("urn:fact_object"), rdflib.Literal(object_val)))
 
+def _get_normalized_fact_id(subject: str, predicate: str, object_val: str) -> str:
+    """Get normalized fact ID for consistent lookup"""
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    return f"{subject}|{predicate}|{normalized_object}"
+
 def remove_fact_details(subject: str, predicate: str, object_val: str):
     """
     Remove details for a specific fact.
@@ -2447,8 +2484,11 @@ def remove_fact_details(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2477,8 +2517,11 @@ def get_fact_details(subject: str, predicate: str, object_val: str) -> str:
     import rdflib
     from urllib.parse import quote, unquote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2529,7 +2572,9 @@ def remove_fact_agent_id(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     agent_predicate = rdflib.URIRef("urn:agent_id")
@@ -2545,7 +2590,9 @@ def get_fact_agent_id(subject: str, predicate: str, object_val: str) -> Optional
     import rdflib
     from urllib.parse import quote
     
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     agent_predicate = rdflib.URIRef("urn:agent_id")
@@ -2554,6 +2601,21 @@ def get_fact_agent_id(subject: str, predicate: str, object_val: str) -> Optional
         if str(s) == str(fact_id_uri) and str(p) == str(agent_predicate):
             return str(o)
     return None
+
+def _normalize_object_for_fact_id(object_val: str) -> str:
+    """
+    Normalize object value for fact ID creation to ensure consistency.
+    Converts "0.000" -> "0", but keeps "4.5" as "4.5".
+    This ensures fact IDs match between storage and retrieval.
+    """
+    try:
+        if '.' in str(object_val):
+            float_val = float(object_val)
+            if float_val.is_integer():
+                return str(int(float_val))
+    except (ValueError, AttributeError, TypeError):
+        pass  # Keep as string if conversion fails
+    return str(object_val)
 
 def add_fact_source_document(subject: str, predicate: str, object_val: str, source_document: str, uploaded_at: str):
     """
@@ -2574,8 +2636,11 @@ def add_fact_source_document(subject: str, predicate: str, object_val: str, sour
     if not source_document or not uploaded_at:
         return
     
-    # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
+    # Create the fact identifier using normalized value
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2634,8 +2699,11 @@ def remove_fact_source_document(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2665,8 +2733,11 @@ def add_fact_is_inferred(subject: str, predicate: str, object_val: str, is_infer
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2693,8 +2764,11 @@ def remove_fact_is_inferred(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2725,8 +2799,11 @@ def get_fact_is_inferred(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2755,8 +2832,11 @@ def add_fact_confidence(subject: str, predicate: str, object_val: str, confidenc
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2776,7 +2856,9 @@ def remove_fact_confidence(subject: str, predicate: str, object_val: str):
     import rdflib
     from urllib.parse import quote
     
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2806,7 +2888,9 @@ def get_fact_confidence(subject: str, predicate: str, object_val: str) -> float:
     import rdflib
     from urllib.parse import quote
     
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     
@@ -2838,8 +2922,11 @@ def get_fact_source_document(subject: str, predicate: str, object_val: str) -> l
     import rdflib
     from urllib.parse import quote
     
+    # Normalize object value for consistent fact ID generation
+    normalized_object = _normalize_object_for_fact_id(object_val)
+    
     # Create the fact identifier
-    fact_id = f"{subject}|{predicate}|{object_val}"
+    fact_id = f"{subject}|{predicate}|{normalized_object}"
     fact_id_clean = fact_id.strip().replace(' ', '_')
     fact_id_uri = rdflib.URIRef(f"urn:fact:{quote(fact_id_clean, safe='')}")
     

@@ -611,7 +611,7 @@ class HuggingFaceApiClient {
 
   // Operational Insights
   async getOperationalInsights(): Promise<ApiResponse<any>> {
-    return this.request("/api/insights/operational", { method: "GET" });
+    return this.request("/api/insights/operational", { method: "GET" }, 180000); // 3 minutes timeout
   }
 }
 

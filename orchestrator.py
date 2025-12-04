@@ -1,5 +1,21 @@
 """
-Orchestrator Agent - Coordinates queries and delegates to appropriate agents
+Orchestrator Agent - Routes queries from LLM to appropriate agents
+===================================================================
+
+ROLE:
+The Orchestrator Agent acts as a query router that:
+- Receives queries from the LLM
+- Analyzes query type and content
+- Routes queries to the appropriate agent(s):
+  * Statistics Agent: for correlation/distribution/min-max queries
+  * Operational Query Agent: for groupby/aggregation queries and operational insights (O1, O2, O3)
+  * Knowledge Graph: for fact-based queries
+- Coordinates multi-agent responses when needed
+- Returns routing information for traceability
+
+The Orchestrator does NOT process data itself - it only routes queries.
+All data processing is done by specialized agents.
+All facts are stored in the Knowledge Graph (main storage).
 """
 
 from typing import List, Dict, Any, Optional, Tuple
@@ -170,30 +186,8 @@ def orchestrate_query(query: str, query_info: Dict[str, Any]) -> Tuple[Optional[
                 import traceback
                 traceback.print_exc()
         
-        # Route to Strategic Query Agent if keyword "strategic" is detected
-        elif query_type == "strategic":
-            # Keyword-based routing for strategic queries
-            try:
-                from strategic_query_agent import process_strategic_query_with_agent, STRATEGIC_QUERY_AGENT_ID
-                strategic_agent = agents_store.get(STRATEGIC_QUERY_AGENT_ID)
-                if strategic_agent:
-                    strategic_agent.status = "processing"
-                    answer, evidence_facts, strat_routing = process_strategic_query_with_agent(query_info, query)
-                    strategic_agent.status = "active"
-                    routing_info.update(strat_routing)
-                    routing_info["target_agents"] = [STRATEGIC_QUERY_AGENT_ID]
-                    routing_info["strategy"] = "strategic_agent"
-                    routing_info["reason"] = "Routed to strategic agent based on keyword detection"
-                    orchestrator.status = "active"
-                    return answer, evidence_facts, routing_info
-                else:
-                    print("⚠️  Strategic Query Agent not found")
-            except ImportError as e:
-                print(f"⚠️  Strategic query agent module not available: {e}")
-            except Exception as e:
-                print(f"⚠️  Error processing strategic query: {e}")
-                import traceback
-                traceback.print_exc()
+        # Note: Strategic queries (S1, S2) are no longer supported - removed from architecture
+        # All operational queries (O1, O2, O3) are handled by the Operational Query Agent
         
         # For structured queries, use query processor but with agent-aware extraction
         if query_info.get("query_type") == "structured":
@@ -225,7 +219,8 @@ def orchestrate_query(query: str, query_info: Dict[str, Any]) -> Tuple[Optional[
                     routing_info["statistics_context"] = stats_context
                     routing_info["has_statistics"] = True
             except Exception as e:
-                print(f"⚠️  Error getting statistics context: {e}")
+                # Error getting statistics context (silently handled)
+                pass
                 routing_info["has_statistics"] = False
             
             # Delegate to statistics agent - LLM will handle with statistics context

@@ -1,5 +1,16 @@
 {
-  "last_updated": "2025-12-01T21:50:08.517760",
-  "total_documents": 0,
-  "documents": []
+  "last_updated": "2025-12-04T23:06:49.042245",
+  "total_documents": 1,
+  "documents": [
+    {
+      "id": "1",
+      "name": "HR_S.csv",
+      "type": "csv",
+      "size": 6827,
+      "uploaded_at": "2025-12-04T23:06:49.042235",
+      "status": "completed",
+      "facts_extracted": 2209,
+      "agent_id": "doc_HR_S.csv"
+    }
+  ]
 }

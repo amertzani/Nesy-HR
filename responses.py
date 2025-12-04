@@ -935,9 +935,11 @@ def respond(message, history=None, system_message="You are an intelligent assist
                 if all_stats:
                     stats_context = format_statistics_context_for_llm(message, all_stats)
             except Exception as e:
-                print(f"⚠️  Error getting statistics context: {e}")
+                # Error getting statistics context (silently handled)
+                pass
     except Exception as e:
-        print(f"⚠️  Error checking statistics routing: {e}")
+        # Error checking statistics routing (silently handled)
+        pass
     
     # Retrieve relevant context from knowledge graph (only for non-structured queries)
     context = retrieve_context(message)
