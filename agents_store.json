@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-12-04T23:06:12.016811",
+  "last_updated": "2025-12-05T12:55:11.458501",
   "total_agents": 6,
   "agents": {
     "orchestrator_agent": {
@@ -7,7 +7,7 @@
       "name": "Orchestrator Agent",
       "type": "orchestrator",
       "status": "active",
-      "created_at": "2025-12-04T23:06:12.015879",
+      "created_at": "2025-12-05T12:55:11.458139",
       "metadata": {
         "description": "Coordinates queries and delegates tasks to appropriate agents",
         "role": "query_coordination",
@@ -24,7 +24,7 @@
       "name": "Statistics Agent",
       "type": "statistics",
       "status": "active",
-      "created_at": "2025-12-04T23:06:12.015915",
+      "created_at": "2025-12-05T12:55:11.458158",
       "metadata": {
         "description": "Performs statistical analysis of documents (especially CSV files)",
         "role": "statistical_analysis",
@@ -41,7 +41,7 @@
       "name": "Visualization Agent",
       "type": "visualization",
       "status": "active",
-      "created_at": "2025-12-04T23:06:12.015922",
+      "created_at": "2025-12-05T12:55:11.458161",
       "metadata": {
         "description": "Creates user-friendly graphs/charts from statistics",
         "role": "data_visualization",
@@ -58,7 +58,7 @@
       "name": "Knowledge Graph Agent",
       "type": "kg",
       "status": "active",
-      "created_at": "2025-12-04T23:06:12.015926",
+      "created_at": "2025-12-05T12:55:11.458165",
       "metadata": {
         "description": "Extracts facts/knowledge from documents for traceability",
         "role": "knowledge_extraction",
@@ -90,7 +90,7 @@
       "name": "Operational Query Agent",
       "type": "operational_query",
       "status": "active",
-      "created_at": "2025-12-04T23:06:12.016553",
+      "created_at": "2025-12-05T12:55:11.458348",
       "metadata": {
         "description": "Processes operational-level multi-variable queries (O1, O2, O3) using statistics and knowledge graph",
         "role": "operational_analysis",

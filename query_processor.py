@@ -89,10 +89,12 @@ def detect_query_type(question: str) -> Dict[str, Any]:
     # "what is the salary of Becker, Renee"
     # "who is the manager of Boutwell, Bonalyn"
     filter_patterns = [
-        r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?(position|salary|department|age|name|status|absences|marital|gender|state|city|zip|phone|email|manager|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
-        r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?(position|salary|department|age|status|absences|marital|gender|state|city|zip|phone|email|manager|managerid)',
-        r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:salary|position|department|age|status|absences|manager|managerid)',
-        r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+        r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?(position|position\s+id|positionid|salary|department|age|name|status|absences|marital|gender|state|city|zip|phone|email|manager|manager\s+id|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+        r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?(position|position\s+id|positionid|salary|department|age|status|absences|marital|gender|state|city|zip|phone|email|manager|manager\s+id|managerid)',
+        r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:salary|position|position\s+id|positionid|department|age|status|absences|manager|manager\s+id|managerid)',
+        r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|manager\s+id|managerid).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+        # Direct pattern for "X of Y" format (e.g., "position id of Becker, Scott")
+        r'(position\s+id|positionid|manager\s+id|managerid|salary|position|department|age|status|absences|marital|gender|state|city|zip|phone|email|manager)\s+of\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
     ]
     
     # Pattern 3: Count/Aggregation queries

@@ -1909,7 +1909,14 @@ def retrieve_context(question, limit=None):
     
     # Check for source document filtering keywords
     question_lower = question.lower()
-    filter_to_statistical = 'statistical analysis' in question_lower or 'statistical' in question_lower and 'analysis' in question_lower
+    # Recognize both "statistical_analysis" and "statistical_insights" keywords
+    filter_to_statistical = (
+        'statistical analysis' in question_lower or 
+        'statistical_analysis' in question_lower or
+        'statistical_insights' in question_lower or
+        ('statistical' in question_lower and 'analysis' in question_lower) or
+        ('statistical' in question_lower and 'insights' in question_lower)
+    )
     filter_to_operational = 'operational insights' in question_lower or 'operational' in question_lower and 'insights' in question_lower
     
     # Extract meaningful keywords from question (remove stopwords)
@@ -1951,14 +1958,18 @@ def retrieve_context(question, limit=None):
     # For very large graphs, limit how many facts we check
     graph_size = len(graph) if graph else 0
     if graph_size > 10000:
-        # Only check first 20,000 facts (enough to find top matches)
-        max_facts_to_check = 20000
+        # Only check first 15,000 facts (enough to find top matches with keyword filtering)
+        max_facts_to_check = 15000
         # Large graph - limit checking silently
         pass
     elif graph_size > 5000:
         max_facts_to_check = 10000
         # Medium-large graph - limit checking silently
         pass
+    
+    # For very large graphs, use aggressive pre-filtering
+    # This dramatically reduces the number of facts we need to score
+    use_aggressive_filtering = graph_size > 10000
     
     for s, p, o in graph:
         # Early exit if we've checked enough facts
@@ -1998,6 +2009,32 @@ def retrieve_context(question, limit=None):
         
         # Build fact text for matching
         fact_text = f"{subject} {predicate} {object_val}".lower()
+        
+        # EARLY KEYWORD FILTERING: Skip facts that don't match any keywords (for large graphs)
+        # This dramatically reduces the number of facts we need to score
+        if use_aggressive_filtering and qwords:
+            keyword_match = False
+            # Check if any keyword appears in the fact
+            for word in qwords:
+                if word.lower() in fact_text:
+                    keyword_match = True
+                    break
+            
+            # Also check for entity matches (important for employee queries)
+            if not keyword_match and entities:
+                for entity in entities:
+                    if entity.lower() in fact_text:
+                        keyword_match = True
+                        break
+            
+            # Skip facts that don't match any keywords (unless it's an insight fact)
+            # Insight facts are always included as they're pre-computed summaries
+            is_insight_fact = ('operational' in fact_text or 'strategic' in fact_text or 
+                             'correlation' in fact_text or 'statistic' in fact_text or
+                             'operational_insights' in str(s).lower() or 'statistical_analysis' in str(s).lower())
+            
+            if not keyword_match and not is_insight_fact:
+                continue  # Skip this fact - no keyword match
         
         # Boost score for operational/strategic insights - check source document
         source_doc = None
@@ -2099,7 +2136,10 @@ def retrieve_context(question, limit=None):
                     score += 2
         
         # Include facts with ANY word match (score > 0 means at least one word matched)
-        if score > 0:
+        # For large graphs, we've already pre-filtered, so we can be more lenient
+        # But still require some minimum score to avoid noise
+        min_score_threshold = 1 if not use_aggressive_filtering else 0
+        if score > min_score_threshold:
             # Track where matches were found (more detailed)
             match_locations = []
             matched_words = []
@@ -2982,6 +3022,264 @@ def get_fact_source_document(subject: str, predicate: str, object_val: str) -> l
             unique_sources.append((source_doc, timestamp))
     
     return unique_sources if unique_sources else []
+
+def get_correlation_value(col1: str, col2: str) -> Optional[float]:
+    """
+    Directly retrieve correlation value between two columns from knowledge graph.
+    This bypasses LLM and provides fast, direct access to correlation data.
+    
+    Args:
+        col1: First column name
+        col2: Second column name
+    
+    Returns:
+        Correlation value as float, or None if not found
+    """
+    global graph
+    from urllib.parse import quote, unquote
+    import rdflib
+    
+    # Normalize column names (strip whitespace, handle case)
+    col1_clean = col1.strip()
+    col2_clean = col2.strip()
+    
+    # Try both orderings (correlation matrix is symmetric)
+    # Also try normalized versions
+    subject_variants = [
+        normalize_entity(f"{col1_clean} and {col2_clean}"),
+        normalize_entity(f"{col2_clean} and {col1_clean}"),
+        f"{col1_clean} and {col2_clean}",
+        f"{col2_clean} and {col1_clean}",
+        f"{col1_clean.lower()} and {col2_clean.lower()}",
+        f"{col2_clean.lower()} and {col1_clean.lower()}",
+    ]
+    
+    predicate = "has correlation"
+    predicate_clean = predicate.replace(' ', '_')
+    predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+    
+    # First, try exact URI matches
+    for subject_variant in subject_variants:
+        subject_clean = subject_variant.replace(' ', '_')
+        subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+        
+        # Search for the correlation fact
+        for s, p, o in graph:
+            if str(s) == str(subject_uri) and str(p) == str(predicate_uri):
+                try:
+                    corr_value = float(str(o))
+                    return corr_value
+                except (ValueError, TypeError):
+                    continue
+    
+    # If exact match fails, try case-insensitive search by extracting from URIs
+    # This handles cases where normalization might differ
+    predicate_str = str(predicate_uri).lower()
+    for s, p, o in graph:
+        if str(p).lower() == predicate_str:
+            # Extract subject from URI
+            subject_uri_str = str(s)
+            if 'urn:entity:' in subject_uri_str:
+                subject_from_uri = unquote(subject_uri_str.split('urn:entity:')[-1]).replace('_', ' ')
+                subject_lower = subject_from_uri.lower()
+                
+                # Check if this subject contains both column names
+                col1_lower = col1_clean.lower()
+                col2_lower = col2_clean.lower()
+                
+                # Check if subject contains both columns (in either order)
+                if (col1_lower in subject_lower and col2_lower in subject_lower and 
+                    'and' in subject_lower):
+                    try:
+                        corr_value = float(str(o))
+                        return corr_value
+                    except (ValueError, TypeError):
+                        continue
+    
+    return None
+
+def get_employee_attribute(employee_name: str, attribute: str) -> Optional[str]:
+    """
+    Directly retrieve an attribute value for an employee from knowledge graph.
+    This bypasses LLM and provides fast, direct access to employee facts.
+    
+    Args:
+        employee_name: Employee name (e.g., "Booth, Frank")
+        attribute: Attribute to retrieve (e.g., "manager", "salary", "position")
+    
+    Returns:
+        Attribute value as string, or None if not found
+    """
+    global graph
+    from urllib.parse import quote, unquote
+    import rdflib
+    import re
+    
+    # Normalize employee name
+    employee_name_clean = employee_name.strip()
+    
+    # Map attribute to possible predicate variations
+    attribute_lower = attribute.lower()
+    predicate_variations = []
+    
+    # Special handling for manager queries
+    if attribute_lower in ['manager', 'managerid', 'manager name', 'manager id']:
+        predicate_variations = [
+            "has manager name",
+            "has manager id",
+            "has managername",
+            "has managerid",
+            "manager name",
+            "manager id",
+            "managername",
+            "managerid",
+            "has manager",
+            "manager",
+        ]
+    elif attribute_lower == 'salary':
+        predicate_variations = [
+            "has salary",
+            "salary",
+            "has_salary",
+            "salary_is",
+        ]
+    elif attribute_lower in ['position', 'position_id', 'positionid']:
+        predicate_variations = [
+            "has position id",
+            "has position_id",
+            "has positionid",
+            "position id",
+            "position_id",
+            "positionid",
+            "has position",
+            "position",
+            "has_position",
+            "position_is",
+            "job title",
+            "has job title",
+        ]
+    elif attribute_lower == 'department':
+        predicate_variations = [
+            "works in department",
+            "department",
+            "has department",
+            "works_in_department",
+            "department_is",
+        ]
+    else:
+        # Generic attribute mapping - handles ANY attribute from CSV columns
+        # Examples: performance, satisfaction, engagement, status, absences, etc.
+        attribute_normalized = attribute_lower.replace(' ', '_').replace('-', '_')
+        predicate_variations = [
+            f"has {attribute_lower}",           # "has performance score"
+            f"has_{attribute_normalized}",      # "has_performance_score"
+            attribute_lower,                    # "performance score"
+            attribute_normalized,                # "performance_score"
+            f"{attribute_normalized}_is",       # "performance_score_is"
+            f"has {attribute_normalized}",      # "has performance_score"
+            # Also try with "score" suffix if not present (for performance, satisfaction, engagement)
+            f"has_{attribute_normalized}_score" if 'score' not in attribute_normalized else None,
+            # Try without common suffixes
+            attribute_normalized.replace('_score', '').replace('_id', '').replace('_name', ''),
+        ]
+        # Remove None values
+        predicate_variations = [p for p in predicate_variations if p is not None]
+    
+    # Try multiple employee name formats
+    employee_name_variants = [
+        employee_name_clean,
+        employee_name_clean.replace(' ', '_'),
+        employee_name_clean.title(),
+        employee_name_clean.upper(),
+    ]
+    
+    # Also try with/without quotes
+    if ',' in employee_name_clean:
+        parts = employee_name_clean.split(',')
+        if len(parts) == 2:
+            last_name = parts[0].strip()
+            first_name = parts[1].strip()
+            employee_name_variants.extend([
+                f"{last_name}, {first_name}",
+                f"{last_name.title()}, {first_name.title()}",
+                f"{last_name.upper()}, {first_name.upper()}",
+            ])
+    
+    # Search for matching triples
+    for emp_variant in employee_name_variants:
+        # Try URI format
+        subject_clean = emp_variant.replace(' ', '_')
+        subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+        
+        for pred_variant in predicate_variations:
+            predicate_clean = pred_variant.replace(' ', '_')
+            predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+            
+            # Direct triple lookup
+            matching_triples = list(graph.triples((subject_uri, predicate_uri, None)))
+            if matching_triples:
+                # Return the first matching value
+                return str(matching_triples[0][2])
+        
+        # Also try with Literal subject
+        subject_literal = rdflib.Literal(emp_variant)
+        for pred_variant in predicate_variations:
+            predicate_clean = pred_variant.replace(' ', '_')
+            predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+            
+            matching_triples = list(graph.triples((subject_literal, predicate_uri, None)))
+            if matching_triples:
+                return str(matching_triples[0][2])
+    
+    # Fallback: case-insensitive search through all triples (limited)
+    # This handles cases where normalization might differ
+    max_iterations = 5000  # Limit to prevent timeout
+    iterations = 0
+    
+    employee_name_lower = employee_name_clean.lower()
+    attribute_lower = attribute.lower()
+    
+    for s, p, o in graph:
+        iterations += 1
+        if iterations > max_iterations:
+            break
+        
+        # Skip metadata triples
+        predicate_str = str(p)
+        if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
+            'fact_object' in predicate_str or 'has_details' in predicate_str or 
+            'source_document' in predicate_str or 'uploaded_at' in predicate_str or
+            'is_inferred' in predicate_str or 'confidence' in predicate_str):
+            continue
+        
+        # Extract subject
+        subject_uri_str = str(s)
+        if 'urn:entity:' in subject_uri_str:
+            subject = unquote(subject_uri_str.split('urn:entity:')[-1]).replace('_', ' ')
+        elif 'urn:' in subject_uri_str:
+            subject = unquote(subject_uri_str.split('urn:')[-1]).replace('_', ' ')
+        else:
+            subject = str(s)
+        
+        # Extract predicate
+        if 'urn:predicate:' in predicate_str:
+            predicate = unquote(predicate_str.split('urn:predicate:')[-1]).replace('_', ' ')
+        elif 'urn:' in predicate_str:
+            predicate = unquote(predicate_str.split('urn:')[-1]).replace('_', ' ')
+        else:
+            predicate = predicate_str
+        
+        # Check if subject matches employee name (case-insensitive)
+        if subject.lower() == employee_name_lower or employee_name_lower in subject.lower():
+            # Check if predicate matches attribute (case-insensitive)
+            predicate_lower = predicate.lower()
+            if any(attr_var.lower() in predicate_lower for attr_var in predicate_variations):
+                return str(o)
+            # Also check if attribute keyword is in predicate
+            if attribute_lower in predicate_lower:
+                return str(o)
+    
+    return None
 
 def import_knowledge_from_json_file(file):
     try:

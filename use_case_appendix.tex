@@ -1,0 +1,95 @@
+% Use Case Appendix - Additional Details
+% Include this after technical_sections_appendix.tex
+
+\section{Use Case Appendix: Additional Details}
+
+\subsection{Complete Provenance Chains}
+
+\subsubsection{Knowledge Graph Query Provenance}
+\begin{enumerate}
+    \item Source Document: employees.csv (uploaded 2024-01-15T10:30:00)
+    \item Processing: Document Agent (doc\_001) → Worker Agent (worker\_001)
+    \item Extraction: CSV row processing, confidence 1.0
+    \item Storage: RDF triple (John\_Smith, has\_salary, 75000) with metadata
+    \item Query: Orchestrator → Query Processor → Knowledge Graph retrieval
+    \item Response: LLM Agent formats with evidence facts
+    \item Display: Chat interface with clickable source links
+\end{enumerate}
+
+\subsubsection{Statistical Query Provenance}
+\begin{enumerate}
+    \item Source Document: employees.csv
+    \item Processing: Statistics Agent computes Pearson correlation during document processing
+    \item Storage: Correlation fact stored in knowledge graph
+    \item Query: Orchestrator → Statistics Agent → Knowledge Graph retrieval
+    \item Response: LLM Agent explains statistical findings
+    \item Display: Chat response + Statistics Dashboard visualization
+\end{enumerate}
+
+\subsubsection{Operational Query Provenance}
+\begin{enumerate}
+    \item Source Document: employees.csv
+    \item Processing: Operational Agent computes groupby aggregations
+    \item Storage: Operational facts stored in knowledge graph
+    \item Query: Orchestrator → Operational Agent → Knowledge Graph retrieval
+    \item Response: LLM Agent formats insights with evidence
+    \item Display: Chat response + Insights Page table
+\end{enumerate}
+
+\subsubsection{LLM Query Provenance}
+\begin{enumerate}
+    \item Source: Multiple facts from knowledge graph
+    \item Processing: LLM Agent retrieves relevant facts using relevance ranking
+    \item Synthesis: LLM combines facts into coherent analysis
+    \item Response: Natural language with evidence facts
+    \item Display: Chat interface with comprehensive answer
+\end{enumerate}
+
+\subsection{Additional Screenshot Descriptions}
+
+\subsubsection{Source Document View}
+\textit{[Screenshot: Documents page showing "employees.csv" with metadata: Upload timestamp, Total facts extracted (1,247), Processing status (Completed), Processing agent (doc\_001). Link to "View All Facts" visible. Sample facts list showing first 10 facts from document.]}
+
+\subsubsection{Statistics Correlation Matrix}
+\textit{[Screenshot: Full correlation matrix heatmap showing all pairwise correlations between numeric columns. Color scale: Red (negative), White (zero), Blue (positive). "salary" × "performance\_rating" cell highlighted. Interactive tooltips showing exact correlation values on hover.]}
+
+\subsubsection{Insights Manager View}
+\textit{[Screenshot: Insights page "By Manager" section showing table with columns: Manager Name, Employee Count, Avg Salary, Avg Performance, Avg Absences. Multiple manager rows visible. Source attribution and refresh button visible.]}
+
+\subsubsection{Graph Node Details}
+\textit{[Screenshot: Graph visualization with "John Smith" node selected, showing detailed sidebar panel with: Node properties (type: Employee), All connections (3 edges), Source information (employees.csv, worker\_001), Related entities list, Edit/Delete buttons.]}
+
+\subsection{Query Type Coverage}
+
+The system handles four main query types:
+\begin{itemize}
+    \item \textbf{Structured Queries}: Direct fact retrieval from knowledge graph
+    \item \textbf{Statistical Queries}: Correlation and distribution analysis
+    \item \textbf{Operational Queries}: Groupby and aggregation insights
+    \item \textbf{Conversational Queries}: Natural language with multi-fact synthesis
+\end{itemize}
+
+Each query type maintains transparency through evidence facts and source attribution.
+
+\subsection{Agent Communication Patterns}
+
+\begin{itemize}
+    \item \textbf{Centralized Knowledge Graph}: All agents write to and read from the same knowledge graph
+    \item \textbf{Orchestrator Routing}: Single entry point routes queries to appropriate agents
+    \item \textbf{Parallel Processing}: Document agents create worker agents that process chunks concurrently
+    \item \textbf{Specialized Processing}: Each agent type handles specific tasks
+    \item \textbf{Transparent Status}: All agents report status visible to users
+\end{itemize}
+
+\subsection{User Interface Features}
+
+\begin{itemize}
+    \item \textbf{Chat Interface}: Natural language interaction with evidence display
+    \item \textbf{Knowledge Base}: Table view for fact inspection and filtering
+    \item \textbf{Graph Visualization}: Interactive exploration of entity relationships
+    \item \textbf{Statistics Dashboard}: Correlation matrices and descriptive statistics
+    \item \textbf{Insights Page}: Operational metrics and aggregations
+    \item \textbf{Agent Architecture}: System transparency and status monitoring
+    \item \textbf{Documents Page}: Source document management and verification
+\end{itemize}
+

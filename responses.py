@@ -777,6 +777,382 @@ def respond(message, history=None, system_message="You are an intelligent assist
     # CSV queries are handled by the normal LLM flow with context retrieval
     # The LLM will use the facts extracted from CSV data to answer questions
     
+    # DIRECT CORRELATION LOOKUP: Bypass LLM for simple correlation queries
+    # This prevents timeout issues and provides instant responses
+    try:
+        import re
+        from knowledge import get_correlation_value
+        
+        message_lower = message.lower()
+        # Check if this is a correlation query
+        if 'correlation' in message_lower or 'correlate' in message_lower:
+            # Try to extract two column names from the query
+            # Patterns: "X and Y correlation", "correlation between X and Y", "X Y correlation", etc.
+            # Also handle: "statistical_insights: X and Y correlation"
+            patterns = [
+                r'statistical[_\s]*(?:insights|analysis)[:\s]+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+and\s+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)(?:\s+correlation|\s|$)',
+                r'([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+and\s+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+correlation',
+                r'correlation\s+(?:between|of)\s+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+and\s+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)',
+                r'([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+([A-Za-z0-9_]+(?:\s+[A-Za-z0-9_]+)*?)\s+correlation',
+            ]
+            
+            col1 = None
+            col2 = None
+            for pattern in patterns:
+                match = re.search(pattern, message, re.IGNORECASE)
+                if match:
+                    col1 = match.group(1).strip()
+                    col2 = match.group(2).strip()
+                    # Clean up any trailing punctuation or whitespace
+                    col1 = col1.rstrip('.,;:!?')
+                    col2 = col2.rstrip('.,;:!?')
+                    if col1 and col2:
+                        break
+            
+            # If we found two columns, try direct lookup
+            if col1 and col2:
+                corr_value = get_correlation_value(col1, col2)
+                if corr_value is not None:
+                    # Format response with correlation value
+                    strength = "strong" if abs(corr_value) > 0.7 else ("moderate" if abs(corr_value) > 0.5 else "weak")
+                    direction = "positive" if corr_value > 0 else "negative"
+                    response = f"The correlation between **{col1}** and **{col2}** is **{corr_value:.3f}**.\n\n"
+                    response += f"This indicates a {strength} {direction} correlation."
+                    if abs(corr_value) < 0.1:
+                        response += " The correlation is very weak, suggesting little to no linear relationship."
+                    elif abs(corr_value) < 0.3:
+                        response += " The correlation is weak, suggesting a minimal relationship."
+                    elif abs(corr_value) < 0.5:
+                        response += " The correlation is moderate, suggesting a noticeable relationship."
+                    elif abs(corr_value) < 0.7:
+                        response += " The correlation is moderate to strong, suggesting a meaningful relationship."
+                    else:
+                        response += " The correlation is strong, suggesting a strong linear relationship."
+                    
+                    print(f"✅ Direct correlation lookup: {col1} ↔ {col2} = {corr_value:.3f}")
+                    return response
+    except Exception as e:
+        # If direct lookup fails, continue with normal processing
+        print(f"⚠️  Direct correlation lookup failed: {e}")
+        pass
+    
+    # DIRECT EMPLOYEE FACT LOOKUP: Bypass LLM for simple employee attribute queries
+    # This prevents timeout issues for queries like "manager of Booth, Frank" or "position id of Becker, Scott"
+    try:
+        import re
+        from knowledge import get_employee_attribute
+        
+        message_lower = message.lower()
+        # Check if this is an employee attribute query
+        # Patterns: "manager of X", "salary of X", "position of X", "position id of X", "X has manager", etc.
+        # Simple patterns first for better matching - expanded to include "position id", "manager id", etc.
+        # Generic patterns that work for ANY attribute from CSV columns
+        # Examples: performance, satisfaction, engagement, status, absences, etc.
+        filter_patterns = [
+            # Direct pattern: "attribute of X" (most common) - matches any word(s) as attribute
+            r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+            # Pattern: "what is the attribute of X"
+            r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+(?:\s+[a-z]+)*?)\s*(?:of|for)\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+            # Pattern: "X has attribute"
+            r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?([a-z]+(?:\s+[a-z]+)*?)',
+            # Pattern: "what is X's attribute"
+            r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?([a-z]+(?:\s+[a-z]+)*?)',
+            # Pattern: "manager of X" (special case for manager)
+            r'manager.*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+            # Pattern: "who/what is the manager of X"
+            r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|managerid|manager\s+id).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+        ]
+        
+        employee_name = None
+        attribute = None
+        
+        for pattern in filter_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                # Pattern 1: "attribute of X" - generic pattern, two groups
+                if pattern.startswith(r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+'):
+                    attribute = match.group(1).strip() if match.lastindex >= 1 else None
+                    employee_name = match.group(2).strip() if match.lastindex >= 2 else None
+                # Pattern 2: "manager of X" - only employee name captured
+                elif pattern.startswith(r'manager.*?(?:of|for)'):
+                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                    attribute = 'manager'  # Set attribute directly
+                # Pattern 3: "what is the attribute of X" - two groups
+                elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+'):
+                    attribute = match.group(1).strip() if match.lastindex >= 1 else None
+                    employee_name = match.group(2).strip() if match.lastindex >= 2 else None
+                # Pattern 4: "X has attribute" - two groups (reversed)
+                elif pattern.startswith(r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have)'):
+                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                    attribute = match.group(2).strip() if match.lastindex >= 2 else None
+                # Pattern 5: "what is X's attribute" - two groups
+                elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+'):
+                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                    attribute = match.group(2).strip() if match.lastindex >= 2 else None
+                # Pattern 6: "who/what is the manager of X" - only employee name
+                elif pattern.startswith(r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager'):
+                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                    attribute = 'manager'  # Set attribute directly
+                # Fallback: try to extract from any two groups
+                elif match.lastindex >= 2:
+                    # Try to determine which is employee name (has comma pattern)
+                    group1 = match.group(1).strip()
+                    group2 = match.group(2).strip()
+                    if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group1):
+                        employee_name = group1
+                        attribute = group2
+                    elif re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group2):
+                        employee_name = group2
+                        attribute = group1
+                    else:
+                        # Assume first is attribute, second is employee
+                        attribute = group1
+                        employee_name = group2
+                # Single group - try to find employee name elsewhere in query
+                elif match.lastindex >= 1:
+                    first_group = match.group(1).strip()
+                    # Check if first group is employee name (has comma pattern)
+                    if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', first_group):
+                        employee_name = first_group
+                        # Try to extract ANY attribute from query text (generic - works for all CSV columns)
+                        # Look for common attribute patterns in the query
+                        attribute_match = re.search(r'\b(performance|satisfaction|engagement|status|salary|position|department|manager|age|absences|marital|gender|state|city|zip|phone|email|performance\s+score|satisfaction\s+score|engagement\s+score)\b', message_lower)
+                        if attribute_match:
+                            attribute = attribute_match.group(1)
+                    else:
+                        # Might be attribute, try to find employee name elsewhere
+                        attribute = first_group
+                        # Look for employee name pattern in the message
+                        emp_match = re.search(r'([A-Z][a-z]+,\s*[A-Z][a-z\.]+)', message)
+                        if emp_match:
+                            employee_name = emp_match.group(1).strip()
+                
+                # Clean up employee name and attribute
+                if employee_name:
+                    employee_name = employee_name.rstrip('.,;:!?')
+                if attribute:
+                    # Remove common stopwords and clean up
+                    attribute = attribute.rstrip('.,;:!?')
+                    # Remove possessive forms (e.g., "X's" -> "X")
+                    attribute = re.sub(r"'s\s*$", "", attribute, flags=re.IGNORECASE)
+                    # Remove common question words that might have been captured
+                    stopwords = ['the', 'a', 'an', 'what', 'which', 'who', 'is', 'are', 'of', 'for']
+                    attribute_words = attribute.split()
+                    attribute_words = [w for w in attribute_words if w.lower() not in stopwords]
+                    attribute = ' '.join(attribute_words).strip()
+                
+                if employee_name and attribute:
+                    break
+        
+        # If we found employee name and attribute, try direct lookup
+        if employee_name and attribute:
+            # Normalize attribute name (handle "position id" -> "position_id")
+            attribute_normalized = attribute.lower().replace(' ', '').replace('_', '')
+            if attribute_normalized == 'positionid':
+                attribute_normalized = 'position_id'
+            elif attribute_normalized == 'managerid':
+                attribute_normalized = 'manager_id'
+            
+            print(f"🔍 Direct employee lookup attempt: employee='{employee_name}', attribute='{attribute}' (normalized: '{attribute_normalized}')")
+            # Try both normalized and original attribute
+            attr_value = get_employee_attribute(employee_name, attribute_normalized)
+            if attr_value is None and attribute_normalized != attribute.lower():
+                # Try original attribute if normalized didn't work
+                attr_value = get_employee_attribute(employee_name, attribute.lower())
+            
+            if attr_value is not None:
+                print(f"✅ Found value: {attr_value}")
+                # Format response based on attribute type
+                attribute_display = attribute.replace('_', ' ').title()
+                if attribute_normalized in ['manager', 'manager_id']:
+                    response = f"The manager of **{employee_name}** is **{attr_value}**."
+                elif attribute_normalized == 'salary':
+                    response = f"The salary of **{employee_name}** is **{attr_value}**."
+                elif attribute_normalized == 'position_id':
+                    response = f"The position ID of **{employee_name}** is **{attr_value}**."
+                elif attribute_normalized == 'position':
+                    response = f"The position of **{employee_name}** is **{attr_value}**."
+                elif attribute_normalized == 'department':
+                    response = f"**{employee_name}** works in the **{attr_value}** department."
+                else:
+                    response = f"**{employee_name}** has {attribute_display}: **{attr_value}**."
+                
+                # Add evidence
+                try:
+                    from knowledge import get_fact_source_document
+                    # Try multiple predicate formats
+                    predicates_to_try = [
+                        f"has_{attribute_normalized}",
+                        f"has_{attribute.lower().replace(' ', '_')}",
+                        f"has_{attribute.lower()}"
+                    ]
+                    source_docs = []
+                    for pred in predicates_to_try:
+                        source_docs = get_fact_source_document(employee_name, pred, attr_value)
+                        if source_docs:
+                            break
+                    
+                    if source_docs:
+                        response += f"\n\n**Evidence from Knowledge Graph:**\n"
+                        for doc in source_docs[:3]:  # Limit to 3 sources
+                            response += f"- {employee_name} → has_{attribute_normalized} → {attr_value} [Source: {doc}]\n"
+                except Exception as e:
+                    print(f"⚠️  Error getting evidence: {e}")
+                    pass
+                
+                print(f"✅ Direct employee fact lookup: {employee_name} -> {attribute_normalized} = {attr_value}")
+                return response
+            else:
+                print(f"⚠️  Direct employee lookup found no value for {employee_name} -> {attribute}")
+    except Exception as e:
+        # If direct lookup fails, continue with normal processing
+        print(f"⚠️  Direct employee fact lookup failed: {e}")
+        import traceback
+        traceback.print_exc()
+        pass
+    
+    # DIRECT OPERATIONAL INSIGHTS LOOKUP: Bypass LLM for operational insights queries
+    # This handles queries like "operational insights: team size of manager Michael Albert"
+    try:
+        import re
+        from knowledge import graph, normalize_entity
+        from urllib.parse import unquote
+        import rdflib
+        
+        message_lower = message.lower()
+        # Check if this is an operational insights query
+        if 'operational' in message_lower and 'insights' in message_lower:
+            # Patterns for operational insights queries
+            # "team size of manager X", "average salary of manager X", etc.
+            op_patterns = [
+                r'team\s+size.*?(?:of|for).*?manager\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+                r'team\s+size.*?(?:of|for).*?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+                r'(?:average|avg).*?(salary|performance|engagement|satisfaction|absences).*?(?:of|for).*?manager\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+                r'(?:average|avg).*?(salary|performance|engagement|satisfaction|absences).*?(?:of|for).*?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+            ]
+            
+            manager_name = None
+            metric = None
+            
+            for pattern in op_patterns:
+                match = re.search(pattern, message, re.IGNORECASE)
+                if match:
+                    if match.lastindex >= 2:
+                        metric = match.group(1).strip()
+                        manager_name = match.group(2).strip()
+                    elif match.lastindex >= 1:
+                        manager_name = match.group(1).strip()
+                        # Extract metric from query
+                        if 'team size' in message_lower or 'employee count' in message_lower:
+                            metric = 'team_size'
+                        elif 'salary' in message_lower:
+                            metric = 'salary'
+                        elif 'performance' in message_lower:
+                            metric = 'performance'
+                        elif 'engagement' in message_lower:
+                            metric = 'engagement'
+                        elif 'satisfaction' in message_lower:
+                            metric = 'satisfaction'
+                        elif 'absences' in message_lower:
+                            metric = 'absences'
+                    
+                    if manager_name:
+                        manager_name = manager_name.rstrip('.,;:!?')
+                    if metric:
+                        metric = metric.rstrip('.,;:!?')
+                    
+                    if manager_name:
+                        break
+            
+            # If we found a manager name, search for operational insights facts
+            if manager_name:
+                # Search for facts about this manager from operational_insights source
+                # Look for patterns like "Manager X manages Y employees" or "Manager X has average team engagement score of Y"
+                manager_normalized = normalize_entity(manager_name.lower())
+                
+                # Try different predicate patterns based on metric
+                if metric == 'team_size' or not metric:
+                    predicate_patterns = ['manages', 'employee_count', 'team size']
+                elif metric == 'salary':
+                    predicate_patterns = ['average team salary', 'avg salary', 'average salary']
+                elif metric == 'performance':
+                    predicate_patterns = ['average team performance', 'avg performance', 'average performance']
+                elif metric == 'engagement':
+                    predicate_patterns = ['average team engagement', 'avg engagement', 'average engagement']
+                elif metric == 'satisfaction':
+                    predicate_patterns = ['average team satisfaction', 'avg satisfaction', 'average satisfaction']
+                elif metric == 'absences':
+                    predicate_patterns = ['average team absences', 'avg absences', 'average absences']
+                else:
+                    predicate_patterns = [metric]
+                
+                # Search through graph for matching facts (limited search to prevent timeout)
+                max_iterations = 5000
+                iterations = 0
+                
+                for s, p, o in graph:
+                    iterations += 1
+                    if iterations > max_iterations:
+                        break
+                    
+                    # Skip metadata triples
+                    predicate_str = str(p)
+                    if ('fact_subject' in predicate_str or 'fact_predicate' in predicate_str or 
+                        'fact_object' in predicate_str or 'has_details' in predicate_str or 
+                        'source_document' in predicate_str or 'uploaded_at' in predicate_str or
+                        'is_inferred' in predicate_str or 'confidence' in predicate_str):
+                        continue
+                    
+                    # Extract subject
+                    subject_uri_str = str(s)
+                    if 'urn:entity:' in subject_uri_str:
+                        subject = unquote(subject_uri_str.split('urn:entity:')[-1]).replace('_', ' ')
+                    elif 'urn:' in subject_uri_str:
+                        subject = unquote(subject_uri_str.split('urn:')[-1]).replace('_', ' ')
+                    else:
+                        subject = str(s)
+                    
+                    # Extract predicate
+                    if 'urn:predicate:' in predicate_str:
+                        predicate = unquote(predicate_str.split('urn:predicate:')[-1]).replace('_', ' ')
+                    elif 'urn:' in predicate_str:
+                        predicate = unquote(predicate_str.split('urn:')[-1]).replace('_', ' ')
+                    else:
+                        predicate = predicate_str
+                    
+                    # Check if subject contains manager name and predicate matches metric
+                    subject_lower = subject.lower()
+                    predicate_lower = predicate.lower()
+                    
+                    if manager_normalized in subject_lower or manager_name.lower() in subject_lower:
+                        # Check if this is from operational_insights source
+                        from knowledge import get_fact_source_document
+                        sources = get_fact_source_document(subject, predicate, str(o))
+                        is_operational = any('operational_insights' in str(src[0]).lower() for src in sources) if sources else False
+                        
+                        if is_operational:
+                            # Check if predicate matches the metric we're looking for
+                            if not metric or any(pat.lower() in predicate_lower for pat in predicate_patterns):
+                                # Found a match!
+                                if 'manages' in predicate_lower and 'employee' in predicate_lower:
+                                    # Team size: "Manager X manages Y employees"
+                                    response = f"Manager **{manager_name}** manages **{str(o)}** employees."
+                                    print(f"✅ Direct operational insights lookup: {manager_name} -> team size = {str(o)}")
+                                    return response
+                                elif 'average' in predicate_lower or 'avg' in predicate_lower:
+                                    # Average metric: extract the value
+                                    value = str(o)
+                                    metric_name = metric if metric else 'metric'
+                                    response = f"Manager **{manager_name}** has average team {metric_name} of **{value}**."
+                                    print(f"✅ Direct operational insights lookup: {manager_name} -> {metric_name} = {value}")
+                                    return response
+    except Exception as e:
+        # If direct lookup fails, continue with normal processing
+        print(f"⚠️  Direct operational insights lookup failed: {e}")
+        import traceback
+        traceback.print_exc()
+        pass
+    
     # Try orchestrator-based query processing first
     try:
         import importlib

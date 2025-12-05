@@ -271,7 +271,10 @@ async def chat_endpoint(request: ChatMessage):
         # Add extra time for larger knowledge graphs
         # For structured queries, we need more time for fact extraction
         if fact_count > 10000:
-            extra_time = min(60.0, fact_count / 500)  # Up to 60 extra seconds for large graphs
+            # More generous timeout for very large graphs
+            extra_time = min(120.0, fact_count / 300)  # Up to 120 extra seconds for large graphs
+        elif fact_count > 5000:
+            extra_time = min(60.0, fact_count / 500)  # Up to 60 extra seconds for medium-large graphs
         else:
             extra_time = 0
         
@@ -280,8 +283,8 @@ async def chat_endpoint(request: ChatMessage):
         else:
             timeout_seconds = base_timeout_gpu + extra_time
         
-        # Cap at 3 minutes for very large graphs (increased for better reliability)
-        timeout_seconds = min(timeout_seconds, 180.0)
+        # Cap at 5 minutes for very large graphs (increased for better reliability)
+        timeout_seconds = min(timeout_seconds, 300.0)
         
         print(f"⏱️  Query timeout: {timeout_seconds:.1f}s (device: {LLM_DEVICE}, facts: {fact_count})")
         
