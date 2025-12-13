@@ -1,0 +1,59 @@
+================================================================================
+EVALUATION METRICS REPORT
+================================================================================
+
+DATASET DIMENSIONS
+--------------------------------------------------------------------------------
+Number of employee records (R): 311
+Number of variables (N): 36
+Dataset file: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+
+Numeric columns (18):
+  - EmpID
+  - MarriedID
+  - MaritalStatusID
+  - GenderID
+  - EmpStatusID
+  - DeptID
+  - PerfScoreID
+  - FromDiversityJobFairID
+  - Salary
+  - Termd
+  ... and 8 more
+
+Categorical columns (18):
+  - Employee_Name
+  - Position
+  - State
+  - DOB
+  - Sex
+  - MaritalDesc
+  - CitizenDesc
+  - HispanicLatino
+  - RaceDesc
+  - DateofHire
+  ... and 8 more
+
+COMBINATORIAL METRICS
+--------------------------------------------------------------------------------
+Maximum order considered (K_max): 5
+
+Combinations by order k:
+  k = 2: C(36, 2) = 630 combinations, E(2) = 1 pairwise interactions
+  k = 3: C(36, 3) = 7,140 combinations, E(3) = 3 pairwise interactions
+  k = 4: C(36, 4) = 58,905 combinations, E(4) = 6 pairwise interactions
+  k = 5: C(36, 5) = 376,992 combinations, E(5) = 10 pairwise interactions
+
+Total combinations (k=2 to k=5): 443,667
+Operational combinations (k=2): 630
+
+CUTOFF ORDERS (Operational vs Strategic)
+--------------------------------------------------------------------------------
+For different values of E_max (maximum pairwise interactions for operational queries):
+  E_max = 1 → k* = 2 (E(2) = 1)
+    → Operational: k = 2, Strategic: k ≥ 3
+  E_max = 2 → k* = 2 (E(2) = 1)
+    → Operational: k = 2, Strategic: k ≥ 3
+  E_max = 3 → k* = 3 (E(3) = 3)
+  E_max = 6 → k* = 4 (E(4) = 6)
+  E_max = 10 → k* = 5 (E(5) = 10)

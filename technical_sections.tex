@@ -309,113 +309,53 @@ The response is displayed in the chat interface with:
 
 Users can click on evidence facts to view them in the Knowledge Base page, or click on source documents to see all facts from that document.
 
-\section{Technical Implementation}
+\section{Implementation}\label{sec:implementation}
 
-This section provides detailed technical implementation information for reproducibility and understanding of the system's inner workings.
+This section presents the core algorithmic components and theoretical foundations underlying the system's implementation, focusing on the computational mechanisms that enable transparency and traceability.
 
-\subsection{Knowledge Graph Implementation}
+\subsection{Knowledge Graph Storage and Provenance}
 
-\textbf{Technology Stack}
-The knowledge graph is implemented using RDFLib (version 6.0+), a Python library for working with RDF. RDFLib provides:
-\begin{itemize}
-    \item RDF triple storage and retrieval
-    \item SPARQL-like query capabilities
-    \item Multiple serialization formats (RDF/XML, Turtle, JSON-LD)
-    \item Efficient in-memory graph representation
-\end{itemize}
+The knowledge graph uses RDFLib's in-memory \texttt{Graph} structure, where facts are stored as RDF triples with \texttt{URIRef} objects for subjects/predicates and \texttt{Literal} objects for values. The theoretical choice of RDF as the representation formalism provides standardised semantics while enabling explicit provenance tracking through reification.
 
-\textbf{Data Structure}
-Facts are stored as RDF triples using URIRefs for subjects and predicates, and Literals for objects. The complete structure with namespace definitions and metadata properties is shown in Listing~\ref{lst:rdf-structure} in Appendix~A.
+Each fact is assigned a unique identifier computed as \texttt{fact\_id = f"{subject}|{predicate}|{normalized\_object}"}, which is URI-encoded and stored separately. Provenance metadata (source document, timestamp, agent ID, confidence) is attached through additional RDF triples linking fact IDs to metadata values, as shown in Listing~\ref{lst:fact-storage}. This design enables multiple sources per fact and maintains complete auditability.
 
-\textbf{Persistence Mechanism}
-The knowledge graph is persisted using Python's pickle module for efficient binary serialization, with JSON backup for portability. The implementation is detailed in Listing~\ref{lst:kg-persistence} in Appendix~A.
+The graph persistence uses dual-format storage: binary \texttt{pickle} serialisation for efficient loading and JSON backup for portability. The fact ID computation normalises object values to ensure consistent identification across extraction runs, preventing duplicate facts from different processing stages.
 
-\textbf{Query Mechanism}
-Facts are retrieved using RDFLib's query capabilities, specifically the \texttt{triples()} method for efficient pattern matching. The query implementation with source and metadata retrieval is shown in Listing~\ref{lst:kg-query} in Appendix~A.
+\subsection{Entity Normalisation and Consistency}
 
-\textbf{Entity Normalization Algorithm}
-To ensure consistent entity representation, the system normalizes entity names using a multi-step algorithm that includes lowercase conversion, special character removal, space normalization, and learning from existing facts. The complete algorithm with normalization map learning is detailed in Listing~\ref{lst:entity-norm} in Appendix~A. The normalization algorithm ensures that entities like "John Smith", "john smith", and "John  Smith" are all mapped to the same canonical form, enabling consistent fact retrieval and preventing duplicate entities in the knowledge graph.
+Entity normalisation addresses the representational consistency problem: semantically identical entities with different surface forms (e.g., ``John Smith'' vs. ``john  smith'') must map to a canonical representation. The algorithm applies sequential transformations: lowercasing, special character removal, and space normalisation, followed by lookup in a learned mapping dictionary.
 
-\textbf{Fact Extraction Algorithm}
-The system extracts facts from text using a hybrid approach combining regex pattern matching with optional LLM-based extraction. The algorithm processes sentences, matches patterns, validates entities, and computes confidence scores. The complete implementation is shown in Listing~\ref{lst:fact-extraction} in Appendix~A. For CSV files, the system uses a specialized extraction algorithm that processes each row as a structured data record, as detailed in Listing~\ref{lst:csv-extraction} in Appendix~A.
+The system implements an unsupervised learning mechanism that groups entities by normalised form and selects the most frequent variant as canonical. This learned mapping is persisted and updated incrementally, enabling the system to improve entity consistency over time without manual intervention. The algorithm, shown in Listing~\ref{lst:entity-norm}, ensures that entity queries retrieve all relevant facts regardless of surface form variations.
 
-\subsection{Multi-Agent System Implementation}
+\subsection{Fact Extraction and Duplicate Prevention}
 
-\textbf{Agent Architecture Pattern}
-The system uses an agent-based architecture with a centralized knowledge graph. Each agent is implemented as a Python dataclass with agent ID, type, status, and metadata. The base class structure is shown in Listing~\ref{lst:agent-base} in Appendix~A.
+Fact extraction uses a hybrid approach: regex pattern matching for structured relational phrases combined with optional LLM-based extraction for complex sentences. For CSV data, each row is processed as a structured record where column names become predicates and values become objects, creating facts of the form \texttt{(employee\_name, has\_\{column\}, value)}.
 
-\textbf{Agent Communication}
-Agents communicate through the centralized knowledge graph rather than direct inter-agent communication. Worker agents extract facts and store them in the knowledge graph, while the Statistics Agent computes correlations and descriptive statistics. The complete communication pattern with correlation computation is detailed in Listing~\ref{lst:agent-comm} in Appendix~A.
+Duplicate prevention is critical for parallel processing correctness. The system maintains an in-memory hash set \texttt{\_fact\_lookup\_set} containing normalised fact tuples, enabling O(1) existence checks before graph insertion. This index is initialised at startup (O(n) complexity) and maintained incrementally, ensuring that concurrent worker threads can safely check for duplicates without graph traversal. The theoretical guarantee is that duplicate facts are prevented even under high concurrency, as the set membership test is atomic.
 
-\textbf{Orchestrator Routing Algorithm}
-The Orchestrator Agent implements intelligent query routing using a multi-stage algorithm that combines pattern matching, keyword detection, and entity extraction. The algorithm processes queries through five stages: employee-specific detection, statistical query detection, operational query detection, structured pattern matching, and conversational fallback. The complete routing implementation is shown in Listing~\ref{lst:query-routing} in Appendix~A. The routing algorithm uses a priority-based approach: employee-specific queries are handled first (for efficiency), followed by statistical, operational, and structured queries, with conversational queries as the default fallback.
+\subsection{Parallel Processing and Concurrency}
 
-\textbf{Parallel Processing Algorithm}
-Worker agents process document chunks in parallel using a thread pool executor. The algorithm splits documents into chunks, creates worker agents, and processes chunks concurrently with error handling. The complete implementation is shown in Listing~\ref{lst:parallel-processing} in Appendix~A. The parallel processing algorithm uses a thread pool to process multiple chunks simultaneously, significantly reducing processing time for large documents. The algorithm ensures thread-safe access to the knowledge graph through RDFLib's built-in thread safety mechanisms.
+Parallel document processing uses Python's \texttt{ThreadPoolExecutor} with an adaptive chunking strategy. The chunk size calculation \texttt{chunk\_size = max(25, min(200, 15000 // c))} balances load distribution against thread overhead, targeting approximately 15,000 data points per chunk. This adaptive approach ensures efficient parallelisation regardless of dataset dimensions.
 
-\subsection{Query Processing Implementation}
+The theoretical foundation is that RDFLib's graph operations are thread-safe, enabling concurrent writes without explicit synchronisation. Worker threads use \texttt{threading.Lock()} only for updating shared counters and agent registries, not for graph access. The parallel processing implementation, shown in Listing~\ref{lst:parallel-processing}, demonstrates how the system achieves linear speedup for large documents while maintaining data consistency.
 
-\textbf{Query Classification Algorithm}
-The system classifies queries using a hierarchical pattern matching algorithm that extracts both query type and parameters. The algorithm processes queries through multiple pattern matching stages for filter, min/max, operational, statistical, and conversational queries. The complete implementation is detailed in Listing~\ref{lst:query-classification} in Appendix~A. The classification algorithm uses regex patterns with capture groups to extract both the query type and specific parameters (entities, attributes, columns), enabling precise query processing.
+\subsection{Query Routing and Classification}
 
-\textbf{Evidence Assembly Algorithm}
-The system assembles evidence facts for responses using a relevance-based ranking algorithm that scores facts based on keyword matching with the query. The algorithm selects the top-k most relevant facts and formats them with source attribution. The complete implementation with ranking logic is shown in Listing~\ref{lst:evidence-assembly} in Appendix~A. The evidence assembly algorithm ensures that the most relevant facts are displayed first, making it easier for users to verify system reasoning.
+Query routing uses a hierarchical pattern-matching algorithm that processes queries through priority-ordered stages: employee-specific detection, statistical keyword matching, operational query detection, structured pattern matching, and conversational fallback. The theoretical motivation is efficiency: employee-specific queries can be answered by querying only relevant document agents, reducing graph traversal overhead.
 
-\subsection{Frontend Implementation}
+The routing algorithm, detailed in Listing~\ref{lst:query-routing}, extracts query parameters (entities, attributes, operations) using regex patterns and keyword lists. It returns routing decisions with explicit reasoning, maintaining transparency about why each query was routed to specific agents. This design enables users to understand the system's decision-making process.
 
-\textbf{Technology Stack}
-The frontend is built using:
-\begin{itemize}
-    \item \textbf{React 18}: Modern React with hooks and functional components
-    \item \textbf{TypeScript}: Type-safe JavaScript for better code quality
-    \item \textbf{Vite}: Fast build tool and development server
-    \item \textbf{shadcn/ui}: High-quality React component library
-    \item \textbf{React Query}: Server state management and caching
-    \item \textbf{D3.js}: Graph visualization library
-    \item \textbf{React Flow}: Agent network visualization
-\end{itemize}
+\subsection{Evidence Assembly}
 
-\textbf{API Client}
-The frontend communicates with the backend through a centralized API client that handles chat messages, fact retrieval, and document uploads. The implementation is shown in Listing~\ref{lst:api-client} in Appendix~A.
+Evidence assembly ranks facts by relevance to the query using a scoring function that considers keyword overlap, entity name matches, and predicate alignment. The top-\(k\) facts (typically \(k=5\)) are selected and formatted with source attribution. The algorithm, shown in Listing~\ref{lst:evidence-assembly}, ensures that every system response includes inspectable evidence, enabling users to verify reasoning.
 
-\textbf{State Management}
-The frontend uses React Query for server state management with caching, and Context API for local state. The implementation with query client configuration and knowledge store context is detailed in Listing~\ref{lst:state-management} in Appendix~A.
+The theoretical foundation is that explainability requires not just evidence presence, but evidence relevance. By ranking facts by semantic overlap with the query, the system presents the most informative supporting evidence first, reducing cognitive load on users while maintaining complete traceability.
 
-\subsection{LLM Integration}
+\subsection{Statistical Analysis}
 
-\textbf{LLM Options}
-The system supports multiple LLM backends:
+Statistical analysis pre-computes correlations and descriptive statistics during document ingestion, storing results as facts in the knowledge graph. This design choice enables statistical queries to be answered through graph lookups rather than recomputation, providing fast response times while maintaining consistency with the symbolic knowledge layer.
 
-\begin{itemize}
-    \item \textbf{Ollama}: Local LLM execution (recommended for privacy)
-    \item \textbf{Groq API}: Fast cloud-based LLM (free tier available)
-    \item \textbf{OpenAI API}: Commercial option (requires API key)
-\end{itemize}
-
-\textbf{Prompt Engineering}
-The system uses carefully crafted prompts to ensure traceability, emphasizing exact number usage, evidence citation, and source attribution. The complete prompt template and response generation logic is shown in Listing~\ref{lst:llm-prompt} in Appendix~A.
-
-\subsection{Performance Optimizations}
-
-\textbf{In-Memory Indexing Algorithm}
-For fast fact lookup, the system maintains an in-memory hash-based index that provides O(1) lookup time. The index stores normalized fact tuples and is initialized on startup. The complete implementation with initialization logic is detailed in Listing~\ref{lst:fact-index} in Appendix~A. The indexing algorithm provides constant-time O(1) fact existence checks, which is critical for preventing duplicate facts during parallel processing. The index is initialized on system startup and maintained incrementally as new facts are added.
-
-\textbf{Caching}
-The system implements caching for frequently accessed data:
-
-\begin{itemize}
-    \item Query results are cached for 5 minutes
-    \item Statistics and operational insights are pre-computed and cached
-    \item Graph visualization data is cached until new facts are added
-\end{itemize}
-
-\subsection{Operational Insights Generation}
-
-The Operational Agent generates insights using pandas groupby operations to compute aggregations such as department performance metrics, manager-based statistics, and recruitment source effectiveness. These insights are stored as facts in the knowledge graph for efficient querying. The complete algorithm is detailed in Listing~\ref{lst:operational-insights} in Appendix~A.
-
-\subsection{Entity Matching}
-
-For employee-specific queries, the system uses an entity matching algorithm that efficiently filters facts by source document, enabling fast retrieval of employee information without querying the entire knowledge graph. The algorithm extracts employee names using pattern matching and filters facts by agent ownership. The implementation is shown in Listing~\ref{lst:entity-matching} in Appendix~A.
+Correlations are computed using Pearson's coefficient with a configurable threshold (\(|\rho| > 0.3\)), and descriptive statistics (mean, median, std, quartiles) are computed column-wise. Each statistic is encoded as a separate fact, enabling the system to answer queries like ``What is the average salary?'' through direct graph retrieval rather than statistical computation.
 
 \section{Conclusion}
 

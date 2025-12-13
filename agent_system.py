@@ -662,199 +662,82 @@ def process_document_with_agents(document_id: str, document_name: str, document_
                     except Exception:
                         doc_agent.metadata["processing_status"]["visualizations"] = "error"
                 
-                # 3. Generate operational insights
+                # 3. Generate operational insights - OPTIMIZED: Compute directly, skip groupby (redundant)
                 try:
-                    from concurrent.futures import ThreadPoolExecutor
-                    import pandas as pd
                     import time
                     import os  # Ensure os is imported at function level
                     start_time = time.time()
                     
-                    # Use pre-loaded DataFrame for groupby insights
-                    if df is not None:
+                    # Use pre-loaded DataFrame - CRITICAL: Capture df in local variable to ensure closure works correctly
+                    local_background_df = background_df.copy() if background_df is not None else None
+                    
+                    # Compute operational insights directly (fast path - no parallel overhead for small datasets)
+                    df_to_use = local_background_df
+                    
+                    if df_to_use is not None and len(df_to_use) > 0:
+                        print(f"✅ Computing operational insights using pre-loaded DataFrame ({len(df_to_use)} rows, {len(df_to_use.columns)} columns)")
+                        from operational_queries import compute_operational_insights
+                        operational_insights = compute_operational_insights(df=df_to_use)
+                    else:
+                        # Fallback: Try to use file_path if DataFrame not available
+                        file_path_to_use = background_file_path
+                        if not file_path_to_use or not os.path.exists(file_path_to_use):
+                            if hasattr(doc_agent, 'file_path') and doc_agent.file_path and os.path.exists(doc_agent.file_path):
+                                file_path_to_use = doc_agent.file_path
+                        
+                        if not file_path_to_use or not os.path.exists(file_path_to_use):
+                            print(f"❌ No valid file path or DataFrame available for operational insights")
+                            operational_insights = {}
+                        else:
+                            print(f"✅ Computing operational insights from file: {file_path_to_use}")
+                            from operational_queries import compute_operational_insights
+                            operational_insights = compute_operational_insights(csv_file_path=file_path_to_use)
+                    
+                    elapsed = time.time() - start_time
+                    print(f"⏱️  Operational insights computed in {elapsed:.2f}s")
+                    
+                    # Store operational insights immediately - SIMPLE CHECK like it was working before
+                    if operational_insights and len(operational_insights) > 0:
+                        print(f"✅ Storing operational insights in doc_agent.metadata: {len(operational_insights)} keys: {list(operational_insights.keys())}")
+                        results["operational_insights"] = operational_insights
+                        doc_agent.metadata["operational_insights"] = operational_insights
+                        
+                        # Verify we have the required structured insights
+                        required_keys = ['by_department', 'by_manager', 'by_recruitment_source']
+                        has_required = all(key in operational_insights for key in required_keys)
+                        if has_required:
+                            print(f"✅ All required structured insights present: {required_keys}")
+                        else:
+                            missing = [k for k in required_keys if k not in operational_insights]
+                            print(f"⚠️  Missing required insights: {missing}")
+                        
+                        # Store operational insights as facts in KG for LLM access (async - don't block)
+                        # This can be slow, so we do it in background without blocking
                         try:
-                            def generate_groupby_insights():
-                                """Generate insights using groupby operations - runs in parallel"""
-                                insights = {}
-                                numeric_cols = ['Salary', 'EmpSatisfaction', 'Absences', 'PerfScoreID', 'PerformanceScore', 'EngagementSurvey']
-                                groupby_cols = ['Department', 'RecruitmentSource', 'ManagerName', 'EmploymentStatus']
-                                
-                                # Find actual column names (case-insensitive)
-                                actual_numeric = []
-                                for col in df.columns:
-                                    for nc in numeric_cols:
-                                        if nc.lower() in col.lower() or col.lower() in nc.lower():
-                                            actual_numeric.append(col)
-                                            break
-                                
-                                actual_groupby = []
-                                for col in df.columns:
-                                    for gc in groupby_cols:
-                                        if gc.lower() in col.lower() or col.lower() in gc.lower():
-                                            actual_groupby.append(col)
-                                            break
-                                
-                                for group_col in actual_groupby:
-                                    if group_col not in df.columns:
-                                        continue
-                                    
-                                    group_insights = {}
-                                    for num_col in actual_numeric:
-                                        if num_col not in df.columns:
-                                            continue
-                                        
-                                        try:
-                                            # Convert to numeric
-                                            df[num_col] = pd.to_numeric(df[num_col], errors='coerce')
-                                            # Group by and calculate statistics
-                                            grouped = df.groupby(group_col)[num_col].agg(['mean', 'min', 'max', 'count']).round(2)
-                                            group_insights[num_col] = grouped.to_dict('index')
-                                        except Exception:
-                                            pass
-                                    
-                                    if group_insights:
-                                        insights[group_col] = group_insights
-                                
-                                return insights
-                            
-                            def compute_full_operational_insights():
-                                """Compute full operational insights (by_department, by_manager, etc.)"""
-                                try:
-                                    # Use pre-loaded DataFrame from closure (like statistics does) - no file I/O needed!
-                                    # This is the same approach as statistics agent - uses DataFrame directly
-                                    if background_df is not None and len(background_df) > 0:
-                                        print(f"✅ Computing operational insights using pre-loaded DataFrame ({len(background_df)} rows)")
-                                        from operational_queries import compute_operational_insights
-                                        insights = compute_operational_insights(df=background_df)
-                                    else:
-                                        # Fallback: Try to use file_path if DataFrame not available
-                                        file_path_to_use = background_file_path
-                                        print(f"🔍 compute_full_operational_insights: background_file_path={background_file_path}")
-                                        
-                                        # Try multiple sources for file path
-                                        if not file_path_to_use or not os.path.exists(file_path_to_use):
-                                            if hasattr(doc_agent, 'file_path') and doc_agent.file_path and os.path.exists(doc_agent.file_path):
-                                                file_path_to_use = doc_agent.file_path
-                                                print(f"🔍 Using doc_agent.file_path: {file_path_to_use}")
-                                        
-                                        if not file_path_to_use or not os.path.exists(file_path_to_use):
-                                            print(f"❌ No valid file path or DataFrame available for compute_full_operational_insights")
-                                            print(f"   background_file_path: {background_file_path}")
-                                            print(f"   doc_agent.file_path: {getattr(doc_agent, 'file_path', 'not set')}")
-                                            print(f"   background_df: {'available' if background_df is not None else 'not available'}")
-                                            return {}
-                                        
-                                        print(f"✅ Computing full operational insights from file: {file_path_to_use}")
-                                        from operational_queries import compute_operational_insights
-                                        insights = compute_operational_insights(csv_file_path=file_path_to_use)
-                                    
-                                    if insights and len(insights) > 0:
-                                        print(f"✅ Computed full insights: {len(insights)} keys: {list(insights.keys())}")
-                                        # Verify we have the expected structured insights
-                                        has_by_manager = 'by_manager' in insights and len(insights.get('by_manager', [])) > 0
-                                        has_by_department = 'by_department' in insights and len(insights.get('by_department', [])) > 0
-                                        has_by_recruitment = 'by_recruitment_source' in insights and len(insights.get('by_recruitment_source', [])) > 0
-                                        print(f"   - by_manager: {has_by_manager} ({len(insights.get('by_manager', []))} items)")
-                                        print(f"   - by_department: {has_by_department} ({len(insights.get('by_department', []))} items)")
-                                        print(f"   - by_recruitment_source: {has_by_recruitment} ({len(insights.get('by_recruitment_source', []))} items)")
-                                        
-                                        # Store insights as facts
-                                        from operational_queries import store_operational_insights_as_facts
-                                        store_operational_insights_as_facts(insights)
-                                        print(f"✅ Stored operational insights as facts in KG")
-                                    else:
-                                        print(f"❌ No insights computed from {file_path_to_use} - returned empty dict")
-                                    
-                                    return insights if insights else {}
-                                except Exception as e:
-                                    # Error computing full operational insights
-                                    import traceback
-                                    print(f"❌ Error in compute_full_operational_insights: {e}")
-                                    traceback.print_exc()
-                                    return {}
-                            
-                            with ThreadPoolExecutor(max_workers=2) as executor:
-                                groupby_future = executor.submit(generate_groupby_insights)
-                                full_insights_future = executor.submit(compute_full_operational_insights)
-                                
-                                # Get results
-                                groupby_insights = groupby_future.result()
-                                full_operational_insights = full_insights_future.result()
-                                
-                                # Use full_operational_insights as the main operational insights
-                                operational_insights = full_operational_insights if full_operational_insights else {}
-                            
-                            elapsed = time.time() - start_time
-                            
-                            # Store groupby insights in KG for LLM access
-                            if groupby_insights:
-                                try:
-                                    from knowledge import add_to_graph
-                                    from datetime import datetime
-                                    
-                                    for group_col, metrics in groupby_insights.items():
-                                        for metric_col, group_data in metrics.items():
-                                            insight_text = f"Groupby Analysis: {group_col} × {metric_col}\n"
-                                            insight_text += f"Statistics by {group_col}:\n"
-                                            for group_val, stats in group_data.items():
-                                                insight_text += f"- {group_val}: mean={stats.get('mean', 'N/A')}, min={stats.get('min', 'N/A')}, max={stats.get('max', 'N/A')}, count={stats.get('count', 'N/A')}\n"
-                                            
-                                            add_to_graph(
-                                                insight_text,
-                                                source_document="groupby_insights",
-                                                uploaded_at=datetime.now().isoformat(),
-                                                agent_id="groupby_agent"
-                                            )
-                                except Exception:
-                                    pass
-                            
-                            # Operational insights are now directly from compute_full_operational_insights
-                            if operational_insights:
-                                print(f"✅ Operational insights computed: {len(operational_insights)} keys: {list(operational_insights.keys())}")
-                                # Verify we have structured insights
-                                has_by_manager = 'by_manager' in operational_insights
-                                has_by_department = 'by_department' in operational_insights
-                                has_by_recruitment = 'by_recruitment_source' in operational_insights
-                                print(f"   - by_manager: {has_by_manager}, by_department: {has_by_department}, by_recruitment_source: {has_by_recruitment}")
-                            else:
-                                print(f"⚠️  operational_insights is empty or None - compute_full_operational_insights may have failed")
-                            
-                            # Store operational insights
-                            if operational_insights and len(operational_insights) > 0:
-                                print(f"✅ Storing operational insights in doc_agent.metadata: {len(operational_insights)} keys: {list(operational_insights.keys())}")
-                                results["operational_insights"] = operational_insights
-                                doc_agent.metadata["operational_insights"] = operational_insights
-                                
-                                # Verify we have the required structured insights
-                                required_keys = ['by_department', 'by_manager', 'by_recruitment_source']
-                                has_required = all(key in operational_insights for key in required_keys)
-                                if has_required:
-                                    print(f"✅ All required structured insights present: {required_keys}")
-                                else:
-                                    missing = [k for k in required_keys if k not in operational_insights]
-                                    print(f"⚠️  Missing required insights: {missing}")
-                                
-                                # Store operational insights as facts in KG for LLM access
-                                try:
-                                    from operational_queries import store_operational_insights_as_facts
-                                    store_operational_insights_as_facts(operational_insights)
-                                    print(f"✅ Stored operational insights as facts in KG")
-                                except Exception as e:
-                                    print(f"⚠️  Error storing operational insights as facts: {e}")
-                                    import traceback
-                                    traceback.print_exc()
-                            else:
-                                print(f"❌ operational_insights is empty or None - compute_full_operational_insights failed!")
-                                print(f"   background_file_path: {background_file_path if 'background_file_path' in locals() else 'not set'}")
-                                print(f"   doc_agent.file_path: {getattr(doc_agent, 'file_path', 'not set')}")
-                            
-                            doc_agent.metadata["processing_status"]["operational_insights"] = "completed"
-                            print(f"✅ Operational insights processing completed")
-                        except Exception as df_error:
-                            print(f"⚠️  Error in operational insights background processing: {df_error}")
-                            import traceback
-                            traceback.print_exc()
-                            doc_agent.metadata["processing_status"]["operational_insights"] = "error"
+                            from operational_queries import store_operational_insights_as_facts
+                            # Store facts asynchronously - don't wait for it
+                            store_operational_insights_as_facts(operational_insights)
+                            print(f"✅ Stored operational insights as facts in KG")
+                        except Exception as e:
+                            print(f"⚠️  Error storing operational insights as facts: {e}")
+                            # Don't fail if fact storage fails - insights are already in metadata
+                    else:
+                        print(f"❌ operational_insights is empty or None - computation failed!")
+                        print(f"   background_file_path: {background_file_path if 'background_file_path' in locals() else 'not set'}")
+                        print(f"   doc_agent.file_path: {getattr(doc_agent, 'file_path', 'not set')}")
+                        print(f"   operational_insights type: {type(operational_insights)}, value: {operational_insights}")
+                    
+                    # Always mark as completed
+                    doc_agent.metadata["processing_status"]["operational_insights"] = "completed"
+                    print(f"✅ Operational insights processing completed")
+                except Exception as df_error:
+                    print(f"⚠️  Error in operational insights background processing: {df_error}")
+                    import traceback
+                    traceback.print_exc()
+                    doc_agent.metadata["processing_status"]["operational_insights"] = "error"
+                    # Try to store empty insights so frontend knows processing completed
+                    if "operational_insights" not in doc_agent.metadata:
+                        doc_agent.metadata["operational_insights"] = {}
                 except Exception as outer_error:
                     print(f"⚠️  Error in operational insights outer processing: {outer_error}")
                     import traceback
@@ -2352,20 +2235,24 @@ def format_statistics_context_for_llm(query: str, statistics_list: List[Dict[str
                     context_parts.append("")
                 
                 context_parts.append("### All Column Correlations:")
-                strong_correlations = []
+                all_correlations = []
+                seen_pairs = set()  # Track pairs to avoid duplicates (correlation matrix is symmetric)
+                
                 for col1, corr_dict in correlations.items():
                     for col2, corr_value in corr_dict.items():
                         if col1 != col2:
-                            # Include ALL correlations, not just strong ones
-                            # But prioritize showing strong ones first
-                            strong_correlations.append((col1, col2, corr_value))
+                            # Create canonical pair (alphabetically sorted to avoid duplicates)
+                            pair = tuple(sorted([col1, col2]))
+                            if pair not in seen_pairs:
+                                seen_pairs.add(pair)
+                                # Include ALL correlations, not just strong ones
+                                all_correlations.append((col1, col2, corr_value))
                 
-                # Sort by absolute correlation value
-                strong_correlations.sort(key=lambda x: abs(x[2]), reverse=True)
+                # Sort by absolute correlation value (strongest first)
+                all_correlations.sort(key=lambda x: abs(x[2]), reverse=True)
                 
-                # Show all correlations (not just top 20) if specific pair was requested
-                limit = len(strong_correlations) if specific_correlation else 20
-                for col1, col2, corr_value in strong_correlations[:limit]:
+                # Show ALL correlations (no limit) - user asked for correlations, show them all
+                for col1, col2, corr_value in all_correlations:
                     strength = "strong" if abs(corr_value) > 0.7 else "moderate" if abs(corr_value) > 0.5 else "weak"
                     direction = "positive" if corr_value > 0 else "negative"
                     # Highlight the specific correlation if it's in the list

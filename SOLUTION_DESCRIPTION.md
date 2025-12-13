@@ -11,12 +11,10 @@ A multi-agent knowledge graph system that extracts facts from HR documents (CSV,
 ### Three-Layer Architecture
 
 **Layer 1: Frontend (React/TypeScript)**
-- Chat interface for natural language queries
-- Knowledge base table view (all facts with filters)
-- Interactive graph visualization (force-directed layout)
-- Statistics dashboard (correlations, distributions)
-- Agent network visualization
-- Document upload and management
+
+The frontend interface is built as a modern React application with TypeScript, utilizing a component-based architecture that provides a unified user experience for interacting with the knowledge graph system. The application employs a layered state management approach combining React Context for knowledge graph state (facts, nodes, and edges) with TanStack Query for server state synchronization, ensuring real-time updates and consistent data flow between the user interface and backend API. The architecture features a centralized API client that communicates with the FastAPI backend through RESTful endpoints, handling document uploads, knowledge base operations, graph visualization data, chat interactions, and agent system queries with adaptive timeout mechanisms based on file size and processing complexity.
+
+The interface encompasses multiple interconnected views accessible through a sidebar navigation system: a conversational chat interface for natural language queries that displays responses with supporting evidence facts, an interactive knowledge graph visualization with force-directed layout enabling users to explore entity relationships visually, a comprehensive knowledge base table view with filtering capabilities for facts by source, confidence, and inference status, a statistics dashboard presenting correlations and distributions extracted from the data, an agent network visualization showing the multi-agent system architecture, and document management pages for uploading and tracking processing status of HR documents. All components are built using a consistent design system based on shadcn/ui components and Tailwind CSS, providing a responsive and accessible interface that supports both light and dark themes, with real-time feedback mechanisms including loading states, progress indicators, and error handling to ensure transparency throughout user interactions.
 
 **Layer 2: Backend (Python/FastAPI)**
 - REST API endpoints for all operations
@@ -63,6 +61,97 @@ LLM Response Generation (with evidence facts)
     ↓
 Response with Traceability → User Interface
 ```
+
+---
+
+## Design Principles
+
+The system architecture is guided by eight core design principles that ensure transparency, ethical responsibility, and human-centered functionality, aligned with requirements for responsible AI systems in information access contexts. For a detailed discussion of these principles with specific component mappings and code examples, see `DESIGN_PRINCIPLES.md`.
+
+### 1. Explainability
+Every system response is explainable through explicit evidence facts that users can inspect, verify, and understand. The system avoids black-box decision-making by making all reasoning steps visible and traceable.
+
+**Implementation**: 
+- Evidence assembly in `query_processor.py` → `build_evidence_context()` (lines 776-821) formats supporting facts with source attribution
+- Response generation in `responses.py` → `respond()` ensures all responses include evidence sections
+- Knowledge base table view enables users to inspect all facts and verify system reasoning
+
+**Example**: When a user asks "What is John Smith's salary?", the system returns the answer along with evidence: "John Smith → has_salary → $75,000 [Source: employees.csv]"
+
+### 2. Traceability
+Every fact maintains complete provenance information, enabling users to trace information from source documents through extraction to query responses.
+
+**Implementation**:
+- Fact metadata storage in `knowledge.py` → `add_fact_source_document()` (lines 2660-2705) stores source documents, timestamps, and agent IDs
+- Provenance retrieval in `knowledge.py` → `get_fact_source_document()` (lines 2948-3015) retrieves all sources for a fact
+- API endpoint `/api/knowledge/facts` exposes facts with complete metadata for inspection
+
+**Example**: Each fact stores metadata triples: `(fact_id, urn:source_document, "employees.csv")`, `(fact_id, urn:uploaded_at, "2024-01-15T10:30:00")`, `(fact_id, urn:agent_id, "worker_001")`
+
+### 3. Interpretability
+Users can understand not just what the system decided, but why it made those decisions, including query routing choices and agent selection.
+
+**Implementation**:
+- Orchestrator routing logic in `orchestrator.py` → `find_agents_for_query()` (lines 56-135) returns routing information with explicit reasoning
+- Query type detection in `query_processor.py` → `detect_query_type()` (lines 19-171) identifies query types and extracts parameters
+- Routing information is returned with every query, showing which agents were selected and why
+
+**Example**: Routing info includes `strategy`, `target_agents`, and `reason` fields: `{"strategy": "specific_agents", "target_agents": ["worker_001"], "reason": "Found employee 'John Smith' in 1 agent(s)"}`
+
+### 4. Fairness
+The system tracks data sources to enable bias analysis and ensure fair treatment across different groups, providing infrastructure for bias audits.
+
+**Implementation**:
+- Source document tracking enables filtering facts by source to identify potential source-based biases
+- Confidence score system in `knowledge.py` → `add_fact_confidence()` (lines 2861-2891) stores quality indicators
+- Fact filtering by quality via `/api/knowledge/facts?min_confidence=0.8` enables quality-based filtering
+
+**Example**: HR professionals can filter facts by source document to see if certain documents contribute disproportionately to insights, enabling bias detection
+
+### 5. Accountability
+Every system action is attributable to a specific agent, enabling accountability for extraction quality, processing decisions, and system behavior.
+
+**Implementation**:
+- Agent ID tracking in facts stores which agent extracted each fact (`urn:agent_id` predicate)
+- Agent system architecture in `agent_system.py` defines eight specialized agents with clear responsibilities
+- Agent status monitoring tracks agent states (`active`, `processing`, `error`) for system oversight
+
+**Example**: A fact extracted by worker agent `worker_001` has metadata: `(fact_id, urn:agent_id, "worker_001")`, enabling accountability for extraction quality
+
+### 6. AI Governance
+The system implements governance through transparent orchestration, where all agent interactions, query routing decisions, and processing steps are logged and auditable.
+
+**Implementation**:
+- Centralized orchestration in `orchestrator.py` → `orchestrate_query()` (lines 138-238) routes all queries through a single point
+- Explicit routing strategies (`all_agents`, `specific_agents`, `statistics_agent`, `operational_agent`) are logged and explainable
+- Knowledge graph serves as an audit trail, storing all facts with complete metadata
+
+**Example**: All query routing decisions flow through the orchestrator, which returns routing information including strategy and reasoning, enabling centralized governance and auditing
+
+### 7. Human-Centricity
+The entire system is designed around the needs and workflows of HR professionals, with intuitive interfaces, conversational interactions, and visual exploration tools.
+
+**Implementation**:
+- Conversational chat interface (`ChatInterface.tsx`) enables natural language queries
+- Interactive knowledge graph visualization (`KnowledgeGraphVisualization.tsx`) shows entity relationships visually
+- Knowledge base table view (`KnowledgeBaseTable.tsx`) provides comprehensive fact inspection with filtering
+- Statistics dashboard displays correlations and distributions extracted from data
+
+**Example**: HR professionals can ask "Which department has the highest turnover?" in natural language and receive answers with supporting evidence, without learning query syntax
+
+### 8. Transparency
+The system explicitly avoids black-box decision-making by making all reasoning steps, data sources, and processing decisions visible and inspectable.
+
+**Implementation**:
+- Response format with evidence in `query_processor.py` → `build_evidence_context()` ensures all responses include supporting facts
+- Knowledge graph as inspectable state via `/api/knowledge/facts` enables users to verify system state
+- API endpoints for inspection (`/api/knowledge/graph`, `/api/agents`) enable programmatic system inspection
+
+**Example**: Users can inspect the entire knowledge graph via API, verify what information the system has access to, and understand how responses were generated
+
+---
+
+**Modularity and Scalability**: The multi-agent architecture achieves modularity through eight specialized agents with well-defined responsibilities, enabling maintainability and extensibility. This modular design supports scalability through parallel processing capabilities, with worker agents processing document chunks concurrently while statistics and operational analysis run simultaneously with fact extraction, ensuring responsive performance even as data volume increases.
 
 ---
 

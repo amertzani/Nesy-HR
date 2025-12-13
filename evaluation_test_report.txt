@@ -1,0 +1,92 @@
+================================================================================
+EVALUATION TEST SCENARIOS REPORT
+================================================================================
+Generated: 2025-12-12 22:01:37
+
+SUMMARY
+--------------------------------------------------------------------------------
+Total scenarios: 8
+  - Operational (k=2): 5
+  - Strategic (k≥3): 3
+
+OPERATIONAL SCENARIOS (k=2)
+--------------------------------------------------------------------------------
+
+Scenario O1: Performance Score by Department
+  Variables: PerformanceScore, Department
+  Queries (4):
+    1. What is the distribution of performance scores by department?
+    2. How do performance scores vary across departments?
+    3. Which department has the highest average performance score?
+    4. Show me performance metrics by department
+
+
+Scenario O2: Absences by Employment Status
+  Variables: Absences, EmploymentStatus
+  Queries (3):
+    1. How do absences differ between active and terminated employees?
+    2. What are absence patterns by employment status?
+    3. Compare absences for active vs terminated employees
+  Ground Truth Sample (first 3 groups):
+    Active: {'mean': 9.830917874396135, 'median': 10.0, 'std': 5.846367275365562, 'count': 207, 'min': 1, 'max': 20}
+    Terminated for Cause: {'mean': 11.5625, 'median': 9.5, 'std': 6.043936355279286, 'count': 16, 'min': 2, 'max': 20}
+    Voluntarily Terminated: {'mean': 10.954545454545455, 'median': 11.0, 'std': 5.795180500415229, 'count': 88, 'min': 1, 'max': 20}
+
+
+Scenario O3: Engagement by Manager
+  Variables: EngagementSurvey, ManagerName
+  Queries (3):
+    1. What is the team-level engagement by manager?
+    2. How does engagement vary by manager?
+    3. Which manager has the highest team engagement?
+  Ground Truth Sample (first 3 groups):
+    Alex Sweetwater: {'mean': 4.076666666666666, 'median': 4.5, 'std': 0.9581492576837911, 'count': 9, 'min': 2.1, 'max': 5.0}
+    Amy Dunn: {'mean': 3.9247619047619047, 'median': 4.3, 'std': 1.144131194608464, 'count': 21, 'min': 1.12, 'max': 5.0}
+    Board of Directors: {'mean': 4.915, 'median': 4.915, 'std': 0.12020815280171303, 'count': 2, 'min': 4.83, 'max': 5.0}
+
+
+Scenario O4: Salary by Department
+  Variables: Salary, Department
+  Queries (3):
+    1. What is the average salary by department?
+    2. How does salary distribution vary across departments?
+    3. Which department has the highest average salary?
+  Ground Truth Sample (first 3 groups):
+    Admin Offices: {'mean': 71791.88888888889, 'median': 63003.0, 'std': 21706.397164456183, 'count': 9, 'min': 49920, 'max': 106367}
+    Executive Office: {'mean': 250000.0, 'median': 250000.0, 'std': nan, 'count': 1, 'min': 250000, 'max': 250000}
+    IT/IS: {'mean': 97064.64, 'median': 92328.5, 'std': 33209.612190252075, 'count': 50, 'min': 50178, 'max': 220450}
+
+
+Scenario O5: Performance by Recruitment Source
+  Variables: PerformanceScore, RecruitmentSource
+  Queries (3):
+    1. How does performance vary by recruitment source?
+    2. Which recruitment sources yield the best performers?
+    3. What is the performance distribution by recruitment channel?
+
+
+STRATEGIC SCENARIOS (k≥3)
+--------------------------------------------------------------------------------
+
+Scenario S1: Performance-Engagement-Status Risk Clusters
+  Variables: PerformanceScore, EngagementSurvey, EmploymentStatus
+  Queries (3):
+    1. Identify employees with high performance but low engagement who are at risk of termination
+    2. Which active employees have declining engagement and performance?
+    3. Find risk clusters combining performance, engagement, and employment status
+
+
+Scenario S2: Recruitment Channel Quality
+  Variables: RecruitmentSource, PerformanceScore, EmploymentStatus
+  Queries (3):
+    1. Which recruitment sources deliver high-performing employees who remain active?
+    2. Rank recruitment channels by performance and retention
+    3. Identify underperforming recruitment sources with high turnover
+
+
+Scenario S3: Department Compensation-Performance Analysis
+  Variables: Department, Salary, PerformanceScore
+  Queries (3):
+    1. Which departments have high salaries but low performance?
+    2. Analyze the relationship between salary, performance, and department
+    3. Identify departments with compensation-performance misalignment

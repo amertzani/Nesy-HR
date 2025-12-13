@@ -969,15 +969,34 @@ async def get_operational_insights_endpoint():
                 # Check if operational insights are available
                 if 'operational_insights' in metadata:
                     cached_insights = metadata.get('operational_insights')
-                    print(f"  ✅ Found operational_insights in metadata: type={type(cached_insights)}, len={len(cached_insights) if isinstance(cached_insights, dict) else 'N/A'}")
-                    if cached_insights and isinstance(cached_insights, dict) and len(cached_insights) > 0:
+                    # Check if insights have any data (not just empty dict)
+                    has_data = False
+                    if isinstance(cached_insights, dict):
+                        for key, value in cached_insights.items():
+                            if value and (isinstance(value, list) and len(value) > 0 or isinstance(value, dict) and len(value) > 0):
+                                has_data = True
+                                break
+                    print(f"  ✅ Found operational_insights in metadata: type={type(cached_insights)}, has_data={has_data}, len={len(cached_insights) if isinstance(cached_insights, dict) else 'N/A'}")
+                    # ALWAYS return insights if they exist, even if empty - frontend needs the structure
+                    if cached_insights is not None and isinstance(cached_insights, dict):
                         print(f"✅ Using cached operational insights from document agent ({len(cached_insights)} keys: {list(cached_insights.keys())[:10]})")
                         # Verify we have structured insights
                         has_structured = any(key in cached_insights for key in ['by_department', 'by_manager', 'by_recruitment_source'])
                         if has_structured:
-                            print(f"   ✅ Contains structured insights (by_department, by_manager, etc.)")
+                            # Check if they have data
+                            has_data = any(
+                                key in cached_insights and 
+                                isinstance(cached_insights[key], list) and 
+                                len(cached_insights[key]) > 0
+                                for key in ['by_department', 'by_manager', 'by_recruitment_source']
+                            )
+                            if has_data:
+                                print(f"   ✅ Contains structured insights with data (by_department, by_manager, etc.)")
+                            else:
+                                print(f"   ⚠️  Structured insights present but empty lists")
                         else:
                             print(f"   ⚠️  Missing structured insights - only has: {list(cached_insights.keys())}")
+                        # Return insights regardless of whether they have data - frontend can handle empty lists
                         return {
                             "success": True,
                             "data": {

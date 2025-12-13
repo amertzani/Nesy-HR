@@ -42,9 +42,11 @@ def compute_operational_insights(csv_file_path: Optional[str] = None, df: Option
         csv_file_path: Optional direct path to CSV file. Used only if df is not provided.
         df: Optional pre-loaded DataFrame. If provided, uses this instead of reading file.
     """
+    insights = {}
+    
     # Use pre-loaded DataFrame if available (preferred - no file I/O needed)
     if df is not None and len(df) > 0:
-        print(f"✅ Using pre-loaded DataFrame for operational insights ({len(df)} rows)")
+        print(f"✅ Using pre-loaded DataFrame for operational insights ({len(df)} rows, {len(df.columns)} columns)")
     else:
         # Load DataFrame directly from CSV file (fallback)
         csv_path = csv_file_path
@@ -53,36 +55,162 @@ def compute_operational_insights(csv_file_path: Optional[str] = None, df: Option
         
         if csv_path is None or not os.path.exists(csv_path):
             print(f"⚠️  No CSV file path available and no DataFrame provided")
-            return {}
+            print(f"   Returning empty insights structure")
+            # Return empty structure instead of empty dict
+            return {
+                'by_manager': [],
+                'by_department': [],
+                'by_recruitment_source': [],
+                'top_performance': [],
+                'bottom_performance': [],
+                'top_absences': [],
+                'bottom_engagement': [],
+                'top_special_projects': [],
+                'top_salary': []
+            }
         
         print(f"📊 Loading DataFrame from CSV file: {csv_path}")
-        df = load_csv_data(csv_path)
+        try:
+            df = load_csv_data(csv_path)
+        except Exception as load_error:
+            print(f"❌ Error loading CSV file: {load_error}")
+            import traceback
+            traceback.print_exc()
+            # Return empty structure
+            return {
+                'by_manager': [],
+                'by_department': [],
+                'by_recruitment_source': [],
+                'top_performance': [],
+                'bottom_performance': [],
+                'top_absences': [],
+                'bottom_engagement': [],
+                'top_special_projects': [],
+                'top_salary': []
+            }
         
         if df is None or len(df) == 0:
-            print(f"⚠️  Failed to load DataFrame from CSV file")
-            return {}
-    insights = {}
+            print(f"⚠️  Failed to load DataFrame from CSV file or DataFrame is empty")
+            # Return empty structure
+            return {
+                'by_manager': [],
+                'by_department': [],
+                'by_recruitment_source': [],
+                'top_performance': [],
+                'bottom_performance': [],
+                'top_absences': [],
+                'bottom_engagement': [],
+                'top_special_projects': [],
+                'top_salary': []
+            }
+    
+    # Validate DataFrame
+    if df is None:
+        print(f"❌ DataFrame is None after loading")
+        return {
+            'by_manager': [],
+            'by_department': [],
+            'by_recruitment_source': [],
+            'top_performance': [],
+            'bottom_performance': [],
+            'top_absences': [],
+            'bottom_engagement': [],
+            'top_special_projects': [],
+            'top_salary': []
+        }
+    
+    print(f"📊 DataFrame ready: {len(df)} rows, {len(df.columns)} columns: {list(df.columns)[:10]}")
     
     # Manager-based insights (consolidated into one table)
-    insights['by_manager'] = group_by_manager(df)
+    try:
+        insights['by_manager'] = group_by_manager(df)
+    except Exception as e:
+        print(f"⚠️  Error computing by_manager insights: {e}")
+        insights['by_manager'] = []
     
     # Department insights (all departments)
-    insights['by_department'] = group_by_department(df)
+    try:
+        insights['by_department'] = group_by_department(df)
+    except Exception as e:
+        print(f"⚠️  Error computing by_department insights: {e}")
+        insights['by_department'] = []
     
     # Recruitment source insights
-    insights['by_recruitment_source'] = group_by_recruitment_source(df)
+    try:
+        insights['by_recruitment_source'] = group_by_recruitment_source(df)
+    except Exception as e:
+        print(f"⚠️  Error computing by_recruitment_source insights: {e}")
+        insights['by_recruitment_source'] = []
     
     # Employee-level insights (only for active employees)
-    insights['top_performance'] = get_top_performance(df, top_n=5)
-    insights['bottom_performance'] = get_bottom_performance(df, bottom_n=5)
-    insights['top_absences'] = get_top_absences(df, top_n=5)
-    insights['bottom_engagement'] = get_bottom_engagement(df, bottom_n=5)
-    insights['top_special_projects'] = get_top_special_projects(df, top_n=5)
-    insights['top_salary'] = get_top_salary(df, top_n=5)
+    try:
+        insights['top_performance'] = get_top_performance(df, top_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing top_performance insights: {e}")
+        insights['top_performance'] = []
+    
+    try:
+        insights['bottom_performance'] = get_bottom_performance(df, bottom_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing bottom_performance insights: {e}")
+        insights['bottom_performance'] = []
+    
+    try:
+        insights['top_absences'] = get_top_absences(df, top_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing top_absences insights: {e}")
+        insights['top_absences'] = []
+    
+    try:
+        insights['bottom_engagement'] = get_bottom_engagement(df, bottom_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing bottom_engagement insights: {e}")
+        insights['bottom_engagement'] = []
+    
+    try:
+        insights['top_special_projects'] = get_top_special_projects(df, top_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing top_special_projects insights: {e}")
+        insights['top_special_projects'] = []
+    
+    try:
+        insights['top_salary'] = get_top_salary(df, top_n=5)
+    except Exception as e:
+        print(f"⚠️  Error computing top_salary insights: {e}")
+        insights['top_salary'] = []
+    
+    # Additional insights (by_employment_status, by_position, etc.)
+    try:
+        additional_insights = compute_additional_insights(df)
+        insights.update(additional_insights)
+    except Exception as e:
+        print(f"⚠️  Error computing additional insights: {e}")
+        # Continue without additional insights
+    
+    # Always return insights dict, even if some values are empty lists
+    # This ensures the API can return the insights structure to the frontend
+    print(f"✅ Operational insights computation completed: {len(insights)} keys")
+    for key, value in insights.items():
+        if isinstance(value, list):
+            print(f"   - {key}: {len(value)} items")
+        elif isinstance(value, dict):
+            print(f"   - {key}: {len(value)} items")
+        else:
+            print(f"   - {key}: {type(value).__name__}")
     
     # Store insights as facts for LLM access (so queries like "average salary in department 3" work)
-    store_operational_insights_as_facts(insights)
+    # Wrap in try-except to ensure computation doesn't fail if fact storage has issues
+    try:
+        store_operational_insights_as_facts(insights)
+    except Exception as store_error:
+        # Log error but don't fail - insights are still valid and can be used
+        print(f"⚠️  Warning: Failed to store operational insights as facts: {store_error}")
+        print(f"   Insights computed successfully but not stored in KG. This won't affect insight retrieval.")
+        import traceback
+        traceback.print_exc()
     
+    # CRITICAL: Always return insights dict, never return empty dict
+    # Even if all lists are empty, return the structure so frontend knows what to expect
     return insights
 
 
@@ -130,203 +258,226 @@ def group_by_department(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Group by Department and calculate avg PerformanceScoreID, avg Absences, avg Salary"""
     results = []
     
-    # Find department column
-    dept_col = normalize_column_name(df, "Department")
-    if dept_col is None:
-        if "Department" in df.columns:
-            dept_col = "Department"
-        elif "DeptID" in df.columns:
-            dept_col = "DeptID"
-        else:
+    try:
+        if df is None or len(df) == 0:
+            print(f"⚠️  group_by_department: DataFrame is None or empty")
             return results
-    
-    # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
-    perf_col = normalize_column_name(df, "PerfScoreID")
-    if perf_col is None:
-        perf_col = normalize_column_name(df, "PerformanceScore")
-    
-    # Find absences column
-    abs_col = normalize_column_name(df, "Absences")
-    
-    # Find salary column
-    salary_col = normalize_column_name(df, "Salary")
-    
-    if dept_col not in df.columns:
+        
+        # Find department column
+        dept_col = normalize_column_name(df, "Department")
+        if dept_col is None:
+            if "Department" in df.columns:
+                dept_col = "Department"
+            elif "DeptID" in df.columns:
+                dept_col = "DeptID"
+            else:
+                print(f"⚠️  group_by_department: No department column found. Available columns: {list(df.columns)[:10]}")
+                return results
+        
+        # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
+        perf_col = normalize_column_name(df, "PerfScoreID")
+        if perf_col is None:
+            perf_col = normalize_column_name(df, "PerformanceScore")
+        
+        # Find absences column
+        abs_col = normalize_column_name(df, "Absences")
+        
+        # Find salary column
+        salary_col = normalize_column_name(df, "Salary")
+        
+        if dept_col not in df.columns:
+            print(f"⚠️  group_by_department: Column '{dept_col}' not in DataFrame")
+            return results
+        
+        # Group by department - ensure we get all unique departments
+        dept_groups = df.groupby(dept_col)
+        
+        for dept, group_df in dept_groups:
+            dept_name = str(dept).strip()
+            
+            # If department is numeric (DeptID), try to find actual department name
+            if dept_name.replace('.', '').replace('-', '').isdigit():
+                # Try to find a text Department column
+                for col in df.columns:
+                    if col != dept_col and ('department' in col.lower() or 'dept' in col.lower()):
+                        dept_names = group_df[col].dropna().unique()
+                        if len(dept_names) > 0:
+                            text_name = str(dept_names[0]).strip()
+                            if not text_name.replace('.', '').replace('-', '').isdigit():
+                                dept_name = text_name
+                                break
+            
+            dept_data = {
+                "department": dept_name,
+                "employee_count": len(group_df)
+            }
+            
+            # Find satisfaction and engagement columns for department
+            satisfaction_col = normalize_column_name(df, "Satisfaction")
+            if satisfaction_col is None:
+                satisfaction_col = normalize_column_name(df, "EngagementSurvey")
+            
+            engagement_col = normalize_column_name(df, "EngagementSurvey")
+            
+            # Average PerformanceScoreID - use PerfScoreID (numeric) not PerformanceScore (text)
+            if perf_col and perf_col in group_df.columns:
+                perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
+                # Filter out NaN values for calculation
+                perf_valid = perf_series.dropna()
+                if len(perf_valid) > 0:
+                    dept_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
+                else:
+                    dept_data["avg_performance_score"] = None
+            
+            # Average Satisfaction
+            if satisfaction_col and satisfaction_col in group_df.columns:
+                sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
+                sat_valid = sat_series.dropna()
+                if len(sat_valid) > 0:
+                    dept_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
+                else:
+                    dept_data["avg_satisfaction"] = None
+            
+            # Average Engagement
+            if engagement_col and engagement_col in group_df.columns:
+                eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
+                eng_valid = eng_series.dropna()
+                if len(eng_valid) > 0:
+                    dept_data["avg_engagement"] = sanitize_float(eng_valid.mean())
+                else:
+                    dept_data["avg_engagement"] = None
+            
+            # Average Absences
+            if abs_col and abs_col in group_df.columns:
+                abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
+                abs_valid = abs_series.dropna()
+                if len(abs_valid) > 0:
+                    dept_data["avg_absences"] = sanitize_float(abs_valid.mean())
+                else:
+                    dept_data["avg_absences"] = None
+            
+            # Average Salary - only average over valid numeric values in this group
+            if salary_col and salary_col in group_df.columns:
+                salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
+                # Filter out NaN values for calculation - only average rows with valid salary in this department
+                salary_valid = salary_series.dropna()
+                if len(salary_valid) > 0:
+                    dept_data["avg_salary"] = sanitize_float(salary_valid.mean())
+                else:
+                    dept_data["avg_salary"] = None
+            
+            results.append(dept_data)
+        
         return results
-    
-    # Group by department - ensure we get all unique departments
-    dept_groups = df.groupby(dept_col)
-    
-    for dept, group_df in dept_groups:
-        dept_name = str(dept).strip()
-        
-        # If department is numeric (DeptID), try to find actual department name
-        if dept_name.replace('.', '').replace('-', '').isdigit():
-            # Try to find a text Department column
-            for col in df.columns:
-                if col != dept_col and ('department' in col.lower() or 'dept' in col.lower()):
-                    dept_names = group_df[col].dropna().unique()
-                    if len(dept_names) > 0:
-                        text_name = str(dept_names[0]).strip()
-                        if not text_name.replace('.', '').replace('-', '').isdigit():
-                            dept_name = text_name
-                            break
-        
-        dept_data = {
-            "department": dept_name,
-            "employee_count": len(group_df)
-        }
-        
-        # Find satisfaction and engagement columns for department
-        satisfaction_col = normalize_column_name(df, "Satisfaction")
-        if satisfaction_col is None:
-            satisfaction_col = normalize_column_name(df, "EngagementSurvey")
-        
-        engagement_col = normalize_column_name(df, "EngagementSurvey")
-        
-        # Average PerformanceScoreID - use PerfScoreID (numeric) not PerformanceScore (text)
-        if perf_col and perf_col in group_df.columns:
-            perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
-            # Filter out NaN values for calculation
-            perf_valid = perf_series.dropna()
-            if len(perf_valid) > 0:
-                dept_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
-            else:
-                dept_data["avg_performance_score"] = None
-        
-        # Average Satisfaction
-        if satisfaction_col and satisfaction_col in group_df.columns:
-            sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
-            sat_valid = sat_series.dropna()
-            if len(sat_valid) > 0:
-                dept_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
-            else:
-                dept_data["avg_satisfaction"] = None
-        
-        # Average Engagement
-        if engagement_col and engagement_col in group_df.columns:
-            eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
-            eng_valid = eng_series.dropna()
-            if len(eng_valid) > 0:
-                dept_data["avg_engagement"] = sanitize_float(eng_valid.mean())
-            else:
-                dept_data["avg_engagement"] = None
-        
-        # Average Absences
-        if abs_col and abs_col in group_df.columns:
-            abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
-            abs_valid = abs_series.dropna()
-            if len(abs_valid) > 0:
-                dept_data["avg_absences"] = sanitize_float(abs_valid.mean())
-            else:
-                dept_data["avg_absences"] = None
-        
-        # Average Salary - only average over valid numeric values in this group
-        if salary_col and salary_col in group_df.columns:
-            salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
-            # Filter out NaN values for calculation - only average rows with valid salary in this department
-            salary_valid = salary_series.dropna()
-            if len(salary_valid) > 0:
-                dept_data["avg_salary"] = sanitize_float(salary_valid.mean())
-            else:
-                dept_data["avg_salary"] = None
-        
-        results.append(dept_data)
-    
-    return results
+    except Exception as e:
+        print(f"❌ Error in group_by_department: {e}")
+        import traceback
+        traceback.print_exc()
+        return results
 
 
 def group_by_manager(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Group by Manager (ID or name) and calculate comprehensive metrics: avg Performance, Satisfaction, Engagement, Absences, Salary"""
     results = []
     
-    # Find manager column
-    mgr_col = find_manager_column(df)
-    if mgr_col is None:
+    try:
+        if df is None or len(df) == 0:
+            print(f"⚠️  group_by_manager: DataFrame is None or empty")
+            return results
+        
+        # Find manager column
+        mgr_col = find_manager_column(df)
+        if mgr_col is None:
+            print(f"⚠️  group_by_manager: No manager column found. Available columns: {list(df.columns)[:10]}")
+            return results
+        
+        # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
+        perf_col = normalize_column_name(df, "PerfScoreID")
+        if perf_col is None:
+            perf_col = normalize_column_name(df, "PerformanceScore")
+        
+        # Find satisfaction column (might be EngagementSurvey or separate)
+        satisfaction_col = normalize_column_name(df, "Satisfaction")
+        if satisfaction_col is None:
+            satisfaction_col = normalize_column_name(df, "EngagementSurvey")
+        
+        # Find engagement column
+        engagement_col = normalize_column_name(df, "EngagementSurvey")
+        
+        # Find absences column
+        abs_col = normalize_column_name(df, "Absences")
+        
+        # Find salary column
+        salary_col = normalize_column_name(df, "Salary")
+        
+        if mgr_col not in df.columns:
+            return results
+        
+        # Group by manager
+        mgr_groups = df.groupby(mgr_col)
+        
+        for mgr, group_df in mgr_groups:
+            mgr_name = str(mgr).strip()
+            mgr_data = {
+                "manager": mgr_name,
+                "employee_count": len(group_df)
+            }
+            
+            # Average PerformanceScoreID - filter out NaN values
+            if perf_col and perf_col in group_df.columns:
+                perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
+                perf_valid = perf_series.dropna()
+                if len(perf_valid) > 0:
+                    mgr_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
+                else:
+                    mgr_data["avg_performance_score"] = None
+            
+            # Average Satisfaction
+            if satisfaction_col and satisfaction_col in group_df.columns:
+                sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
+                sat_valid = sat_series.dropna()
+                if len(sat_valid) > 0:
+                    mgr_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
+                else:
+                    mgr_data["avg_satisfaction"] = None
+            
+            # Average Engagement
+            if engagement_col and engagement_col in group_df.columns:
+                eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
+                eng_valid = eng_series.dropna()
+                if len(eng_valid) > 0:
+                    mgr_data["avg_engagement"] = sanitize_float(eng_valid.mean())
+                else:
+                    mgr_data["avg_engagement"] = None
+            
+            # Average Absences
+            if abs_col and abs_col in group_df.columns:
+                abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
+                abs_valid = abs_series.dropna()
+                if len(abs_valid) > 0:
+                    mgr_data["avg_absences"] = sanitize_float(abs_valid.mean())
+                else:
+                    mgr_data["avg_absences"] = None
+            
+            # Average Salary and Total Salary
+            if salary_col and salary_col in group_df.columns:
+                salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
+                salary_valid = salary_series.dropna()
+                if len(salary_valid) > 0:
+                    mgr_data["avg_salary"] = sanitize_float(salary_valid.mean())
+                    mgr_data["total_salary"] = sanitize_float(salary_valid.sum())
+                else:
+                    mgr_data["avg_salary"] = None
+                    mgr_data["total_salary"] = None
+            
+            results.append(mgr_data)
+        
         return results
-    
-    # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
-    perf_col = normalize_column_name(df, "PerfScoreID")
-    if perf_col is None:
-        perf_col = normalize_column_name(df, "PerformanceScore")
-    
-    # Find satisfaction column (might be EngagementSurvey or separate)
-    satisfaction_col = normalize_column_name(df, "Satisfaction")
-    if satisfaction_col is None:
-        satisfaction_col = normalize_column_name(df, "EngagementSurvey")
-    
-    # Find engagement column
-    engagement_col = normalize_column_name(df, "EngagementSurvey")
-    
-    # Find absences column
-    abs_col = normalize_column_name(df, "Absences")
-    
-    # Find salary column
-    salary_col = normalize_column_name(df, "Salary")
-    
-    if mgr_col not in df.columns:
+    except Exception as e:
+        print(f"❌ Error in group_by_manager: {e}")
+        import traceback
+        traceback.print_exc()
         return results
-    
-    # Group by manager
-    mgr_groups = df.groupby(mgr_col)
-    
-    for mgr, group_df in mgr_groups:
-        mgr_name = str(mgr).strip()
-        mgr_data = {
-            "manager": mgr_name,
-            "employee_count": len(group_df)
-        }
-        
-        # Average PerformanceScoreID - filter out NaN values
-        if perf_col and perf_col in group_df.columns:
-            perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
-            perf_valid = perf_series.dropna()
-            if len(perf_valid) > 0:
-                mgr_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
-            else:
-                mgr_data["avg_performance_score"] = None
-        
-        # Average Satisfaction
-        if satisfaction_col and satisfaction_col in group_df.columns:
-            sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
-            sat_valid = sat_series.dropna()
-            if len(sat_valid) > 0:
-                mgr_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
-            else:
-                mgr_data["avg_satisfaction"] = None
-        
-        # Average Engagement
-        if engagement_col and engagement_col in group_df.columns:
-            eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
-            eng_valid = eng_series.dropna()
-            if len(eng_valid) > 0:
-                mgr_data["avg_engagement"] = sanitize_float(eng_valid.mean())
-            else:
-                mgr_data["avg_engagement"] = None
-        
-        # Average Absences
-        if abs_col and abs_col in group_df.columns:
-            abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
-            abs_valid = abs_series.dropna()
-            if len(abs_valid) > 0:
-                mgr_data["avg_absences"] = sanitize_float(abs_valid.mean())
-            else:
-                mgr_data["avg_absences"] = None
-        
-        # Average Salary and Total Salary
-        if salary_col and salary_col in group_df.columns:
-            salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
-            salary_valid = salary_series.dropna()
-            if len(salary_valid) > 0:
-                mgr_data["avg_salary"] = sanitize_float(salary_valid.mean())
-                mgr_data["total_salary"] = sanitize_float(salary_valid.sum())
-            else:
-                mgr_data["avg_salary"] = None
-                mgr_data["total_salary"] = None
-        
-        results.append(mgr_data)
-    
-    return results
 
 
 def get_top_absences(df: pd.DataFrame, top_n: int = 5) -> List[Dict[str, Any]]:
@@ -846,107 +997,119 @@ def group_by_recruitment_source(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Group by RecruitmentSource and calculate avg PerformanceScoreID, avg Salary, etc."""
     results = []
     
-    # Find recruitment source column
-    source_col = normalize_column_name(df, "RecruitmentSource")
-    if source_col is None:
-        if "RecruitmentSource" in df.columns:
-            source_col = "RecruitmentSource"
-        else:
+    try:
+        if df is None or len(df) == 0:
+            print(f"⚠️  group_by_recruitment_source: DataFrame is None or empty")
             return results
-    
-    # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
-    perf_col = normalize_column_name(df, "PerfScoreID")
-    if perf_col is None:
-        perf_col = normalize_column_name(df, "PerformanceScore")
-    
-    # Find salary column
-    salary_col = normalize_column_name(df, "Salary")
-    
-    # Find absences column
-    abs_col = normalize_column_name(df, "Absences")
-    
-    # Find employment status column
-    status_col = normalize_column_name(df, "EmploymentStatus")
-    
-    if source_col not in df.columns:
-        return results
-    
-    # Group by recruitment source
-    source_groups = df.groupby(source_col)
-    
-    for source, group_df in source_groups:
-        source_name = str(source).strip()
-        employee_count = len(group_df)
-        source_data = {
-            "recruitment_source": source_name,
-            "employee_count": employee_count
-        }
         
-        # Average PerformanceScoreID - filter out NaN values
-        if perf_col and perf_col in group_df.columns:
-            perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
-            perf_valid = perf_series.dropna()
-            if len(perf_valid) > 0:
-                source_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
+        # Find recruitment source column
+        source_col = normalize_column_name(df, "RecruitmentSource")
+        if source_col is None:
+            if "RecruitmentSource" in df.columns:
+                source_col = "RecruitmentSource"
             else:
-                source_data["avg_performance_score"] = None
+                print(f"⚠️  group_by_recruitment_source: No recruitment source column found. Available columns: {list(df.columns)[:10]}")
+                return results
         
-        # Average Salary
-        if salary_col and salary_col in group_df.columns:
-            salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
-            salary_valid = salary_series.dropna()
-            if len(salary_valid) > 0:
-                source_data["avg_salary"] = sanitize_float(salary_valid.mean())
-            else:
-                source_data["avg_salary"] = None
+        # Find performance score column - prefer PerfScoreID (numeric) over PerformanceScore (text)
+        perf_col = normalize_column_name(df, "PerfScoreID")
+        if perf_col is None:
+            perf_col = normalize_column_name(df, "PerformanceScore")
         
-        # Average Absences
-        if abs_col and abs_col in group_df.columns:
-            abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
-            abs_valid = abs_series.dropna()
-            if len(abs_valid) > 0:
-                source_data["avg_absences"] = sanitize_float(abs_valid.mean())
-            else:
-                source_data["avg_absences"] = None
+        # Find salary column
+        salary_col = normalize_column_name(df, "Salary")
         
-        # Average Satisfaction
-        satisfaction_col = normalize_column_name(df, "Satisfaction")
-        if satisfaction_col is None:
-            satisfaction_col = normalize_column_name(df, "EmpSatisfaction")
-        if satisfaction_col and satisfaction_col in group_df.columns:
-            sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
-            sat_valid = sat_series.dropna()
-            if len(sat_valid) > 0:
-                source_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
-            else:
-                source_data["avg_satisfaction"] = None
+        # Find absences column
+        abs_col = normalize_column_name(df, "Absences")
         
-        # Average Engagement
-        engagement_col = normalize_column_name(df, "EngagementSurvey")
-        if engagement_col and engagement_col in group_df.columns:
-            eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
-            eng_valid = eng_series.dropna()
-            if len(eng_valid) > 0:
-                source_data["avg_engagement"] = sanitize_float(eng_valid.mean())
-            else:
-                source_data["avg_engagement"] = None
+        # Find employment status column
+        status_col = normalize_column_name(df, "EmploymentStatus")
         
-        # Total number of active employees
-        if status_col and status_col in group_df.columns:
-            active_count = len(group_df[group_df[status_col].astype(str).str.lower().str.contains('active', na=False)])
-            source_data["active_employees"] = active_count
-            # Calculate percentage of active employees
-            if employee_count > 0:
-                source_data["active_percentage"] = sanitize_float((active_count / employee_count) * 100)
+        if source_col not in df.columns:
+            print(f"⚠️  group_by_recruitment_source: Column '{source_col}' not in DataFrame")
+            return results
+        
+        # Group by recruitment source
+        source_groups = df.groupby(source_col)
+        
+        for source, group_df in source_groups:
+            source_name = str(source).strip()
+            employee_count = len(group_df)
+            source_data = {
+                "recruitment_source": source_name,
+                "employee_count": employee_count
+            }
+            
+            # Average PerformanceScoreID - filter out NaN values
+            if perf_col and perf_col in group_df.columns:
+                perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
+                perf_valid = perf_series.dropna()
+                if len(perf_valid) > 0:
+                    source_data["avg_performance_score"] = sanitize_float(perf_valid.mean())
+                else:
+                    source_data["avg_performance_score"] = None
+            
+            # Average Salary
+            if salary_col and salary_col in group_df.columns:
+                salary_series = pd.to_numeric(group_df[salary_col], errors='coerce')
+                salary_valid = salary_series.dropna()
+                if len(salary_valid) > 0:
+                    source_data["avg_salary"] = sanitize_float(salary_valid.mean())
+                else:
+                    source_data["avg_salary"] = None
+            
+            # Average Absences
+            if abs_col and abs_col in group_df.columns:
+                abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
+                abs_valid = abs_series.dropna()
+                if len(abs_valid) > 0:
+                    source_data["avg_absences"] = sanitize_float(abs_valid.mean())
+                else:
+                    source_data["avg_absences"] = None
+            
+            # Average Satisfaction
+            satisfaction_col = normalize_column_name(df, "Satisfaction")
+            if satisfaction_col is None:
+                satisfaction_col = normalize_column_name(df, "EmpSatisfaction")
+            if satisfaction_col and satisfaction_col in group_df.columns:
+                sat_series = pd.to_numeric(group_df[satisfaction_col], errors='coerce')
+                sat_valid = sat_series.dropna()
+                if len(sat_valid) > 0:
+                    source_data["avg_satisfaction"] = sanitize_float(sat_valid.mean())
+                else:
+                    source_data["avg_satisfaction"] = None
+            
+            # Average Engagement
+            engagement_col = normalize_column_name(df, "EngagementSurvey")
+            if engagement_col and engagement_col in group_df.columns:
+                eng_series = pd.to_numeric(group_df[engagement_col], errors='coerce')
+                eng_valid = eng_series.dropna()
+                if len(eng_valid) > 0:
+                    source_data["avg_engagement"] = sanitize_float(eng_valid.mean())
+                else:
+                    source_data["avg_engagement"] = None
+            
+            # Total number of active employees
+            if status_col and status_col in group_df.columns:
+                active_count = len(group_df[group_df[status_col].astype(str).str.lower().str.contains('active', na=False)])
+                source_data["active_employees"] = active_count
+                # Calculate percentage of active employees
+                if employee_count > 0:
+                    source_data["active_percentage"] = sanitize_float((active_count / employee_count) * 100)
+                else:
+                    source_data["active_percentage"] = None
             else:
+                source_data["active_employees"] = None
                 source_data["active_percentage"] = None
-        else:
-            source_data["active_employees"] = None
-            source_data["active_percentage"] = None
+            
+            results.append(source_data)
         
-        results.append(source_data)
-    
-    return results
+        return results
+    except Exception as e:
+        print(f"❌ Error in group_by_recruitment_source: {e}")
+        import traceback
+        traceback.print_exc()
+        return results
 
 
 def compute_additional_insights(df: pd.DataFrame) -> Dict[str, Any]:
@@ -1045,6 +1208,7 @@ def compute_additional_insights(df: pd.DataFrame) -> Dict[str, Any]:
         if satisfaction_col is None:
             satisfaction_col = normalize_column_name(df, "EngagementSurvey")
         engagement_col = normalize_column_name(df, "EngagementSurvey")
+        abs_col = normalize_column_name(df, "Absences")
         
         if perf_col and perf_col in df.columns:
             status_groups = df.groupby(status_col)
@@ -1060,6 +1224,17 @@ def compute_additional_insights(df: pd.DataFrame) -> Dict[str, Any]:
                 perf_series = pd.to_numeric(group_df[perf_col], errors='coerce')
                 perf_valid = perf_series.dropna()
                 status_data["avg_performance_score"] = sanitize_float(perf_valid.mean()) if len(perf_valid) > 0 else None
+                
+                # Average absences
+                if abs_col and abs_col in group_df.columns:
+                    abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
+                    abs_valid = abs_series.dropna()
+                    if len(abs_valid) > 0:
+                        status_data["avg_absences"] = sanitize_float(abs_valid.mean())
+                    else:
+                        status_data["avg_absences"] = None
+                else:
+                    status_data["avg_absences"] = None
                 
                 # Average engagement survey
                 if engagement_col and engagement_col in group_df.columns:
@@ -1383,10 +1558,76 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
     """
     Store operational insights as facts in the knowledge base.
     This allows the LLM to access these insights when answering questions.
+    
+    This function is designed to handle large datasets gracefully by:
+    - Catching and logging errors for individual fact storage operations
+    - Continuing even if some facts fail to store
+    - Limiting the number of fact formats stored for very large datasets
+    - Removing old rounded facts before storing new precise ones
     """
     try:
-        from knowledge import add_to_graph
+        from knowledge import add_to_graph, graph, fact_exists
         from datetime import datetime
+        import rdflib
+        from urllib.parse import quote
+        
+        # CRITICAL: Remove old operational insights facts with rounded values
+        # This ensures we don't have duplicate/conflicting facts with "4" vs "4.43"
+        print(f"🧹 Cleaning up old operational insights facts with rounded values...")
+        try:
+            # Find and remove facts about manager engagement that might have rounded values
+            # We'll remove facts that match the pattern but have integer values
+            triples_to_remove = []
+            for s, p, o in graph:
+                try:
+                    subject_str = str(s)
+                    predicate_str = str(p)
+                    object_str = str(o)
+                    
+                    # Check if this is an operational insights fact about manager engagement
+                    if ("manager" in subject_str.lower() or "amy dunn" in subject_str.lower() or 
+                        "michael albert" in subject_str.lower() or "simon roup" in subject_str.lower()):
+                        if ("engagement" in predicate_str.lower() or "engagement" in object_str.lower()):
+                            # Check if object is a rounded integer (like "4" instead of "4.43")
+                            try:
+                                obj_val = float(object_str)
+                                # If it's a whole number (like 4.0), it's likely a rounded old fact
+                                if obj_val == int(obj_val) and obj_val < 5:
+                                    triples_to_remove.append((s, p, o))
+                                    print(f"   🗑️  Removing old rounded fact: {subject_str[:50]}... {predicate_str[:50]}... {object_str}")
+                            except (ValueError, TypeError):
+                                pass
+                except Exception:
+                    pass
+            
+            # Remove the old facts
+            for triple in triples_to_remove:
+                try:
+                    graph.remove(triple)
+                except Exception:
+                    pass
+            
+            if triples_to_remove:
+                print(f"✅ Removed {len(triples_to_remove)} old rounded operational insights facts")
+                from knowledge import save_knowledge_graph
+                save_knowledge_graph()
+        except Exception as cleanup_error:
+            print(f"⚠️  Warning: Error cleaning up old facts: {cleanup_error}")
+            # Continue anyway - we'll still store new facts
+        
+        # Count total items to store (for large dataset handling)
+        total_items = 0
+        if 'by_department' in insights:
+            total_items += len(insights['by_department'])
+        if 'by_manager' in insights:
+            total_items += len(insights['by_manager'])
+        if 'by_recruitment_source' in insights:
+            total_items += len(insights['by_recruitment_source'])
+        
+        # For very large datasets (>100 departments/managers), limit fact formats to avoid overwhelming the KG
+        use_limited_formats = total_items > 100
+        if use_limited_formats:
+            print(f"📊 Large dataset detected ({total_items} items). Using optimized fact storage.")
         
         # Store department insights - make them queryable for questions like "average salary in department 3"
         if 'by_department' in insights:
@@ -1408,42 +1649,70 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                 # Average performance score
                 if dept_data.get('avg_performance_score') is not None:
                     avg_perf = dept_data['avg_performance_score']
-                    # Store in multiple formats for better queryability
-                    fact_texts = [
+                    # Store in multiple formats for better queryability (limit formats for large datasets)
+                    if use_limited_formats:
+                        fact_texts = [
+                            f"Department {dept_name_normalized} has average performance score of {avg_perf:.2f}",
+                            f"The average performance score in department {dept_name_normalized} is {avg_perf:.2f}",
+                        ]
+                    else:
+                        fact_texts = [
                         f"Department {dept_name} has average performance score of {avg_perf:.2f}",
                         f"Department {dept_name_normalized} has average performance score of {avg_perf:.2f}",
                         f"The average performance score in department {dept_name} is {avg_perf:.2f}",
                         f"The average performance score in department {dept_name_normalized} is {avg_perf:.2f}",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            # Log but continue - don't fail entire operation for one fact
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 # Average absences
                 if dept_data.get('avg_absences') is not None:
                     avg_abs = dept_data['avg_absences']
-                    fact_texts = [
+                    if use_limited_formats:
+                        fact_texts = [
+                            f"Department {dept_name_normalized} has average absences of {avg_abs:.2f} days",
+                            f"The average absences in department {dept_name_normalized} is {avg_abs:.2f} days",
+                        ]
+                    else:
+                        fact_texts = [
                         f"Department {dept_name} has average absences of {avg_abs:.2f} days",
                         f"Department {dept_name_normalized} has average absences of {avg_abs:.2f} days",
                         f"The average absences in department {dept_name} is {avg_abs:.2f} days",
                         f"The average absences in department {dept_name_normalized} is {avg_abs:.2f} days",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 # Average salary - CRITICAL for queries like "average salary in department 3"
                 if dept_data.get('avg_salary') is not None:
                     avg_sal = dept_data['avg_salary']
-                    fact_texts = [
+                    if use_limited_formats:
+                        fact_texts = [
+                            f"Department {dept_name_normalized} has average salary of {avg_sal:.2f}",
+                            f"The average salary in department {dept_name_normalized} is {avg_sal:.2f}",
+                            f"Average salary for department {dept_name_normalized} is {avg_sal:.2f}",
+                        ]
+                    else:
+                        fact_texts = [
                         f"Department {dept_name} has average salary of {avg_sal:.2f}",
                         f"Department {dept_name_normalized} has average salary of {avg_sal:.2f}",
                         f"The average salary in department {dept_name} is {avg_sal:.2f}",
@@ -1452,22 +1721,30 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                         f"Average salary for department {dept_name_normalized} is {avg_sal:.2f}",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 # Store employee count
                 if dept_employee_count > 0:
-                    fact_text = f"Department {dept_name} has {dept_employee_count} employees"
-                    add_to_graph(
+                    fact_text = f"Department {dept_name_normalized} has {dept_employee_count} employees"
+                    try:
+                        add_to_graph(
                         fact_text,
                         source_document="operational_insights",
                         uploaded_at=datetime.now().isoformat(),
                         agent_id="operational_query_agent"
                     )
+                    except Exception as fact_error:
+                        print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                        continue
         
         # Store manager insights
         if 'by_manager' in insights:
@@ -1478,55 +1755,89 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                 # Average performance score
                 if mgr_data.get('avg_performance_score') is not None:
                     avg_perf = mgr_data['avg_performance_score']
-                    fact_texts = [
+                    if use_limited_formats:
+                        fact_texts = [
+                            f"Manager {mgr_name} has average team performance score of {avg_perf:.2f}",
+                            f"The average performance score for manager {mgr_name}'s team is {avg_perf:.2f}",
+                        ]
+                    else:
+                        fact_texts = [
                         f"Manager {mgr_name} has average team performance score of {avg_perf:.2f}",
                         f"Manager {mgr_name} manages a team with average performance score of {avg_perf:.2f}",
                         f"The average performance score for manager {mgr_name}'s team is {avg_perf:.2f}",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
-                # Average engagement
+                # Average engagement - Store with multiple formats for better queryability
                 if mgr_data.get('avg_engagement') is not None:
                     avg_eng = mgr_data['avg_engagement']
-                    fact_texts = [
-                        f"Manager {mgr_name} has average team engagement score of {avg_eng:.2f}",
-                        f"Manager {mgr_name} manages a team with average engagement score of {avg_eng:.2f}",
-                        f"The average engagement score for manager {mgr_name}'s team is {avg_eng:.2f}",
-                    ]
+                    # Ensure we use precise value (2 decimal places)
+                    avg_eng_precise = round(float(avg_eng), 2)
+                    if use_limited_formats:
+                        fact_texts = [
+                            f"Manager {mgr_name} has average engagement survey value of {avg_eng_precise:.2f}",
+                            f"Manager {mgr_name} has average team engagement score of {avg_eng_precise:.2f}",
+                        ]
+                    else:
+                        fact_texts = [
+                            f"Manager {mgr_name} has average engagement survey value of {avg_eng_precise:.2f}",
+                            f"Manager {mgr_name} has average engagement survey score of {avg_eng_precise:.2f}",
+                            f"Manager {mgr_name} has average team engagement score of {avg_eng_precise:.2f}",
+                            f"Manager {mgr_name} manages a team with average engagement score of {avg_eng_precise:.2f}",
+                            f"The average engagement survey value for manager {mgr_name} is {avg_eng_precise:.2f}",
+                            f"The average engagement score for manager {mgr_name}'s team is {avg_eng_precise:.2f}",
+                            f"Manager {mgr_name}'s team has an average engagement survey value of {avg_eng_precise:.2f}",
+                        ]
                     for fact_text in fact_texts:
-                        add_to_graph(
-                            fact_text,
-                            source_document="operational_insights",
-                            uploaded_at=datetime.now().isoformat(),
-                            agent_id="operational_query_agent"
-                        )
+                        try:
+                            add_to_graph(
+                                fact_text,
+                                source_document="operational_insights",
+                                uploaded_at=datetime.now().isoformat(),
+                                agent_id="operational_query_agent"
+                            )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 # Average satisfaction
                 if mgr_data.get('avg_satisfaction') is not None:
                     avg_sat = mgr_data['avg_satisfaction']
                     fact_text = f"Manager {mgr_name} has average team satisfaction score of {avg_sat:.2f}"
-                    add_to_graph(
+                    try:
+                        add_to_graph(
                         fact_text,
                         source_document="operational_insights",
                         uploaded_at=datetime.now().isoformat(),
                         agent_id="operational_query_agent"
                     )
+                    except Exception as fact_error:
+                        print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                        continue
                 
                 # Team size
                 if mgr_team_size > 0:
                     fact_text = f"Manager {mgr_name} manages {mgr_team_size} employees"
-                    add_to_graph(
+                    try:
+                        add_to_graph(
                         fact_text,
                         source_document="operational_insights",
                         uploaded_at=datetime.now().isoformat(),
                         agent_id="operational_query_agent"
                     )
+                    except Exception as fact_error:
+                        print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                        continue
         
         # Store top absences - multiple formats for better queryability
         if 'top_absences' in insights:
@@ -1550,12 +1861,16 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                         fact_texts.append(f"{emp_name} ({position}) has {absences:.0f} absences (rank {i})")
                     
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
             
             # Store summary fact for "top 5 employees by absences" queries
             if len(insights['top_absences']) >= 5:
@@ -1566,12 +1881,16 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                     top5_list.append(f"{i}. {emp_name} ({absences:.0f} absences)")
                 
                 summary_fact = f"Top 5 employees by absences: {', '.join(top5_list)}"
-                add_to_graph(
+                try:
+                    add_to_graph(
                     summary_fact,
                     source_document="operational_insights",
                     uploaded_at=datetime.now().isoformat(),
                     agent_id="operational_query_agent"
                 )
+                except Exception as fact_error:
+                    print(f"⚠️  Warning: Failed to store summary fact: {fact_error}")
+                    pass
         
         # Store bottom engagement - multiple formats for better queryability
         if 'bottom_engagement' in insights:
@@ -1594,12 +1913,16 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                         fact_texts.append(f"{emp_name} (managed by {manager}) has engagement score of {engagement:.2f} (rank {i} lowest)")
                     
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
             
             # Store summary fact for "bottom 5 employees by engagement" queries
             if len(insights['bottom_engagement']) >= 5:
@@ -1610,12 +1933,16 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                     bottom5_list.append(f"{i}. {emp_name} ({engagement:.2f})")
                 
                 summary_fact = f"Bottom 5 employees by engagement: {', '.join(bottom5_list)}"
-                add_to_graph(
+                try:
+                    add_to_graph(
                     summary_fact,
                     source_document="operational_insights",
                     uploaded_at=datetime.now().isoformat(),
                     agent_id="operational_query_agent"
                 )
+                except Exception as fact_error:
+                    print(f"⚠️  Warning: Failed to store summary fact: {fact_error}")
+                    pass
         
         # Store recruitment source insights
         if 'by_recruitment_source' in insights:
@@ -1631,12 +1958,16 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                         f"The average performance score for recruitment source {source_name} is {avg_perf:.2f}",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 if source_data.get('avg_salary') is not None:
                     avg_sal = source_data['avg_salary']
@@ -1645,25 +1976,36 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                         f"Employees from recruitment source {source_name} have average salary of {avg_sal:.2f}",
                     ]
                     for fact_text in fact_texts:
-                        add_to_graph(
+                        try:
+                            add_to_graph(
                             fact_text,
                             source_document="operational_insights",
                             uploaded_at=datetime.now().isoformat(),
                             agent_id="operational_query_agent"
                         )
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                            continue
                 
                 if source_data.get('avg_absences') is not None:
                     avg_abs = source_data['avg_absences']
                     fact_text = f"Recruitment source {source_name} has average absences of {avg_abs:.2f} days"
-                    add_to_graph(
+                    try:
+                        add_to_graph(
                         fact_text,
                         source_document="operational_insights",
                         uploaded_at=datetime.now().isoformat(),
                         agent_id="operational_query_agent"
                     )
+                    except Exception as fact_error:
+                        print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
+                        continue
         
     except Exception as e:
         print(f"⚠️  Error storing operational insights: {e}")
+        import traceback
+        traceback.print_exc()
+        # Don't re-raise - allow insights to be used even if fact storage fails
 
 
 def process_operational_query(query_info: Dict[str, Any], question: str) -> Tuple[Optional[str], List[Dict[str, Any]], Dict[str, Any]]:
@@ -1726,7 +2068,177 @@ def process_operational_query(query_info: Dict[str, Any], question: str) -> Tupl
     # This is idempotent - won't duplicate facts if already stored
     store_operational_insights_as_facts(insights)
     
-    # Retrieve relevant facts from knowledge graph, prioritizing operational_insights
+    # FIRST: Check if we can answer directly from insights (fast path, avoids slow context retrieval)
+    question_lower = question.lower()
+    evidence_facts = []
+    
+    # Direct answer for "top 5 employees by absences"
+    if "top" in question_lower and ("absence" in question_lower or "absent" in question_lower):
+        if 'top_absences' in insights and insights['top_absences']:
+            answer_parts = ["Based on available data, here's the list of top 5 employees with highest absences:\n"]
+            for i, emp_data in enumerate(insights['top_absences'][:5], 1):
+                emp_name = emp_data.get('employee_name', 'Unknown')
+                absences = emp_data.get('absences', 0)
+                dept = emp_data.get('department', '')
+                answer_parts.append(f"{i}. **{emp_name}**: {absences:.0f} absences" + (f" ({dept})" if dept else ""))
+            answer = "\n".join(answer_parts)
+            answer += "\n\n**Explanation:**\nThese are the employees with the highest number of absences based on the operational insights computed from the uploaded data."
+            
+            # Create evidence facts
+            for emp_data in insights['top_absences'][:5]:
+                evidence_facts.append({
+                    "subject": emp_data.get('employee_name', 'Unknown'),
+                    "predicate": "has_absences",
+                    "object": str(emp_data.get('absences', 0)),
+                    "source": ["operational_insights"]
+                })
+            
+            return answer, evidence_facts, {
+                "strategy": "operational_query_agent",
+                "reason": "Retrieved from operational insights",
+                "insights": insights
+            }
+    
+    # Direct answer for "best recruitment source" or "recruitment source" queries
+    if "recruitment" in question_lower and ("best" in question_lower or "most" in question_lower or "highest" in question_lower or "number" in question_lower or "hires" in question_lower):
+        if 'by_recruitment_source' in insights and insights['by_recruitment_source']:
+            # Find the recruitment source with highest employee_count
+            sources = insights['by_recruitment_source']
+            if sources:
+                # Sort by employee_count (hires)
+                sorted_sources = sorted(sources, key=lambda x: x.get('employee_count', 0), reverse=True)
+                top_source = sorted_sources[0]
+                source_name = top_source.get('recruitment_source', 'Unknown')
+                hire_count = top_source.get('employee_count', 0)
+                
+                answer_parts = [f"Based on the operational insights data, **{source_name}** has been the most common recruitment source with {hire_count} hires."]
+                if len(sorted_sources) > 1:
+                    answer_parts.append(f"\n\nOther recruitment sources:")
+                    for i, src in enumerate(sorted_sources[1:6], 2):  # Show top 5
+                        answer_parts.append(f"{i}. {src.get('recruitment_source', 'Unknown')}: {src.get('employee_count', 0)} hires")
+                
+                answer = "\n".join(answer_parts)
+                answer += "\n\n**Explanation:**\nThis is based on the total number of employees hired from each recruitment source in the dataset."
+                
+                # Create evidence facts
+                for src in sorted_sources[:5]:
+                    evidence_facts.append({
+                        "subject": src.get('recruitment_source', 'Unknown'),
+                        "predicate": "has_hires",
+                        "object": str(src.get('employee_count', 0)),
+                        "source": ["operational_insights"]
+                    })
+                
+                return answer, evidence_facts, {
+                    "strategy": "operational_query_agent",
+                    "reason": "Retrieved from operational insights",
+                    "insights": insights
+                }
+    
+    # Direct answer for "bottom 5 employees by engagement"
+    if "bottom" in question_lower and "engagement" in question_lower:
+        if 'bottom_engagement' in insights and insights['bottom_engagement']:
+            answer_parts = ["Based on available data, here's the list of bottom 5 employees with lowest engagement:\n"]
+            for i, emp_data in enumerate(insights['bottom_engagement'][:5], 1):
+                emp_name = emp_data.get('employee_name', 'Unknown')
+                engagement = emp_data.get('engagement_score', 0)
+                dept = emp_data.get('department', '')
+                answer_parts.append(f"{i}. **{emp_name}**: {engagement:.2f} engagement score" + (f" ({dept})" if dept else ""))
+            answer = "\n".join(answer_parts)
+            answer += "\n\n**Explanation:**\nThese are the employees with the lowest engagement scores based on the operational insights computed from the uploaded data."
+            
+            # Create evidence facts
+            for emp_data in insights['bottom_engagement'][:5]:
+                evidence_facts.append({
+                    "subject": emp_data.get('employee_name', 'Unknown'),
+                    "predicate": "has_engagement_score",
+                    "object": str(emp_data.get('engagement_score', 0)),
+                    "source": ["operational_insights"]
+                })
+            
+            return answer, evidence_facts, {
+                "strategy": "operational_query_agent",
+                "reason": "Retrieved from operational insights",
+                "insights": insights
+            }
+            
+    # Direct answer for "active vs terminated" or "active and terminated" queries about absences
+    if ("absence" in question_lower or "absent" in question_lower) and (
+        ("active" in question_lower and "terminated" in question_lower) or
+        ("active" in question_lower and "vs" in question_lower) or
+        ("compare" in question_lower and ("active" in question_lower or "terminated" in question_lower))
+    ):
+        if 'by_employment_status' in insights and insights['by_employment_status']:
+            # Find active and terminated statuses
+            active_status = None
+            terminated_status = None
+            
+            for status_data in insights['by_employment_status']:
+                status_str = str(status_data.get('employment_status', '')).lower()
+                if 'active' in status_str and 'terminated' not in status_str:
+                    active_status = status_data
+                elif 'terminated' in status_str or 'term' in status_str:
+                    terminated_status = status_data
+            
+            # If not found by exact match, try to identify by common patterns
+            if not active_status or not terminated_status:
+                for status_data in insights['by_employment_status']:
+                    status_str = str(status_data.get('employment_status', '')).lower()
+                    if not active_status and ('active' in status_str or status_str in ['a', 'act']):
+                        active_status = status_data
+                    if not terminated_status and ('terminated' in status_str or 'term' in status_str or status_str in ['t', 'termd']):
+                        terminated_status = status_data
+            
+            if active_status and terminated_status:
+                active_abs = active_status.get('avg_absences', 0) or 0
+                terminated_abs = terminated_status.get('avg_absences', 0) or 0
+                active_count = active_status.get('employee_count', 0)
+                terminated_count = terminated_status.get('employee_count', 0)
+                
+                difference = terminated_abs - active_abs
+                diff_percent = (difference / active_abs * 100) if active_abs > 0 else 0
+                
+                answer_parts = [
+                    "Based on operational insights, here's how absences differ between active and terminated employees:\n"
+                ]
+                answer_parts.append(f"**Active Employees:**")
+                answer_parts.append(f"- Average absences: {active_abs:.2f}")
+                answer_parts.append(f"- Employee count: {active_count}")
+                answer_parts.append(f"\n**Terminated Employees:**")
+                answer_parts.append(f"- Average absences: {terminated_abs:.2f}")
+                answer_parts.append(f"- Employee count: {terminated_count}")
+                answer_parts.append(f"\n**Difference:**")
+                if difference > 0:
+                    answer_parts.append(f"Terminated employees have {difference:.2f} more absences on average ({diff_percent:.1f}% higher)")
+                elif difference < 0:
+                    answer_parts.append(f"Active employees have {abs(difference):.2f} more absences on average ({abs(diff_percent):.1f}% higher)")
+                else:
+                    answer_parts.append(f"No significant difference in average absences")
+                
+                answer = "\n".join(answer_parts)
+                answer += "\n\n**Explanation:**\nThis comparison is based on the average number of absences for employees in each employment status category."
+                
+                # Create evidence facts
+                evidence_facts.append({
+                    "subject": "Active Employees",
+                    "predicate": "has_avg_absences",
+                    "object": str(active_abs),
+                    "source": ["operational_insights"]
+                })
+                evidence_facts.append({
+                    "subject": "Terminated Employees",
+                    "predicate": "has_avg_absences",
+                    "object": str(terminated_abs),
+                    "source": ["operational_insights"]
+                })
+                
+                return answer, evidence_facts, {
+                    "strategy": "operational_query_agent",
+                    "reason": "Retrieved from operational insights (by_employment_status)",
+                    "insights": insights
+                }
+    
+    # If no direct answer found, retrieve context from knowledge graph (slower path)
     try:
         from knowledge import retrieve_context
         
@@ -1736,105 +2248,6 @@ def process_operational_query(query_info: Dict[str, Any], question: str) -> Tupl
         
         # If we have context, use it to answer the question
         if context and "No directly relevant facts found" not in context:
-            # For operational queries, we want to use the facts directly
-            # The LLM in responses.py will use this context to answer
-            
-            # Extract evidence facts from the context
-            evidence_facts = []
-            
-            # Also check if we can directly answer from insights data
-            question_lower = question.lower()
-            
-            # Direct answer for "top 5 employees by absences"
-            if "top" in question_lower and ("absence" in question_lower or "absent" in question_lower):
-                if 'top_absences' in insights and insights['top_absences']:
-                    answer_parts = ["Based on available data, here's the list of top 5 employees with highest absences:\n"]
-                    for i, emp_data in enumerate(insights['top_absences'][:5], 1):
-                        emp_name = emp_data.get('employee_name', 'Unknown')
-                        absences = emp_data.get('absences', 0)
-                        dept = emp_data.get('department', '')
-                        answer_parts.append(f"{i}. **{emp_name}**: {absences:.0f} absences" + (f" ({dept})" if dept else ""))
-                    answer = "\n".join(answer_parts)
-                    answer += "\n\n**Explanation:**\nThese are the employees with the highest number of absences based on the operational insights computed from the uploaded data."
-                    
-                    # Create evidence facts
-                    for emp_data in insights['top_absences'][:5]:
-                        evidence_facts.append({
-                            "subject": emp_data.get('employee_name', 'Unknown'),
-                            "predicate": "has_absences",
-                            "object": str(emp_data.get('absences', 0)),
-                            "source": ["operational_insights"]
-                        })
-                    
-                    return answer, evidence_facts, {
-                        "strategy": "operational_query_agent",
-                        "reason": "Retrieved from operational insights",
-                        "insights": insights
-                    }
-            
-            # Direct answer for "best recruitment source" or "recruitment source" queries
-            if "recruitment" in question_lower and ("best" in question_lower or "most" in question_lower or "highest" in question_lower or "number" in question_lower or "hires" in question_lower):
-                if 'by_recruitment_source' in insights and insights['by_recruitment_source']:
-                    # Find the recruitment source with highest employee_count
-                    sources = insights['by_recruitment_source']
-                    if sources:
-                        # Sort by employee_count (hires)
-                        sorted_sources = sorted(sources, key=lambda x: x.get('employee_count', 0), reverse=True)
-                        top_source = sorted_sources[0]
-                        source_name = top_source.get('recruitment_source', 'Unknown')
-                        hire_count = top_source.get('employee_count', 0)
-                        
-                        answer_parts = [f"Based on the operational insights data, **{source_name}** has been the most common recruitment source with {hire_count} hires."]
-                        if len(sorted_sources) > 1:
-                            answer_parts.append(f"\n\nOther recruitment sources:")
-                            for i, src in enumerate(sorted_sources[1:6], 2):  # Show top 5
-                                answer_parts.append(f"{i}. {src.get('recruitment_source', 'Unknown')}: {src.get('employee_count', 0)} hires")
-                        
-                        answer = "\n".join(answer_parts)
-                        answer += "\n\n**Explanation:**\nThis is based on the total number of employees hired from each recruitment source in the dataset."
-                        
-                        # Create evidence facts
-                        for src in sorted_sources[:5]:
-                            evidence_facts.append({
-                                "subject": src.get('recruitment_source', 'Unknown'),
-                                "predicate": "has_hires",
-                                "object": str(src.get('employee_count', 0)),
-                                "source": ["operational_insights"]
-                            })
-                        
-                        return answer, evidence_facts, {
-                            "strategy": "operational_query_agent",
-                            "reason": "Retrieved from operational insights",
-                            "insights": insights
-                        }
-            
-            # Direct answer for "bottom 5 employees by engagement"
-            if "bottom" in question_lower and "engagement" in question_lower:
-                if 'bottom_engagement' in insights and insights['bottom_engagement']:
-                    answer_parts = ["Based on available data, here's the list of bottom 5 employees with lowest engagement:\n"]
-                    for i, emp_data in enumerate(insights['bottom_engagement'][:5], 1):
-                        emp_name = emp_data.get('employee_name', 'Unknown')
-                        engagement = emp_data.get('engagement_score', 0)
-                        dept = emp_data.get('department', '')
-                        answer_parts.append(f"{i}. **{emp_name}**: {engagement:.2f} engagement score" + (f" ({dept})" if dept else ""))
-                    answer = "\n".join(answer_parts)
-                    answer += "\n\n**Explanation:**\nThese are the employees with the lowest engagement scores based on the operational insights computed from the uploaded data."
-                    
-                    # Create evidence facts
-                    for emp_data in insights['bottom_engagement'][:5]:
-                        evidence_facts.append({
-                            "subject": emp_data.get('employee_name', 'Unknown'),
-                            "predicate": "has_engagement_score",
-                            "object": str(emp_data.get('engagement_score', 0)),
-                            "source": ["operational_insights"]
-                        })
-                    
-                    return answer, evidence_facts, {
-                        "strategy": "operational_query_agent",
-                        "reason": "Retrieved from operational insights",
-                        "insights": insights
-                    }
-            
             # For other queries, return context to be used by LLM
             # The context contains relevant facts from operational_insights
             answer = f"Based on operational insights from the uploaded data:\n\n{context}"

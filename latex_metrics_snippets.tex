@@ -1,0 +1,55 @@
+%======================================================================
+% REAL METRICS FROM DATASET - Replace dummy values in paper
+%======================================================================
+
+% Dataset dimensions:
+% R = 311 (number of employee records)
+% N = 36 (number of variables)
+
+% Equation: |C_k| = C(N, k)
+% C(36, 2) = 630
+% C(36, 3) = 7140
+% C(36, 4) = 58905
+% C(36, 5) = 376992
+
+% Total combinations up to K_max=5:
+% |C_<=K_max| = 443667
+
+% Operational combinations (k=2):
+% |C_2| = C(36, 2) = 36 × 35 / 2 = 630
+
+% Pairwise interactions E(k) = C(k, 2):
+% E(2) = C(2, 2) = 1
+% E(3) = C(3, 2) = 3
+% E(4) = C(4, 2) = 6
+% E(5) = C(5, 2) = 10
+
+% Cutoff orders for different E_max:
+% E_max = 1 → k* = 2 (E(2) = 1)
+% E_max = 2 → k* = 2 (E(2) = 1)
+% E_max = 3 → k* = 3 (E(3) = 3)
+% E_max = 6 → k* = 4 (E(4) = 6)
+% E_max = 10 → k* = 5 (E(5) = 10)
+
+%======================================================================
+% READY-TO-USE LATEX SNIPPETS
+%======================================================================
+
+% Replace: 'R = 311' with:
+R = 311
+
+% Replace: 'N = 36' with:
+N = 36
+
+% Replace in equation (eq:operational-combinations):
+\left|\mathcal{C}_2\right| = \binom{36}{2} = \frac{36 \times 35}{2} = 630,
+
+% Example HR variables found in dataset (for text examples):
+% \texttt{MaritalStatusID}
+% \texttt{EmpStatusID}
+% \texttt{Salary}
+% \texttt{EmploymentStatus}
+% \texttt{Department}
+% \texttt{ManagerName}
+% \texttt{ManagerID}
+% \texttt{RecruitmentSource}

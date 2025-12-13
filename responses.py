@@ -177,10 +177,12 @@ CRITICAL RULES:
 13. For employee queries: use exact names and values from the knowledge graph
 14. Always ground your answers in the provided context facts - if a number isn't in the context, don't use it
 15. **FOR SPECIFIC CORRELATION QUESTIONS**: When asked about correlation between two specific columns (e.g., "correlation between X and Y"), you MUST:
-    - Find the "Specific Correlation Requested" section in the context
+    - Find the "Specific Correlation Requested" section in the context FIRST
     - Give the EXACT correlation value (e.g., -0.64, 0.75) from that section
     - Explain what the correlation means (strong/moderate/weak, positive/negative)
-    - If the specific correlation is shown, prioritize it over other correlations in your answer"""
+    - If the specific correlation is shown, prioritize it over other correlations in your answer
+    - The correlation matrix is symmetric, so correlation between X and Y is the same as Y and X - only mention it once
+    - If you see "All Column Correlations" section, you can reference it but focus on the specific correlation requested"""
         
         prompt = f"{system_prompt}\n\nKnowledge Base Context:\n{clean_context}\n\nQuestion: {message}\n\nAnswer:"
         
@@ -250,10 +252,12 @@ CRITICAL RULES:
 13. For employee queries: use exact names and values from the knowledge graph
 14. Always ground your answers in the provided context facts - if a number isn't in the context, don't use it
 15. **FOR SPECIFIC CORRELATION QUESTIONS**: When asked about correlation between two specific columns (e.g., "correlation between X and Y"), you MUST:
-    - Find the "Specific Correlation Requested" section in the context
+    - Find the "Specific Correlation Requested" section in the context FIRST
     - Give the EXACT correlation value (e.g., -0.64, 0.75) from that section
     - Explain what the correlation means (strong/moderate/weak, positive/negative)
-    - If the specific correlation is shown, prioritize it over other correlations in your answer"""
+    - If the specific correlation is shown, prioritize it over other correlations in your answer
+    - The correlation matrix is symmetric, so correlation between X and Y is the same as Y and X - only mention it once
+    - If you see "All Column Correlations" section, you can reference it but focus on the specific correlation requested"""
         
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -836,180 +840,199 @@ def respond(message, history=None, system_message="You are an intelligent assist
         print(f"⚠️  Direct correlation lookup failed: {e}")
         pass
     
-    # DIRECT EMPLOYEE FACT LOOKUP: Bypass LLM for simple employee attribute queries
-    # This prevents timeout issues for queries like "manager of Booth, Frank" or "position id of Becker, Scott"
-    try:
-        import re
-        from knowledge import get_employee_attribute
-        
-        message_lower = message.lower()
-        # Check if this is an employee attribute query
-        # Patterns: "manager of X", "salary of X", "position of X", "position id of X", "X has manager", etc.
-        # Simple patterns first for better matching - expanded to include "position id", "manager id", etc.
-        # Generic patterns that work for ANY attribute from CSV columns
-        # Examples: performance, satisfaction, engagement, status, absences, etc.
-        filter_patterns = [
-            # Direct pattern: "attribute of X" (most common) - matches any word(s) as attribute
-            r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
-            # Pattern: "what is the attribute of X"
-            r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+(?:\s+[a-z]+)*?)\s*(?:of|for)\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
-            # Pattern: "X has attribute"
-            r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?([a-z]+(?:\s+[a-z]+)*?)',
-            # Pattern: "what is X's attribute"
-            r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?([a-z]+(?:\s+[a-z]+)*?)',
-            # Pattern: "manager of X" (special case for manager)
-            r'manager.*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
-            # Pattern: "who/what is the manager of X"
-            r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|managerid|manager\s+id).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
-        ]
-        
-        employee_name = None
-        attribute = None
-        
-        for pattern in filter_patterns:
-            match = re.search(pattern, message, re.IGNORECASE)
-            if match:
-                # Pattern 1: "attribute of X" - generic pattern, two groups
-                if pattern.startswith(r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+'):
-                    attribute = match.group(1).strip() if match.lastindex >= 1 else None
-                    employee_name = match.group(2).strip() if match.lastindex >= 2 else None
-                # Pattern 2: "manager of X" - only employee name captured
-                elif pattern.startswith(r'manager.*?(?:of|for)'):
-                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
-                    attribute = 'manager'  # Set attribute directly
-                # Pattern 3: "what is the attribute of X" - two groups
-                elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+'):
-                    attribute = match.group(1).strip() if match.lastindex >= 1 else None
-                    employee_name = match.group(2).strip() if match.lastindex >= 2 else None
-                # Pattern 4: "X has attribute" - two groups (reversed)
-                elif pattern.startswith(r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have)'):
-                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
-                    attribute = match.group(2).strip() if match.lastindex >= 2 else None
-                # Pattern 5: "what is X's attribute" - two groups
-                elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+'):
-                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
-                    attribute = match.group(2).strip() if match.lastindex >= 2 else None
-                # Pattern 6: "who/what is the manager of X" - only employee name
-                elif pattern.startswith(r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager'):
-                    employee_name = match.group(1).strip() if match.lastindex >= 1 else None
-                    attribute = 'manager'  # Set attribute directly
-                # Fallback: try to extract from any two groups
-                elif match.lastindex >= 2:
-                    # Try to determine which is employee name (has comma pattern)
-                    group1 = match.group(1).strip()
-                    group2 = match.group(2).strip()
-                    if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group1):
-                        employee_name = group1
-                        attribute = group2
-                    elif re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group2):
-                        employee_name = group2
-                        attribute = group1
-                    else:
-                        # Assume first is attribute, second is employee
-                        attribute = group1
-                        employee_name = group2
-                # Single group - try to find employee name elsewhere in query
-                elif match.lastindex >= 1:
-                    first_group = match.group(1).strip()
-                    # Check if first group is employee name (has comma pattern)
-                    if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', first_group):
-                        employee_name = first_group
-                        # Try to extract ANY attribute from query text (generic - works for all CSV columns)
-                        # Look for common attribute patterns in the query
-                        attribute_match = re.search(r'\b(performance|satisfaction|engagement|status|salary|position|department|manager|age|absences|marital|gender|state|city|zip|phone|email|performance\s+score|satisfaction\s+score|engagement\s+score)\b', message_lower)
-                        if attribute_match:
-                            attribute = attribute_match.group(1)
-                    else:
-                        # Might be attribute, try to find employee name elsewhere
-                        attribute = first_group
-                        # Look for employee name pattern in the message
-                        emp_match = re.search(r'([A-Z][a-z]+,\s*[A-Z][a-z\.]+)', message)
-                        if emp_match:
-                            employee_name = emp_match.group(1).strip()
-                
-                # Clean up employee name and attribute
-                if employee_name:
-                    employee_name = employee_name.rstrip('.,;:!?')
-                if attribute:
-                    # Remove common stopwords and clean up
-                    attribute = attribute.rstrip('.,;:!?')
-                    # Remove possessive forms (e.g., "X's" -> "X")
-                    attribute = re.sub(r"'s\s*$", "", attribute, flags=re.IGNORECASE)
-                    # Remove common question words that might have been captured
-                    stopwords = ['the', 'a', 'an', 'what', 'which', 'who', 'is', 'are', 'of', 'for']
-                    attribute_words = attribute.split()
-                    attribute_words = [w for w in attribute_words if w.lower() not in stopwords]
-                    attribute = ' '.join(attribute_words).strip()
-                
-                if employee_name and attribute:
-                    break
-        
-        # If we found employee name and attribute, try direct lookup
-        if employee_name and attribute:
-            # Normalize attribute name (handle "position id" -> "position_id")
-            attribute_normalized = attribute.lower().replace(' ', '').replace('_', '')
-            if attribute_normalized == 'positionid':
-                attribute_normalized = 'position_id'
-            elif attribute_normalized == 'managerid':
-                attribute_normalized = 'manager_id'
+    # SKIP EMPLOYEE LOOKUP FOR STATISTICAL/OPERATIONAL QUERIES
+    # Check if this is a statistical or operational query first
+    message_lower = message.lower()
+    is_statistical_query = (
+        'correlation' in message_lower or 
+        'correlate' in message_lower or
+        'statistical' in message_lower or
+        'statistic' in message_lower or
+        'distribution' in message_lower or
+        'statistical analysis' in message_lower or
+        'statistical_analysis' in message_lower
+    )
+    is_operational_query = (
+        'operational' in message_lower or
+        'operational insights' in message_lower or
+        'operational_insights' in message_lower
+    )
+    
+    # Only do employee lookup if NOT a statistical/operational query
+    if not is_statistical_query and not is_operational_query:
+        # DIRECT EMPLOYEE FACT LOOKUP: Bypass LLM for simple employee attribute queries
+        # This prevents timeout issues for queries like "manager of Booth, Frank" or "position id of Becker, Scott"
+        try:
+            import re
+            from knowledge import get_employee_attribute
             
-            print(f"🔍 Direct employee lookup attempt: employee='{employee_name}', attribute='{attribute}' (normalized: '{attribute_normalized}')")
-            # Try both normalized and original attribute
-            attr_value = get_employee_attribute(employee_name, attribute_normalized)
-            if attr_value is None and attribute_normalized != attribute.lower():
-                # Try original attribute if normalized didn't work
-                attr_value = get_employee_attribute(employee_name, attribute.lower())
+            # Check if this is an employee attribute query
+            # Patterns: "manager of X", "salary of X", "position of X", "position id of X", "X has manager", etc.
+            # Simple patterns first for better matching - expanded to include "position id", "manager id", etc.
+            # Generic patterns that work for ANY attribute from CSV columns
+            # Examples: performance, satisfaction, engagement, status, absences, etc.
+            filter_patterns = [
+                # Direct pattern: "attribute of X" (most common) - matches any word(s) as attribute
+                r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+                # Pattern: "what is the attribute of X"
+                r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+(?:\s+[a-z]+)*?)\s*(?:of|for)\s+([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+                # Pattern: "X has attribute"
+                r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have).*?(?:a|an|the).*?([a-z]+(?:\s+[a-z]+)*?)',
+                # Pattern: "what is X's attribute"
+                r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?([a-z]+(?:\s+[a-z]+)*?)',
+                # Pattern: "manager of X" (special case for manager)
+                r'manager.*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+                # Pattern: "who/what is the manager of X"
+                r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager|managerid|manager\s+id).*?(?:of|for).*?([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?)',
+            ]
             
-            if attr_value is not None:
-                print(f"✅ Found value: {attr_value}")
-                # Format response based on attribute type
-                attribute_display = attribute.replace('_', ' ').title()
-                if attribute_normalized in ['manager', 'manager_id']:
-                    response = f"The manager of **{employee_name}** is **{attr_value}**."
-                elif attribute_normalized == 'salary':
-                    response = f"The salary of **{employee_name}** is **{attr_value}**."
-                elif attribute_normalized == 'position_id':
-                    response = f"The position ID of **{employee_name}** is **{attr_value}**."
-                elif attribute_normalized == 'position':
-                    response = f"The position of **{employee_name}** is **{attr_value}**."
-                elif attribute_normalized == 'department':
-                    response = f"**{employee_name}** works in the **{attr_value}** department."
-                else:
-                    response = f"**{employee_name}** has {attribute_display}: **{attr_value}**."
-                
-                # Add evidence
-                try:
-                    from knowledge import get_fact_source_document
-                    # Try multiple predicate formats
-                    predicates_to_try = [
-                        f"has_{attribute_normalized}",
-                        f"has_{attribute.lower().replace(' ', '_')}",
-                        f"has_{attribute.lower()}"
-                    ]
-                    source_docs = []
-                    for pred in predicates_to_try:
-                        source_docs = get_fact_source_document(employee_name, pred, attr_value)
-                        if source_docs:
-                            break
+            employee_name = None
+            attribute = None
+            
+            for pattern in filter_patterns:
+                match = re.search(pattern, message, re.IGNORECASE)
+                if match:
+                    # Pattern 1: "attribute of X" - generic pattern, two groups
+                    if pattern.startswith(r'([a-z]+(?:\s+[a-z]+)*?)\s+of\s+'):
+                        attribute = match.group(1).strip() if match.lastindex >= 1 else None
+                        employee_name = match.group(2).strip() if match.lastindex >= 2 else None
+                    # Pattern 2: "manager of X" - only employee name captured
+                    elif pattern.startswith(r'manager.*?(?:of|for)'):
+                        employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                        attribute = 'manager'  # Set attribute directly
+                    # Pattern 3: "what is the attribute of X" - two groups
+                    elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?(?:the|a).*?([a-z]+'):
+                        attribute = match.group(1).strip() if match.lastindex >= 1 else None
+                        employee_name = match.group(2).strip() if match.lastindex >= 2 else None
+                    # Pattern 4: "X has attribute" - two groups (reversed)
+                    elif pattern.startswith(r'([A-Z][a-z]+(?:,\s*[A-Z][a-z\.]+)?).*?(?:has|have)'):
+                        employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                        attribute = match.group(2).strip() if match.lastindex >= 2 else None
+                    # Pattern 5: "what is X's attribute" - two groups
+                    elif pattern.startswith(r'(?:what|which|who).*?(?:is|are).*?([A-Z][a-z]+'):
+                        employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                        attribute = match.group(2).strip() if match.lastindex >= 2 else None
+                    # Pattern 6: "who/what is the manager of X" - only employee name
+                    elif pattern.startswith(r'(?:who|what).*?(?:is|are).*?(?:the|a).*?(?:manager'):
+                        employee_name = match.group(1).strip() if match.lastindex >= 1 else None
+                        attribute = 'manager'  # Set attribute directly
+                    # Fallback: try to extract from any two groups
+                    elif match.lastindex >= 2:
+                        # Try to determine which is employee name (has comma pattern)
+                        group1 = match.group(1).strip()
+                        group2 = match.group(2).strip()
+                        if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group1):
+                            employee_name = group1
+                            attribute = group2
+                        elif re.match(r'^[A-Z][a-z]+,\s*[A-Z]', group2):
+                            employee_name = group2
+                            attribute = group1
+                        else:
+                            # Assume first is attribute, second is employee
+                            attribute = group1
+                            employee_name = group2
+                    # Single group - try to find employee name elsewhere in query
+                    elif match.lastindex >= 1:
+                        first_group = match.group(1).strip()
+                        # Check if first group is employee name (has comma pattern)
+                        if re.match(r'^[A-Z][a-z]+,\s*[A-Z]', first_group):
+                            employee_name = first_group
+                            # Try to extract ANY attribute from query text (generic - works for all CSV columns)
+                            # Look for common attribute patterns in the query
+                            attribute_match = re.search(r'\b(performance|satisfaction|engagement|status|salary|position|department|manager|age|absences|marital|gender|state|city|zip|phone|email|performance\s+score|satisfaction\s+score|engagement\s+score)\b', message_lower)
+                            if attribute_match:
+                                attribute = attribute_match.group(1)
+                        else:
+                            # Might be attribute, try to find employee name elsewhere
+                            attribute = first_group
+                            # Look for employee name pattern in the message
+                            emp_match = re.search(r'([A-Z][a-z]+,\s*[A-Z][a-z\.]+)', message)
+                            if emp_match:
+                                employee_name = emp_match.group(1).strip()
                     
-                    if source_docs:
-                        response += f"\n\n**Evidence from Knowledge Graph:**\n"
-                        for doc in source_docs[:3]:  # Limit to 3 sources
-                            response += f"- {employee_name} → has_{attribute_normalized} → {attr_value} [Source: {doc}]\n"
-                except Exception as e:
-                    print(f"⚠️  Error getting evidence: {e}")
-                    pass
+                    # Clean up employee name and attribute
+                    if employee_name:
+                        employee_name = employee_name.rstrip('.,;:!?')
+                    if attribute:
+                        # Remove common stopwords and clean up
+                        attribute = attribute.rstrip('.,;:!?')
+                        # Remove possessive forms (e.g., "X's" -> "X")
+                        attribute = re.sub(r"'s\s*$", "", attribute, flags=re.IGNORECASE)
+                        # Remove common question words that might have been captured
+                        stopwords = ['the', 'a', 'an', 'what', 'which', 'who', 'is', 'are', 'of', 'for']
+                        attribute_words = attribute.split()
+                        attribute_words = [w for w in attribute_words if w.lower() not in stopwords]
+                        attribute = ' '.join(attribute_words).strip()
+                    
+                    if employee_name and attribute:
+                        break
+            
+            # If we found employee name and attribute, try direct lookup
+            if employee_name and attribute:
+                # Normalize attribute name (handle "position id" -> "position_id")
+                attribute_normalized = attribute.lower().replace(' ', '').replace('_', '')
+                if attribute_normalized == 'positionid':
+                    attribute_normalized = 'position_id'
+                elif attribute_normalized == 'managerid':
+                    attribute_normalized = 'manager_id'
                 
-                print(f"✅ Direct employee fact lookup: {employee_name} -> {attribute_normalized} = {attr_value}")
-                return response
-            else:
-                print(f"⚠️  Direct employee lookup found no value for {employee_name} -> {attribute}")
-    except Exception as e:
-        # If direct lookup fails, continue with normal processing
-        print(f"⚠️  Direct employee fact lookup failed: {e}")
-        import traceback
-        traceback.print_exc()
-        pass
+                print(f"🔍 Direct employee lookup attempt: employee='{employee_name}', attribute='{attribute}' (normalized: '{attribute_normalized}')")
+                # Try both normalized and original attribute
+                attr_value = get_employee_attribute(employee_name, attribute_normalized)
+                if attr_value is None and attribute_normalized != attribute.lower():
+                    # Try original attribute if normalized didn't work
+                    attr_value = get_employee_attribute(employee_name, attribute.lower())
+                
+                if attr_value is not None:
+                    print(f"✅ Found value: {attr_value}")
+                    # Format response based on attribute type
+                    attribute_display = attribute.replace('_', ' ').title()
+                    if attribute_normalized in ['manager', 'manager_id']:
+                        response = f"The manager of **{employee_name}** is **{attr_value}**."
+                    elif attribute_normalized == 'salary':
+                        response = f"The salary of **{employee_name}** is **{attr_value}**."
+                    elif attribute_normalized == 'position_id':
+                        response = f"The position ID of **{employee_name}** is **{attr_value}**."
+                    elif attribute_normalized == 'position':
+                        response = f"The position of **{employee_name}** is **{attr_value}**."
+                    elif attribute_normalized == 'department':
+                        response = f"**{employee_name}** works in the **{attr_value}** department."
+                    else:
+                        response = f"**{employee_name}** has {attribute_display}: **{attr_value}**."
+                    
+                    # Add evidence
+                    try:
+                        from knowledge import get_fact_source_document
+                        # Try multiple predicate formats
+                        predicates_to_try = [
+                            f"has_{attribute_normalized}",
+                            f"has_{attribute.lower().replace(' ', '_')}",
+                            f"has_{attribute.lower()}"
+                        ]
+                        source_docs = []
+                        for pred in predicates_to_try:
+                            source_docs = get_fact_source_document(employee_name, pred, attr_value)
+                            if source_docs:
+                                break
+                        
+                        if source_docs:
+                            response += f"\n\n**Evidence from Knowledge Graph:**\n"
+                            for doc in source_docs[:3]:  # Limit to 3 sources
+                                response += f"- {employee_name} → has_{attribute_normalized} → {attr_value} [Source: {doc}]\n"
+                    except Exception as e:
+                        print(f"⚠️  Error getting evidence: {e}")
+                        pass
+                    
+                    print(f"✅ Direct employee fact lookup: {employee_name} -> {attribute_normalized} = {attr_value}")
+                    return response
+                else:
+                    print(f"⚠️  Direct employee lookup found no value for {employee_name} -> {attribute_normalized}")
+        except Exception as e:
+            # If direct lookup fails, continue with normal processing
+            print(f"⚠️  Direct employee fact lookup failed: {e}")
+            import traceback
+            traceback.print_exc()
+            pass
     
     # DIRECT OPERATIONAL INSIGHTS LOOKUP: Bypass LLM for operational insights queries
     # This handles queries like "operational insights: team size of manager Michael Albert"
@@ -1289,40 +1312,68 @@ def respond(message, history=None, system_message="You are an intelligent assist
     except:
         pass
     
-    # Check if this is a statistics query (correlation, distribution, min/max)
-    # and get statistics context for LLM
+    # Get statistics context for LLM (for correlation/statistical queries)
     stats_context = None
-    try:
-        query_processor = importlib.import_module('query_processor')
-        detect_query_type = query_processor.detect_query_type
-        query_info = detect_query_type(message)
-        
-        # Check if this should be a statistics query
-        orchestrator_module = importlib.import_module('orchestrator')
-        find_agents_for_query = orchestrator_module.find_agents_for_query
-        temp_routing = find_agents_for_query(message, query_info.get("query_type", "general"), 
-                                            query_info.get("attribute"), query_info)
-        if temp_routing.get("strategy") == "statistics_agent":
-            # Get statistics context
-            try:
-                from agent_system import format_statistics_context_for_llm
-                from strategic_query_agent import get_all_statistics
-                all_stats = get_all_statistics()
-                if all_stats:
-                    stats_context = format_statistics_context_for_llm(message, all_stats)
-            except Exception as e:
-                # Error getting statistics context (silently handled)
-                pass
-    except Exception as e:
-        # Error checking statistics routing (silently handled)
-        pass
+    # Check if this is a statistical query (correlation, distribution, etc.)
+    if is_statistical_query:
+        try:
+            from agent_system import format_statistics_context_for_llm
+            from strategic_query_agent import get_all_statistics
+            all_stats = get_all_statistics()
+            if all_stats:
+                stats_context = format_statistics_context_for_llm(message, all_stats)
+                print(f"📊 Statistics context retrieved: {len(all_stats)} statistics documents")
+        except Exception as e:
+            print(f"⚠️  Error getting statistics context: {e}")
+            import traceback
+            traceback.print_exc()
+            pass
+    else:
+        # Also check via orchestrator for other statistical queries
+        try:
+            query_processor = importlib.import_module('query_processor')
+            detect_query_type = query_processor.detect_query_type
+            query_info = detect_query_type(message)
+            
+            # Check if this should be a statistics query
+            orchestrator_module = importlib.import_module('orchestrator')
+            find_agents_for_query = orchestrator_module.find_agents_for_query
+            temp_routing = find_agents_for_query(message, query_info.get("query_type", "general"), 
+                                                query_info.get("attribute"), query_info)
+            if temp_routing.get("strategy") == "statistics_agent":
+                # Get statistics context
+                try:
+                    from agent_system import format_statistics_context_for_llm
+                    from strategic_query_agent import get_all_statistics
+                    all_stats = get_all_statistics()
+                    if all_stats:
+                        stats_context = format_statistics_context_for_llm(message, all_stats)
+                        print(f"📊 Statistics context retrieved via orchestrator: {len(all_stats)} statistics documents")
+                except Exception as e:
+                    # Error getting statistics context (silently handled)
+                    pass
+        except Exception as e:
+            # Error checking statistics routing (silently handled)
+            pass
     
-    # Retrieve relevant context from knowledge graph (only for non-structured queries)
-    context = retrieve_context(message)
-    
-    # Add statistics context if available
-    if stats_context:
-        context = f"{stats_context}\n\n---\n\n{context}" if context else stats_context
+    # Retrieve relevant context from knowledge graph
+    # For statistical queries, prioritize statistics context over general KG context
+    if is_statistical_query and stats_context:
+        # For statistical queries, use statistics context as primary
+        context = stats_context
+        # Optionally add relevant KG facts if needed
+        kg_context = retrieve_context(message, limit=50)  # Limit for statistical queries
+        if kg_context and "No directly relevant facts found" not in kg_context:
+            context = f"{stats_context}\n\n---\n\nAdditional Knowledge Graph Facts:\n{kg_context}"
+    elif is_operational_query:
+        # For operational queries, filter to operational insights
+        context = retrieve_context(message, limit=100)
+    else:
+        # For other queries, use normal context retrieval
+        context = retrieve_context(message)
+        # Add statistics context if available (for queries that might benefit from stats)
+        if stats_context:
+            context = f"{stats_context}\n\n---\n\n{context}" if context else stats_context
     
     # Enable LLM if Ollama or OpenAI API is configured
     use_llm = USE_OLLAMA or (USE_OPENAI and OPENAI_API_KEY)  # Use LLM if Ollama or OpenAI is available
