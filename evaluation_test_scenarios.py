@@ -65,20 +65,21 @@ def create_operational_scenarios(df: pd.DataFrame) -> List[Dict[str, Any]]:
             "ground_truth": compute_ground_truth(df, ["PerformanceScore", "Department"])
         })
     
-    # Scenario O2: Absences × EmploymentStatus
-    if 'Absences' in df.columns and 'EmploymentStatus' in df.columns:
+    # Scenario O2: SpecialProjectsCount × Department
+    if 'SpecialProjectsCount' in df.columns and 'Department' in df.columns:
         scenarios.append({
             "id": "O2",
-            "name": "Absences by Employment Status",
-            "variables": ["Absences", "EmploymentStatus"],
+            "name": "Special Projects Count by Department",
+            "variables": ["SpecialProjectsCount", "Department"],
             "k": 2,
             "type": "operational",
             "queries": [
-                "How do absences differ between active and terminated employees?",
-                "What are absence patterns by employment status?",
-                "Compare absences for active vs terminated employees"
+                "What is the average special projects count by department?",
+                "How do special projects vary across departments?",
+                "Which department has the highest average special projects count?",
+                "Show me special projects distribution by department"
             ],
-            "ground_truth": compute_ground_truth(df, ["Absences", "EmploymentStatus"])
+            "ground_truth": compute_ground_truth(df, ["SpecialProjectsCount", "Department"])
         })
     
     # Scenario O3: EngagementSurvey × ManagerName
@@ -320,13 +321,23 @@ def generate_test_report(scenarios: List[Dict[str, Any]], output_file: str = "ev
 
 def main():
     """Main function to generate test scenarios."""
-    csv_path = "/Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv"
+    import sys
+    
+    # Allow CSV path to be provided as command line argument
+    if len(sys.argv) > 1:
+        csv_path = sys.argv[1]
+        print(f"📁 Using provided CSV path: {csv_path}")
+    else:
+        # Default to the actual CSV file location
+        csv_path = "/Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv"
+        print(f"📁 Using default CSV path: {csv_path}")
     
     print("🔍 Loading HR dataset and creating test scenarios...")
     print()
     
     if not os.path.exists(csv_path):
         print(f"❌ CSV file not found: {csv_path}")
+        print("\nUsage: python evaluation_test_scenarios.py [path/to/your.csv]")
         return
     
     try:

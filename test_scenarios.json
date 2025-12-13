@@ -120,50 +120,75 @@
     },
     {
       "id": "O2",
-      "name": "Absences by Employment Status",
+      "name": "Special Projects Count by Department",
       "variables": [
-        "Absences",
-        "EmploymentStatus"
+        "SpecialProjectsCount",
+        "Department"
       ],
       "k": 2,
       "type": "operational",
       "queries": [
-        "How do absences differ between active and terminated employees?",
-        "What are absence patterns by employment status?",
-        "Compare absences for active vs terminated employees"
+        "What is the average special projects count by department?",
+        "How do special projects vary across departments?",
+        "Which department has the highest average special projects count?",
+        "Show me special projects distribution by department"
       ],
       "ground_truth": {
         "variables": [
-          "Absences",
-          "EmploymentStatus"
+          "SpecialProjectsCount",
+          "Department"
         ],
         "statistics": {
-          "groupby": "EmploymentStatus",
-          "metric": "Absences",
+          "groupby": "Department",
+          "metric": "SpecialProjectsCount",
           "groups": {
-            "Active": {
-              "mean": 9.830917874396135,
-              "median": 10.0,
-              "std": 5.846367275365562,
-              "count": 207,
-              "min": 1,
-              "max": 20
+            "Admin Offices": {
+              "mean": 3.6666666666666665,
+              "median": 4.0,
+              "std": 1.8027756377319946,
+              "count": 9,
+              "min": 0,
+              "max": 6
             },
-            "Terminated for Cause": {
-              "mean": 11.5625,
-              "median": 9.5,
-              "std": 6.043936355279286,
-              "count": 16,
-              "min": 2,
-              "max": 20
+            "Executive Office": {
+              "mean": 0.0,
+              "median": 0.0,
+              "std": 0.0,
+              "count": 1,
+              "min": 0,
+              "max": 0
             },
-            "Voluntarily Terminated": {
-              "mean": 10.954545454545455,
-              "median": 11.0,
-              "std": 5.795180500415229,
-              "count": 88,
-              "min": 1,
-              "max": 20
+            "IT/IS": {
+              "mean": 5.92,
+              "median": 6.0,
+              "std": 0.9441549509633318,
+              "count": 50,
+              "min": 4,
+              "max": 8
+            },
+            "Production       ": {
+              "mean": 0.019138755980861243,
+              "median": 0.0,
+              "std": 0.21842360238145303,
+              "count": 209,
+              "min": 0,
+              "max": 3
+            },
+            "Sales": {
+              "mean": 0.0,
+              "median": 0.0,
+              "std": 0.0,
+              "count": 31,
+              "min": 0,
+              "max": 0
+            },
+            "Software Engineering": {
+              "mean": 4.181818181818182,
+              "median": 4.0,
+              "std": 1.6624188291872668,
+              "count": 11,
+              "min": 0,
+              "max": 6
             }
           }
         }
@@ -450,8 +475,8 @@
       "type": "operational",
       "queries": [
         "How does performance vary by recruitment source?",
-        "Which recruitment sources yield the best performers?",
-        "What is the performance distribution by recruitment channel?"
+        "Which recruitment sources have the employees with highest performance score?",
+        "What is the performance distribution by recruitment source?"
       ],
       "ground_truth": {
         "variables": [
@@ -536,111 +561,39 @@
     },
     {
       "id": "S1",
-      "name": "Performance-Engagement-Status Risk Clusters",
+      "name": "Performance-Engagement-SpecialProjects-Absences",
       "variables": [
         "PerformanceScore",
         "EngagementSurvey",
-        "EmploymentStatus"
+        "SpecialProjectsCount",
+        "Absences",
+        "EmpSatisfaction"
       ],
-      "k": 3,
+      "k": 5,
       "type": "strategic",
       "queries": [
-        "Identify employees with high performance but low engagement who are at risk of termination",
-        "Which active employees have declining engagement and performance?",
-        "Find risk clusters combining performance, engagement, and employment status"
+        "Identify employees with high performance, low engagement and many special projects",
+        "Find employees with high performance, low engagement and low satisfaction",
+        "Find employees with high performance, low engagement and low satisfaction and many special projects",
+        "Find employees with low engagement and low satisfaction and many special projects and many absences"
       ],
       "ground_truth": {
         "variables": [
           "PerformanceScore",
           "EngagementSurvey",
-          "EmploymentStatus"
+          "SpecialProjectsCount",
+          "Absences",
+          "EmpSatisfaction"
         ],
         "statistics": {
-          "groupby": [
-            "PerformanceScore",
-            "EmploymentStatus"
-          ],
-          "metric": "EngagementSurvey",
-          "groups": {
-            "('Exceeds', 'Active')": {
-              "mean": 4.445172413793103,
-              "count": 29
-            },
-            "('Exceeds', 'Terminated for Cause')": {
-              "mean": 4.3,
-              "count": 1
-            },
-            "('Exceeds', 'Voluntarily Terminated')": {
-              "mean": 4.642857142857143,
-              "count": 7
-            },
-            "('Fully Meets', 'Active')": {
-              "mean": 4.225185185185185,
-              "count": 162
-            },
-            "('Fully Meets', 'Terminated for Cause')": {
-              "mean": 4.24,
-              "count": 8
-            },
-            "('Fully Meets', 'Voluntarily Terminated')": {
-              "mean": 4.265890410958905,
-              "count": 73
-            },
-            "('Needs Improvement', 'Active')": {
-              "mean": 3.01125,
-              "count": 8
-            },
-            "('Needs Improvement', 'Terminated for Cause')": {
-              "mean": 3.0,
-              "count": 5
-            },
-            "('Needs Improvement', 'Voluntarily Terminated')": {
-              "mean": 2.95,
-              "count": 5
-            },
-            "('PIP', 'Active')": {
-              "mean": 1.915,
-              "count": 8
-            },
-            "('PIP', 'Terminated for Cause')": {
-              "mean": 2.165,
-              "count": 2
-            },
-            "('PIP', 'Voluntarily Terminated')": {
-              "mean": 3.0666666666666664,
-              "count": 3
-            }
-          }
+          "strategic_query": true,
+          "note": "These queries identify specific employees matching criteria. Evaluation checks if response contains relevant employee names and attributes."
         }
       }
     },
     {
-      "id": "S2",
-      "name": "Recruitment Channel Quality",
-      "variables": [
-        "RecruitmentSource",
-        "PerformanceScore",
-        "EmploymentStatus"
-      ],
-      "k": 3,
-      "type": "strategic",
-      "queries": [
-        "Which recruitment sources deliver high-performing employees who remain active?",
-        "Rank recruitment channels by performance and retention",
-        "Identify underperforming recruitment sources with high turnover"
-      ],
-      "ground_truth": {
-        "variables": [
-          "RecruitmentSource",
-          "PerformanceScore",
-          "EmploymentStatus"
-        ],
-        "statistics": {}
-      }
-    },
-    {
       "id": "S3",
-      "name": "Department Compensation-Performance Analysis",
+      "name": "Department-Salary-Performance Analysis",
       "variables": [
         "Department",
         "Salary",
@@ -651,7 +604,7 @@
       "queries": [
         "Which departments have high salaries but low performance?",
         "Analyze the relationship between salary, performance, and department",
-        "Identify departments with compensation-performance misalignment"
+        "Identify departments with low salary and high performance"
       ],
       "ground_truth": {
         "variables": [
@@ -735,6 +688,84 @@
               "count": 1
             }
           }
+        }
+      }
+    },
+    {
+      "id": "E4",
+      "name": "Employee-Specific Fact Retrieval",
+      "variables": [
+        "Employee_Name"
+      ],
+      "k": 1,
+      "type": "evidence",
+      "queries": [
+        "Retrieve facts related with employee Becker, Scott",
+        "Show me all facts about employee Becker, Scott",
+        "What information do we have about employee Becker, Scott?"
+      ],
+      "ground_truth": {
+        "variables": [
+          "Employee_Name"
+        ],
+        "statistics": {
+          "evidence_expected": true,
+          "employee_name": "Becker, Scott",
+          "note": "Should retrieve facts containing employee name and related attributes"
+        }
+      }
+    },
+    {
+      "id": "E5",
+      "name": "Highest Salary Employee Facts",
+      "variables": [
+        "Employee_Name",
+        "Salary"
+      ],
+      "k": 2,
+      "type": "evidence",
+      "queries": [
+        "Give me facts about the employee with the highest salary",
+        "Retrieve facts about the employee who has the highest salary",
+        "Show me information about the highest paid employee"
+      ],
+      "ground_truth": {
+        "variables": [
+          "Employee_Name",
+          "Salary"
+        ],
+        "statistics": {
+          "evidence_expected": true,
+          "employee_name": "King, Janet",
+          "salary": 250000,
+          "note": "Should identify King, Janet as highest salary employee and retrieve related facts"
+        }
+      }
+    },
+    {
+      "id": "E6",
+      "name": "Lowest Performance Employee Facts",
+      "variables": [
+        "Employee_Name",
+        "PerformanceScore"
+      ],
+      "k": 2,
+      "type": "evidence",
+      "queries": [
+        "Give me facts about the employee with the lowest performance",
+        "Retrieve facts about the employee who has the lowest performance score",
+        "Show me information about the employee with worst performance"
+      ],
+      "ground_truth": {
+        "variables": [
+          "Employee_Name",
+          "PerformanceScore"
+        ],
+        "statistics": {
+          "evidence_expected": true,
+          "employee_name": "Delarge, Alex",
+          "performance_score": "PIP",
+          "note": "Should identify Delarge, Alex as lowest performance employee and retrieve related facts"
         }
       }
     }

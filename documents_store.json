@@ -1,5 +1,5 @@
 {
-  "last_updated": "2025-12-13T10:32:46.290172",
+  "last_updated": "2025-12-13T19:21:38.124946",
   "total_documents": 1,
   "documents": [
     {
@@ -7,7 +7,7 @@
       "name": "HR_S.csv",
       "type": "csv",
       "size": 6827,
-      "uploaded_at": "2025-12-13T10:32:46.290160",
+      "uploaded_at": "2025-12-13T19:21:38.124939",
       "status": "completed",
       "facts_extracted": 2209,
       "agent_id": "doc_HR_S.csv"

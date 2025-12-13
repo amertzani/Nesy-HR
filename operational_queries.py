@@ -347,6 +347,16 @@ def group_by_department(df: pd.DataFrame) -> List[Dict[str, Any]]:
                 else:
                     dept_data["avg_engagement"] = None
             
+            # Average Special Projects Count
+            sp_col = normalize_column_name(df, "SpecialProjectsCount")
+            if sp_col and sp_col in group_df.columns:
+                sp_series = pd.to_numeric(group_df[sp_col], errors='coerce')
+                sp_valid = sp_series.dropna()
+                if len(sp_valid) > 0:
+                    dept_data["avg_special_projects"] = sanitize_float(sp_valid.mean())
+                else:
+                    dept_data["avg_special_projects"] = None
+            
             # Average Absences
             if abs_col and abs_col in group_df.columns:
                 abs_series = pd.to_numeric(group_df[abs_col], errors='coerce')
@@ -1566,53 +1576,73 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
     - Removing old rounded facts before storing new precise ones
     """
     try:
-        from knowledge import add_to_graph, graph, fact_exists
+        from knowledge import add_to_graph, graph, fact_exists, add_fact_source_document, add_fact_agent_id
         from datetime import datetime
         import rdflib
         from urllib.parse import quote
         
-        # CRITICAL: Remove old operational insights facts with rounded values
-        # This ensures we don't have duplicate/conflicting facts with "4" vs "4.43"
-        print(f"🧹 Cleaning up old operational insights facts with rounded values...")
+        # CRITICAL: Remove ALL old operational insights facts before storing new ones
+        # This ensures we don't have duplicate/conflicting facts with rounded vs precise values
+        print(f"🧹 Cleaning up old operational insights facts...")
         try:
-            # Find and remove facts about manager engagement that might have rounded values
-            # We'll remove facts that match the pattern but have integer values
-            triples_to_remove = []
+            import rdflib
+            source_predicate = rdflib.URIRef("urn:source_document")
+            
+            # Strategy 1: Remove facts by source_document="operational_insights"
+            fact_ids_to_remove = set()
             for s, p, o in graph:
-                try:
-                    subject_str = str(s)
-                    predicate_str = str(p)
-                    object_str = str(o)
-                    
-                    # Check if this is an operational insights fact about manager engagement
-                    if ("manager" in subject_str.lower() or "amy dunn" in subject_str.lower() or 
-                        "michael albert" in subject_str.lower() or "simon roup" in subject_str.lower()):
-                        if ("engagement" in predicate_str.lower() or "engagement" in object_str.lower()):
-                            # Check if object is a rounded integer (like "4" instead of "4.43")
-                            try:
-                                obj_val = float(object_str)
-                                # If it's a whole number (like 4.0), it's likely a rounded old fact
-                                if obj_val == int(obj_val) and obj_val < 5:
-                                    triples_to_remove.append((s, p, o))
-                                    print(f"   🗑️  Removing old rounded fact: {subject_str[:50]}... {predicate_str[:50]}... {object_str}")
-                            except (ValueError, TypeError):
-                                pass
-                except Exception:
-                    pass
+                if str(p) == str(source_predicate) and str(o) == "operational_insights":
+                    fact_ids_to_remove.add(str(s))
             
-            # Remove the old facts
-            for triple in triples_to_remove:
-                try:
-                    graph.remove(triple)
-                except Exception:
-                    pass
+            # Strategy 2: Also remove facts that match engagement patterns with rounded integer values
+            # Look for facts with "engagement" and integer values (like "3" or "4")
+            for s, p, o in graph:
+                s_str = str(s)
+                o_str = str(o)
+                p_str = str(p)
+                # Check if this is a manager engagement fact
+                if ("manager" in s_str.lower() or "entity:Manager" in s_str.lower() or "fact:Manager" in s_str.lower()):
+                    if ("engagement" in p_str.lower() or "engagement" in o_str.lower()):
+                        # Check if object is a rounded integer (like "3" or "4" without decimals)
+                        try:
+                            # Try to parse as number
+                            if o_str.replace('.', '').isdigit():
+                                val = float(o_str)
+                                # If it's a whole number between 1-5, it's likely a rounded old fact
+                                if val == int(val) and 1 <= val <= 5:
+                                    fact_ids_to_remove.add(s_str)
+                        except:
+                            # If object contains "of 3" or "of 4" etc, it's likely a rounded fact
+                            if any(f" of {i} " in o_str or f" of {i}." in o_str for i in range(1, 6)):
+                                fact_ids_to_remove.add(s_str)
             
-            if triples_to_remove:
-                print(f"✅ Removed {len(triples_to_remove)} old rounded operational insights facts")
+            # Remove all triples associated with these fact IDs
+            triples_removed = 0
+            for fact_id_uri_str in fact_ids_to_remove:
+                # Find all triples where this fact ID is the subject
+                triples_to_remove = []
+                for s, p, o in graph:
+                    if str(s) == fact_id_uri_str:
+                        triples_to_remove.append((s, p, o))
+                
+                # Remove all triples for this fact
+                for triple in triples_to_remove:
+                    try:
+                        graph.remove(triple)
+                        triples_removed += 1
+                    except Exception:
+                        pass
+            
+            if fact_ids_to_remove:
+                print(f"✅ Removed {len(fact_ids_to_remove)} operational insights facts ({triples_removed} triples)")
                 from knowledge import save_knowledge_graph
                 save_knowledge_graph()
+            else:
+                print(f"   No old operational insights facts found to remove")
         except Exception as cleanup_error:
             print(f"⚠️  Warning: Error cleaning up old facts: {cleanup_error}")
+            import traceback
+            traceback.print_exc()
             # Continue anyway - we'll still store new facts
         
         # Count total items to store (for large dataset handling)
@@ -1778,27 +1808,68 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                             print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
                             continue
                 
-                # Average engagement - Store with multiple formats for better queryability
-                if mgr_data.get('avg_engagement') is not None:
-                    avg_eng = mgr_data['avg_engagement']
-                    # Ensure we use precise value (2 decimal places)
-                    avg_eng_precise = round(float(avg_eng), 2)
-                    if use_limited_formats:
-                        fact_texts = [
-                            f"Manager {mgr_name} has average engagement survey value of {avg_eng_precise:.2f}",
-                            f"Manager {mgr_name} has average team engagement score of {avg_eng_precise:.2f}",
-                        ]
-                    else:
-                        fact_texts = [
-                            f"Manager {mgr_name} has average engagement survey value of {avg_eng_precise:.2f}",
-                            f"Manager {mgr_name} has average engagement survey score of {avg_eng_precise:.2f}",
-                            f"Manager {mgr_name} has average team engagement score of {avg_eng_precise:.2f}",
-                            f"Manager {mgr_name} manages a team with average engagement score of {avg_eng_precise:.2f}",
-                            f"The average engagement survey value for manager {mgr_name} is {avg_eng_precise:.2f}",
-                            f"The average engagement score for manager {mgr_name}'s team is {avg_eng_precise:.2f}",
-                            f"Manager {mgr_name}'s team has an average engagement survey value of {avg_eng_precise:.2f}",
-                        ]
-                    for fact_text in fact_texts:
+                        # Average engagement - Store with multiple formats for better queryability
+                        if mgr_data.get('avg_engagement') is not None:
+                            avg_eng = mgr_data['avg_engagement']
+                            # Ensure we use precise value (2 decimal places)
+                            avg_eng_precise = round(float(avg_eng), 2)
+                            # Format to ensure decimal is preserved: use "X.XX" format explicitly
+                            avg_eng_str = f"{avg_eng_precise:.2f}"
+                            if use_limited_formats:
+                                fact_texts = [
+                                    f"Manager {mgr_name} has average engagement survey value of {avg_eng_str} points",
+                                    f"Manager {mgr_name} has average team engagement score of {avg_eng_str} points",
+                                ]
+                            else:
+                                fact_texts = [
+                                    f"Manager {mgr_name} has average engagement survey value of {avg_eng_str} points",
+                                    f"Manager {mgr_name} has average engagement survey score of {avg_eng_str} points",
+                                    f"Manager {mgr_name} has average team engagement score of {avg_eng_str} points",
+                                    f"Manager {mgr_name} manages a team with average engagement score of {avg_eng_str} points",
+                                    f"The average engagement survey value for manager {mgr_name} is {avg_eng_str} points",
+                                    f"The average engagement score for manager {mgr_name}'s team is {avg_eng_str} points",
+                                    f"Manager {mgr_name}'s team has an average engagement survey value of {avg_eng_str} points",
+                                ]
+                    # Add facts directly to graph with precise decimal values (bypass text extraction)
+                    subject = f"Manager {mgr_name}"
+                    predicate = "has average engagement survey value"
+                    object_val = f"{avg_eng_str}"  # Precise decimal value as string
+                    
+                    # Check if fact already exists
+                    if not fact_exists(subject, predicate, object_val):
+                        try:
+                            # Add directly to graph (bypass text extraction to preserve decimals)
+                            subject_clean = subject.replace(' ', '_')
+                            predicate_clean = predicate.replace(' ', '_')
+                            object_clean = object_val
+                            
+                            subject_uri = rdflib.URIRef(f"urn:entity:{quote(subject_clean, safe='')}")
+                            predicate_uri = rdflib.URIRef(f"urn:predicate:{quote(predicate_clean, safe='')}")
+                            object_literal = rdflib.Literal(object_clean)
+                            
+                            graph.add((subject_uri, predicate_uri, object_literal))
+                            
+                            # Add metadata
+                            add_fact_source_document(subject, predicate, object_val, "operational_insights", datetime.now().isoformat())
+                            if agent_id:
+                                add_fact_agent_id(subject, predicate, object_val, "operational_query_agent")
+                        except Exception as fact_error:
+                            print(f"⚠️  Warning: Failed to store fact directly: {fact_error}")
+                            # Fallback to text-based extraction
+                            for fact_text in fact_texts[:1]:  # Just try first format
+                                try:
+                                    add_to_graph(
+                                        fact_text,
+                                        source_document="operational_insights",
+                                        uploaded_at=datetime.now().isoformat(),
+                                        agent_id="operational_query_agent"
+                                    )
+                                    break
+                                except:
+                                    continue
+                    
+                    # Also add alternative formats via text extraction (for queryability)
+                    for fact_text in fact_texts[1:] if len(fact_texts) > 1 else []:
                         try:
                             add_to_graph(
                                 fact_text,
@@ -1807,8 +1878,8 @@ def store_operational_insights_as_facts(insights: Dict[str, Any]) -> None:
                                 agent_id="operational_query_agent"
                             )
                         except Exception as fact_error:
-                            print(f"⚠️  Warning: Failed to store fact '{fact_text[:50]}...': {fact_error}")
-                            continue
+                            # Skip if it fails - we already have the direct fact
+                            pass
                 
                 # Average satisfaction
                 if mgr_data.get('avg_satisfaction') is not None:

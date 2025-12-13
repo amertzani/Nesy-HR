@@ -1,0 +1,73 @@
+================================================================================
+EVALUATION METRICS SUMMARY - VALUES FOR GRAPHING
+================================================================================
+
+This document contains computed metrics from the offline evaluation report.
+All values are presented as Mean ± 95% Confidence Interval.
+
+METRICS BY GROUP
+--------------------------------------------------------------------------------
+
+Group: OPERATIONAL
+  Sample size (n): 46
+
+  Fact Retrieval Accuracy (Canonical Scoring):
+    F1 Score:           0.000 ± 0.000
+    Precision:          0.000 ± 0.000
+    Recall:             0.783 ± 0.124
+
+  Traceability & Reliability:
+    Traceability Completeness: 0.478 ± 0.150
+    Hallucination Resistance:  0.922 ± 0.069
+
+  Performance:
+    Response Latency (seconds): 7.51 ± 2.29
+    Accuracy:                   0.848 ± 0.108
+
+--------------------------------------------------------------------------------
+
+GRAPH DATA (for plotting)
+--------------------------------------------------------------------------------
+
+The following data is formatted for direct use in plotting libraries
+(matplotlib, seaborn, plotly, etc.):
+
+Metric                    | operational    
+-------------------------------------------
+F1                        | 0.000         
+Precision                 | 0.000         
+Recall                    | 0.783         
+Traceability Completeness | 0.478         
+Hallucination Resistance  | 0.922         
+Latency                   | 7.510         
+Accuracy                  | 0.848         
+
+Error bars (95% CI):
+  Use 'ci_lowers' and 'ci_uppers' arrays from graph_data in JSON
+
+================================================================================
+NOTES
+================================================================================
+
+1. Fact Retrieval Metrics:
+   - Precision: |R_q ∩ G_q| / |R_q|
+   - Recall: |R_q ∩ G_q| / |G_q|
+   - F1: 2 * (Precision * Recall) / (Precision + Recall)
+   - Uses canonical scoring (recommended)
+
+2. Traceability Completeness:
+   - T_q / D_q (fact-level)
+   - T_q = facts shown in evidence
+   - D_q = required facts (estimated from ground truth)
+
+3. Hallucination Resistance:
+   - 1 - (Hallucinated Claims / Total Claims)
+   - Estimated from response correctness
+
+4. Reliability:
+   - Requires multiple runs of same query
+   - Not computed in this evaluation (single run per query)
+
+5. NASA-TLX:
+   - Requires user study data
+   - Not available in offline evaluation
