@@ -1,12 +1,14 @@
 # All Tested Queries - Complete List
 
-**Total Queries**: 46  
-**Source**: Offline Evaluation Report (Generated: 2025-12-13 20:47:41)  
+**Total queries: 30  
+**Source**: test_scenarios.json  
 **Dataset**: HRDataset_v14.csv (311 rows, 36 columns)
 
 ---
 
-## Operational Queries (Performance by Department)
+## Operational Queries (17 queries)
+
+### Performance Score by Department (Queries 1-4)
 
 1. What is the distribution of performance scores by department?
 2. How do performance scores vary across departments?
@@ -15,7 +17,7 @@
 
 ---
 
-## Operational Queries (Special Projects by Department)
+### Special Projects Count by Department (Queries 5-8)
 
 5. What is the average special projects count by department?
 6. How do special projects vary across departments?
@@ -24,7 +26,7 @@
 
 ---
 
-## Operational Queries (Engagement by Manager)
+### Engagement by Manager (Queries 9-11)
 
 9. What is the team-level engagement by manager?
 10. How does engagement vary by manager?
@@ -32,7 +34,7 @@
 
 ---
 
-## Operational Queries (Salary by Department)
+### Salary by Department (Queries 12-14)
 
 12. What is the average salary by department?
 13. How does salary distribution vary across departments?
@@ -40,7 +42,7 @@
 
 ---
 
-## Operational Queries (Performance by Recruitment Source)
+### Performance by Recruitment Source (Queries 15-17)
 
 15. How does performance vary by recruitment source?
 16. Which recruitment sources have the employees with highest performance score?
@@ -48,7 +50,9 @@
 
 ---
 
-## Strategic Queries (Multi-Criteria Employee Search)
+## Strategic Queries (7 queries)
+
+### Multi-Criteria Employee Search (Queries 18-21)
 
 18. Identify employees with high performance, low engagement and many special projects
 19. Find employees with high performance, low engagement and low satisfaction
@@ -57,7 +61,7 @@
 
 ---
 
-## Strategic Queries (Department Analysis)
+### Department-Salary-Performance Analysis (Queries 22-24)
 
 22. Which departments have high salaries but low performance?
 23. Analyze the relationship between salary, performance, and department
@@ -65,50 +69,28 @@
 
 ---
 
-## Evidence Retrieval Queries (Employee-Specific)
+## Evidence Retrieval Queries (8 queries)
+
+### Employee-Specific Fact Retrieval - Becker, Scott (Queries 25-26)
 
 25. Retrieve facts related with employee Becker, Scott
-26. Show me all facts about employee Becker, Scott
-27. What information do we have about employee Becker, Scott?
+26. What information do we have about employee Becker, Scott?
 
 ---
 
-## Evidence Retrieval Queries (Highest/Lowest Employee)
+### Highest Salary Employee Facts (Queries 27-29)
 
-28. Give me facts about the employee with the highest salary
-29. Retrieve facts about the employee who has the highest salary
-30. Show me information about the highest paid employee
-31. Give me facts about the employee with the lowest performance
-32. Retrieve facts about the employee who has the lowest performance score
-33. Show me information about the employee with worst performance
+27. Give me facts about the employee with the highest salary
+28. Retrieve facts about the employee who has the highest salary
+29. Show me information about the highest paid employee
 
 ---
 
-## Evidence Retrieval Queries (Department Facts)
+### Lowest Performance Employee Facts (Queries 30-32)
 
-34. Show me facts about employees in IT/IS department
-41. What facts are stored about IT/IS department?
-42. Show me all facts related to Production department
-43. Retrieve facts about Sales department
-
----
-
-## Evidence Retrieval Queries (Keyword-Based)
-
-35. What facts are available about salary information?
-36. Retrieve facts related to performance scores
-37. Find facts about engagement by manager
-38. Search for facts containing 'department' and 'salary'
-39. Find facts about 'performance' and 'manager'
-40. Retrieve facts with keywords 'engagement' and 'team'
-
----
-
-## Evidence Retrieval Queries (Employee-Specific - Additional)
-
-44. Show me all facts about employee Barbossa, Hector
-45. What facts are stored about employee Becker, Scott?
-46. Retrieve all information about employee Bacong, Alejandro
+30. Give me facts about the employee with the lowest performance
+31. Retrieve facts about the employee who has the lowest performance score
+32. Show me information about the employee with worst performance
 
 ---
 
@@ -123,30 +105,16 @@
 | **Operational - Performance by Recruitment** | 3 | 15-17 |
 | **Strategic - Multi-Criteria Search** | 4 | 18-21 |
 | **Strategic - Department Analysis** | 3 | 22-24 |
-| **Evidence - Employee-Specific** | 3 | 25-27 |
-| **Evidence - Highest/Lowest Employee** | 6 | 28-33 |
-| **Evidence - Department Facts** | 4 | 34, 41-43 |
-| **Evidence - Keyword-Based** | 6 | 35-40 |
-| **Evidence - Employee-Specific (Additional)** | 3 | 44-46 |
-| **TOTAL** | **46** | **1-46** |
-
----
-
-## Results Summary
-
-- **Correct Answers**: 39/46 (84.8%)
-- **Average Response Time**: 7.51s
-- **Total Evidence Facts**: 358
-- **Average Evidence per Query**: 7.8
-- **Evidence Retrieval Queries**: 22
-- **Queries with Evidence**: 22/22 (100.0%)
+| **Evidence - Employee-Specific (Becker, Scott)** | 2 | 25-26 |
+| **Evidence - Highest Salary Employee** | 3 | 27-29 |
+| **Evidence - Lowest Performance Employee** | 3 | 30-32 |
+| **TOTAL** | **32** | **1-32** |
 
 ---
 
 ## Notes
 
-- Queries 1-24 are primarily **operational** and **strategic** queries that compute aggregations
-- Queries 25-46 are **evidence retrieval** queries that search the knowledge graph
-- Many operational queries (1-24) don't retrieve evidence because they compute directly from the dataset
-- Evidence queries (25-46) successfully retrieve facts from the knowledge graph
-
+- Queries 1-24 are **operational** and **strategic** queries that compute aggregations from the dataset
+- Queries 25-32 are **evidence retrieval** queries that search the knowledge graph
+- Query 24 (duplicate of Q23) was removed from the test scenarios
+- All queries are defined in `test_scenarios.json` with ground truth data for evaluation

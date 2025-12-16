@@ -1,0 +1,1912 @@
+================================================================================
+OFFLINE SYSTEM EVALUATION REPORT
+================================================================================
+Generated: 2025-12-14 14:10:10
+
+SUMMARY STATISTICS
+--------------------------------------------------------------------------------
+Total queries tested: 32
+Correct answers: 18/32 (56.2%)
+Average response time: 0.06s
+Total evidence facts provided: 299
+Average evidence per query: 9.3
+Evidence retrieval queries: 8
+Queries with evidence: 8/8 (100.0%)
+
+KEY STRENGTHS DEMONSTRATED
+--------------------------------------------------------------------------------
+✓ Fast responses (0.06s average)
+✓ Provides traceable evidence (299 facts)
+
+DETAILED RESULTS
+--------------------------------------------------------------------------------
+
+[1] Query: What is the distribution of performance scores by department?
+Response (0.01s):
+  Average performance by department:
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Admin Offices: 3.00
+  • Executive Office: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #1:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Department Software Engineering → has → average performance score of 3.09
+       2. Department IT/IS → has → average performance score of 3.06
+       3. Department Admin Offices → has → average performance score of 3.00
+       4. Department Executive Office → has → average performance score of 3.00
+       5. Department Production → has → average performance score of 2.98
+       ... and 6 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 11 (estimated from response)
+   - Traceability = 0/11 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 8 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 2
+   - Hallucination rate: 0.250
+   - Hallucination resistance: 1.000 - 0.250 = 0.750
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #1:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.750
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[2] Query: How do performance scores vary across departments?
+Response (0.01s):
+  Average performance by department:
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Admin Offices: 3.00
+  • Executive Office: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #2:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Department Software Engineering → has → average performance score of 3.09
+       2. Department IT/IS → has → average performance score of 3.06
+       3. Department Admin Offices → has → average performance score of 3.00
+       4. Department Executive Office → has → average performance score of 3.00
+       5. Department Production → has → average performance score of 2.98
+       ... and 6 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 11 (estimated from response)
+   - Traceability = 0/11 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 8 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #2:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[3] Query: Which department has the highest average performance score?
+Response (0.01s):
+  Software Engineering has the highest average performance of 3.09
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #3:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #3:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[4] Query: Show me performance metrics by department
+Response (0.00s):
+  Average performance by department:
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Admin Offices: 3.00
+  • Executive Office: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #4:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Department Software Engineering → has → average performance score of 3.09
+       2. Department IT/IS → has → average performance score of 3.06
+       3. Department Admin Offices → has → average performance score of 3.00
+       4. Department Executive Office → has → average performance score of 3.00
+       5. Department Production → has → average performance score of 2.98
+       ... and 6 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 11 (estimated from response)
+   - Traceability = 0/11 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 8 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #4:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[5] Query: What is the average special projects count by department?
+Response (0.33s):
+  No relevant facts found in knowledge graph.
+📊 Evidence: No facts retrieved
+✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
+
+EVALUATION METHODOLOGY FOR QUERY #5:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.33s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #5:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.33s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[6] Query: How do special projects vary across departments?
+Response (0.14s):
+  No relevant facts found in knowledge graph.
+📊 Evidence: No facts retrieved
+✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
+
+EVALUATION METHODOLOGY FOR QUERY #6:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.14s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #6:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.14s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[7] Query: Which department has the highest average special projects count?
+Response (0.41s):
+  No relevant facts found in knowledge graph.
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #7:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.41s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #7:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.41s
+  - Accuracy: ✗
+
+  Expected: IT/IS = 5.92
+--------------------------------------------------------------------------------
+
+[8] Query: Show me special projects distribution by department
+Response (0.37s):
+  No relevant facts found in knowledge graph.
+📊 Evidence: No facts retrieved
+✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
+
+EVALUATION METHODOLOGY FOR QUERY #8:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.37s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #8:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.37s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[9] Query: What is the team-level engagement by manager?
+Response (0.00s):
+  Average engagement by manager:
+  • Eric Dougall: 4.58
+  • Kelley Spirea: 4.48
+  • Brandon R. LeBlanc: 4.35
+  • Webster Butler: 4.33
+  • Simon Roup: 4.23
+  • Janet King: 4.18
+  • David Stanley: 4.15
+  • Alex Sweetwater: 4.08
+  • Elijiah Gray: 4.07
+  • Michael Albert: 4.07
+  • Brian Champaigne: 4.06
+ ...
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #9:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Manager Eric Dougall → has → average engagement survey value of 4.58
+       2. Manager Kelley Spirea → has → average engagement survey value of 4.48
+       3. Manager Brandon R. LeBlanc → has → average engagement survey value of 4.35
+       4. Manager Webster Butler → has → average engagement survey value of 4.33
+       5. Manager Simon Roup → has → average engagement survey value of 4.23
+       ... and 17 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 22 (estimated from response)
+   - Traceability = 0/22 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 13 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 1
+   - Hallucination rate: 0.077
+   - Hallucination resistance: 1.000 - 0.077 = 0.923
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #9:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.923
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[10] Query: How does engagement vary by manager?
+Response (0.01s):
+  Average engagement by manager:
+  • Eric Dougall: 4.58
+  • Kelley Spirea: 4.48
+  • Brandon R. LeBlanc: 4.35
+  • Webster Butler: 4.33
+  • Simon Roup: 4.23
+  • Janet King: 4.18
+  • David Stanley: 4.15
+  • Alex Sweetwater: 4.08
+  • Elijiah Gray: 4.07
+  • Michael Albert: 4.07
+  • Brian Champaigne: 4.06
+ ...
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #10:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Manager Eric Dougall → has → average engagement survey value of 4.58
+       2. Manager Kelley Spirea → has → average engagement survey value of 4.48
+       3. Manager Brandon R. LeBlanc → has → average engagement survey value of 4.35
+       4. Manager Webster Butler → has → average engagement survey value of 4.33
+       5. Manager Simon Roup → has → average engagement survey value of 4.23
+       ... and 17 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 22 (estimated from response)
+   - Traceability = 0/22 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 13 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 1
+   - Hallucination rate: 0.077
+   - Hallucination resistance: 1.000 - 0.077 = 0.923
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #10:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.923
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[11] Query: Which manager has the highest team engagement?
+Response (0.01s):
+  Eric Dougall has the highest average engagement of 4.58
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #11:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #11:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[12] Query: What is the average salary by department?
+Response (0.01s):
+  Average salary by department:
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #12:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Department Executive Office → has → average performance score of 250000.00
+       2. Department IT/IS → has → average performance score of 97064.64
+       3. Department Software Engineering → has → average performance score of 94989.45
+       4. Department Admin Offices → has → average performance score of 71791.89
+       5. Department Sales → has → average performance score of 69061.26
+       ... and 6 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 11 (estimated from response)
+   - Traceability = 0/11 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 8 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #12:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[13] Query: How does salary distribution vary across departments?
+Response (0.01s):
+  Average salary by department:
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #13:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Department Executive Office → has → average performance score of 250000.00
+       2. Department IT/IS → has → average performance score of 97064.64
+       3. Department Software Engineering → has → average performance score of 94989.45
+       4. Department Admin Offices → has → average performance score of 71791.89
+       5. Department Sales → has → average performance score of 69061.26
+       ... and 6 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 11 (estimated from response)
+   - Traceability = 0/11 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 8 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #13:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[14] Query: Which department has the highest average salary?
+Response (0.01s):
+  Executive Office has the highest average salary of $250,000.00
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #14:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #14:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[15] Query: How does performance vary by recruitment source?
+Response (0.01s):
+  Distribution of performance by recruitment:
+  • Employee Referral: 3.10
+  • Diversity Job Fair: 3.00
+  • Other: 3.00
+  • LinkedIn: 3.00
+  • On-line Web application: 3.00
+  • Indeed: 2.98
+  • Google Search: 2.94
+  • CareerBuilder: 2.91
+  • Website: 2.77
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #15:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Referral → has → value 3.10
+       2. Diversity Job Fair → has → value 3.00
+       3. Other → has → value 3.00
+       4. LinkedIn → has → value 3.00
+       5. On-line Web application → has → value 3.00
+       ... and 13 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 18 (estimated from response)
+   - Traceability = 0/18 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 11 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 1
+   - Hallucination rate: 0.091
+   - Hallucination resistance: 1.000 - 0.091 = 0.909
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #15:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.909
+  - Latency: 0.01s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[16] Query: Which recruitment sources have the employees with highest performance score?
+Response (0.01s):
+  Employee Referral has the highest average performance of 3.10
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #16:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #16:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[17] Query: What is the performance distribution by recruitment source?
+Response (0.01s):
+  Distribution of performance by recruitment:
+  • Employee Referral: 3.10
+  • Diversity Job Fair: 3.00
+  • Other: 3.00
+  • LinkedIn: 3.00
+  • On-line Web application: 3.00
+  • Indeed: 2.98
+  • Google Search: 2.94
+  • CareerBuilder: 2.91
+  • Website: 2.77
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #17:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Referral → has → value 3.10
+       2. Diversity Job Fair → has → value 3.00
+       3. Other → has → value 3.00
+       4. LinkedIn → has → value 3.00
+       5. On-line Web application → has → value 3.00
+       ... and 13 more
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 18 (estimated from response)
+   - Traceability = 0/18 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 11 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 3
+   - Hallucination rate: 0.273
+   - Hallucination resistance: 1.000 - 0.273 = 0.727
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #17:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.727
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[18] Query: Identify employees with high performance, low engagement and many special projects
+Response (0.00s):
+  Could not find employee names in data.
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #18:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #18:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.00s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[19] Query: Find employees with high performance, low engagement and low satisfaction
+Response (0.01s):
+  Could not find employee names in data.
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #19:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #19:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[20] Query: Find employees with high performance, low engagement and low satisfaction and many special projects
+Response (0.00s):
+  Could not find employee names in data.
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #20:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #20:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.00s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[21] Query: Find employees with low engagement and low satisfaction and many special projects and many absences
+Response (0.01s):
+  Could not find employee names in data.
+📊 Evidence: No facts retrieved
+✗ Incorrect: None
+
+EVALUATION METHODOLOGY FOR QUERY #21:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #21:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[22] Query: Which departments have high salaries but low performance?
+Response (0.01s):
+  No departments found with high salaries but low performance.
+📊 Evidence: No facts retrieved
+✗ Incorrect: Only 0/17 entities matched (need 3+ or 50%+)
+
+EVALUATION METHODOLOGY FOR QUERY #22:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.01s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #22:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.01s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[23] Query: Analyze the relationship between salary, performance, and department
+Response (0.00s):
+  Department Analysis (Salary vs Performance):
+📊 Evidence: No facts retrieved
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #23:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 2 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #23:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[24] Query: Identify departments with low salary and high performance
+Response (0.00s):
+  No departments found with low salary but high performance.
+📊 Evidence: No facts retrieved
+✗ Incorrect: Only 0/17 entities matched (need 3+ or 50%+)
+
+EVALUATION METHODOLOGY FOR QUERY #24:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 0 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * No gold facts estimated (no evidence retrieved)
+   - Precision/Recall/F1: Not applicable (no evidence retrieved)
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 0
+   - D_q (Required facts): 0 (estimated from response)
+   - Traceability = 0/0 = 0.000 (0.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✗ Incorrect
+   - Estimated hallucination: 30% (estimated for incorrect responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 1.000
+   - Hallucination resistance: 1.000 - 1.000 = 0.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✗ Incorrect
+
+METRICS SUMMARY FOR QUERY #24:
+  - Precision: N/A
+  - Recall: N/A
+  - F1: N/A
+  - Traceability: 0.000
+  - Hallucination Resistance: 0.000
+  - Latency: 0.00s
+  - Accuracy: ✗
+
+--------------------------------------------------------------------------------
+
+[25] Query: Retrieve facts related with employee Becker, Scott
+Response (0.31s):
+  
+Related facts (34):
+  1. Employee Becker, Scott has MaritalDesc Single
+  2. Employee Becker, Scott has TermReason N/A-StillEmployed
+  3. Employee Becker, Scott has HispanicLatino No
+  4. Employee Becker, Scott has Sex M
+  5. Employee Becker, Scott has PositionID 19
+  6. Employee Becker, Scott has P...
+📊 Evidence: 50 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+    31. Employee Becker, Scott has MaritalDesc Single
+    32. Employee Becker, Scott has TermReason N/A-StillEmployed
+    33. Employee Becker, Scott has HispanicLatino No
+    34. Employee Becker, Scott has Sex M
+    35. Employee Becker, Scott has PositionID 19
+    36. Employee Becker, Scott has PerformanceScore Fully Meets
+    37. Employee Becker, Scott has EmpStatusID 3
+    38. Employee Becker, Scott has DateofHire 7/8/2013
+    39. Employee Becker, Scott has EmpID 10277
+    40. Employee Becker, Scott has EmploymentStatus Active
+    41. Employee Becker, Scott has EngagementSurvey 4.2
+    42. Employee Becker, Scott has Position Production Technician I
+    43. Employee Becker, Scott has EmpSatisfaction 4
+    44. Employee Becker, Scott has SpecialProjectsCount 0
+    45. Employee Becker, Scott has RaceDesc Asian
+    46. Employee Becker, Scott has RecruitmentSource LinkedIn
+    47. Employee Becker, Scott has LastPerformanceReview Date 1/11/2019
+    48. HRDataset v14.csv Row 19 has Employee Name Becker, Scott
+    49. Employee Becker, Scott has Department Production
+    50. Employee Becker, Scott has Absences 13
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #25:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 50 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 46 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 50 facts match after canonicalization
+   - Precision = 50/50 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 50/51 = 0.980 (98.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 0.980) / (1.000 + 0.980) = 0.990
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 50
+   - D_q (Required facts): 51 (estimated from response)
+   - Traceability = 50/51 = 0.980 (98.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 2 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.31s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #25:
+  - Precision: 1.000
+  - Recall: 0.980
+  - F1: 0.990
+  - Traceability: 0.980
+  - Hallucination Resistance: 1.000
+  - Latency: 0.31s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[26] Query: What information do we have about employee Becker, Scott?
+Response (0.31s):
+  
+Related facts (34):
+  1. Employee Becker, Scott has MaritalDesc Single
+  2. Employee Becker, Scott has TermReason N/A-StillEmployed
+  3. Employee Becker, Scott has HispanicLatino No
+  4. Employee Becker, Scott has Sex M
+  5. Employee Becker, Scott has PositionID 19
+  6. Employee Becker, Scott has P...
+📊 Evidence: 50 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+    31. Employee Becker, Scott has MaritalDesc Single
+    32. Employee Becker, Scott has TermReason N/A-StillEmployed
+    33. Employee Becker, Scott has HispanicLatino No
+    34. Employee Becker, Scott has Sex M
+    35. Employee Becker, Scott has PositionID 19
+    36. Employee Becker, Scott has PerformanceScore Fully Meets
+    37. Employee Becker, Scott has EmpStatusID 3
+    38. Employee Becker, Scott has DateofHire 7/8/2013
+    39. Employee Becker, Scott has EmpID 10277
+    40. Employee Becker, Scott has EmploymentStatus Active
+    41. Employee Becker, Scott has EngagementSurvey 4.2
+    42. Employee Becker, Scott has Position Production Technician I
+    43. Employee Becker, Scott has EmpSatisfaction 4
+    44. Employee Becker, Scott has SpecialProjectsCount 0
+    45. Employee Becker, Scott has RaceDesc Asian
+    46. Employee Becker, Scott has RecruitmentSource LinkedIn
+    47. Employee Becker, Scott has LastPerformanceReview Date 1/11/2019
+    48. HRDataset v14.csv Row 19 has Employee Name Becker, Scott
+    49. Employee Becker, Scott has Department Production
+    50. Employee Becker, Scott has Absences 13
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #26:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 50 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 46 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 50 facts match after canonicalization
+   - Precision = 50/50 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 50/51 = 0.980 (98.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 0.980) / (1.000 + 0.980) = 0.990
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 50
+   - D_q (Required facts): 51 (estimated from response)
+   - Traceability = 50/51 = 0.980 (98.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 2 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.31s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #26:
+  - Precision: 1.000
+  - Recall: 0.980
+  - F1: 0.990
+  - Traceability: 0.980
+  - Hallucination Resistance: 1.000
+  - Latency: 0.31s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[27] Query: Give me facts about the employee with the highest salary
+Response (0.00s):
+  Could not determine employee with highest salary.
+📊 Evidence: 32 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+
+  ❓ Other Facts:
+    31. HRDataset v14.csv Row 151 → has Salary → 54005
+    32. HRDataset v14.csv Row 264 → has Salary → 65714
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #27:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 32 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 27 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 32 facts match after canonicalization
+   - Precision = 32/32 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 32/32 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 32
+   - D_q (Required facts): 32 (estimated from response)
+   - Traceability = 32/32 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #27:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[28] Query: Retrieve facts about the employee who has the highest salary
+Response (0.00s):
+  Could not determine employee with highest salary.
+📊 Evidence: 32 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+
+  ❓ Other Facts:
+    31. HRDataset v14.csv Row 151 → has Salary → 54005
+    32. HRDataset v14.csv Row 264 → has Salary → 65714
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #28:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 32 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 27 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 32 facts match after canonicalization
+   - Precision = 32/32 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 32/32 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 32
+   - D_q (Required facts): 32 (estimated from response)
+   - Traceability = 32/32 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #28:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[29] Query: Show me information about the highest paid employee
+Response (0.00s):
+  Could not determine employee with highest salary.
+📊 Evidence: 30 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #29:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 30 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 25 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 30 facts match after canonicalization
+   - Precision = 30/30 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 30/30 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 30
+   - D_q (Required facts): 30 (estimated from response)
+   - Traceability = 30/30 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #29:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[30] Query: Give me facts about the employee with the lowest performance
+Response (0.00s):
+  Could not determine employee with lowest performance.
+📊 Evidence: 35 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+
+  ❓ Other Facts:
+    31. HRDataset v14.csv Row 76 → has PerformanceScore → Exceeds
+    32. HRDataset v14.csv Row 245 → has PerformanceScore → Fully Meets
+    33. HRDataset v14.csv Row 31 → has PerformanceScore → Fully Meets
+    34. HRDataset v14.csv Row 104 → has PerformanceScore → Fully Meets
+    35. HRDataset v14.csv Row 105 → has LastPerformanceReview Date → 1/20/2015
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #30:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 35 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 30 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 35 facts match after canonicalization
+   - Precision = 35/35 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 35/35 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 35
+   - D_q (Required facts): 35 (estimated from response)
+   - Traceability = 35/35 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #30:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[31] Query: Retrieve facts about the employee who has the lowest performance score
+Response (0.00s):
+  Could not determine employee with lowest performance.
+📊 Evidence: 35 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+
+  ❓ Other Facts:
+    31. HRDataset v14.csv Row 76 → has PerformanceScore → Exceeds
+    32. HRDataset v14.csv Row 245 → has PerformanceScore → Fully Meets
+    33. HRDataset v14.csv Row 31 → has PerformanceScore → Fully Meets
+    34. HRDataset v14.csv Row 104 → has PerformanceScore → Fully Meets
+    35. HRDataset v14.csv Row 105 → has LastPerformanceReview Date → 1/20/2015
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #31:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 35 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 30 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 35 facts match after canonicalization
+   - Precision = 35/35 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 35/35 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 35
+   - D_q (Required facts): 35 (estimated from response)
+   - Traceability = 35/35 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #31:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------
+
+[32] Query: Show me information about the employee with worst performance
+Response (0.00s):
+  Could not determine employee with lowest performance.
+📊 Evidence: 35 facts retrieved
+
+  📄 Document Agent Facts (Direct CSV):
+    1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+    2. Employee Foss, Jason → has EmploymentStatus → Active
+    3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+    4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+    5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+    6. Employee Liebig, Ketsia → has PerformanceScore → Exceeds
+    7. Employee Bates, Norman → has CitizenDesc → US Citizen
+    8. Employee Roby, Lori → has ManagerID → 4.0
+    9. Employee Petrowsky, Thelma → has EmpSatisfaction → 5
+    10. Employee Osturnka, Adeel → has MaritalStatusID → 1
+    11. Employee Simard, Kramer → has Position → Data Analyst
+    12. Employee Petrowsky, Thelma → has EmpID → 10016
+    13. Employee Gray, Elijiah → has ManagerName → Janet King
+    14. Employee Nguyen, Lei-Ming → has PerfScoreID → 3
+    15. Employee Panjwani, Nina → has EngagementSurvey → 3.89
+    16. Employee Sewkumar, Nori → has MarriedID → 0
+    17. Employee Tippett, Jeanette → has MarriedID → 0
+    18. Employee Daneault, Lynn → has Termd → 0
+    19. Employee Del Bosque, Keyla → has HispanicLatino → No
+    20. Employee Lundy, Susan → has ManagerID → 22.0
+    21. Employee Liebig, Ketsia → has RaceDesc → White
+    22. Employee MacLennan, Samuel → has LastPerformanceReview Date → 4/1/2017
+    23. Employee Smith, Joe → has Salary → 60656
+    24. Employee Stansfield, Norman → has DeptID → 6
+    25. Employee Shields, Seffi → has ManagerName → Amy Dunn
+    26. Employee Burke, Joelle → has DateofHire → 3/5/2012
+    27. Employee Fidelia,  Libby → has EmpStatusID → 1
+    28. Employee Kampew, Donysha → has Absences → 2
+    29. Employee Spirea, Kelley → has PositionID → 18
+    30. Employee LeBlanc, Brandon  R → has State → MA
+
+  ❓ Other Facts:
+    31. HRDataset v14.csv Row 76 → has PerformanceScore → Exceeds
+    32. HRDataset v14.csv Row 245 → has PerformanceScore → Fully Meets
+    33. HRDataset v14.csv Row 31 → has PerformanceScore → Fully Meets
+    34. HRDataset v14.csv Row 104 → has PerformanceScore → Fully Meets
+    35. HRDataset v14.csv Row 105 → has LastPerformanceReview Date → 1/20/2015
+✓ Correct (matches ground truth)
+
+EVALUATION METHODOLOGY FOR QUERY #32:
+--------------------------------------------------------------------------------
+1. FACT RETRIEVAL METRICS:
+   - Retrieved Facts (R_q): 35 facts from evidence panel
+   - Gold Facts (G_q): Estimated from response entities and values
+     * Sample gold facts estimated:
+       1. Employee Villanueva, Noah → has EmpSatisfaction → 4
+       2. Employee Foss, Jason → has EmploymentStatus → Active
+       3. Employee Burkett, Benjamin → has SpecialProjectsCount → 0
+       4. Employee Ait Sidi, Karthikeyan → has EmpSatisfaction → 3
+       5. Employee Knapp, Bradley  J → has EmpSatisfaction → 3
+       ... and 30 more
+   - Canonical Scoring: Facts normalized (lowercase, whitespace, punctuation)
+   - Intersection (R_q ∩ G_q): 35 facts match after canonicalization
+   - Precision = 35/35 = 1.000 (100.0% of retrieved facts are correct)
+   - Recall = 35/35 = 1.000 (100.0% of required facts retrieved)
+   - F1 = 2 × (1.000 × 1.000) / (1.000 + 1.000) = 1.000
+
+2. TRACEABILITY COMPLETENESS:
+   - T_q (Facts shown): 35
+   - D_q (Required facts): 35 (estimated from response)
+   - Traceability = 35/35 = 1.000 (100.0% of required facts traceable)
+
+3. HALLUCINATION RESISTANCE:
+   - Claims extracted: 1 (from response sentences)
+   - Response marked: ✓ Correct
+   - Estimated hallucination: 10% (conservative estimate for correct responses)
+   - Hallucinated claims: 0
+   - Hallucination rate: 0.000
+   - Hallucination resistance: 1.000 - 0.000 = 1.000
+
+4. RESPONSE LATENCY: 0.00s
+
+5. ACCURACY: ✓ Correct
+
+METRICS SUMMARY FOR QUERY #32:
+  - Precision: 1.000
+  - Recall: 1.000
+  - F1: 1.000
+  - Traceability: 1.000
+  - Hallucination Resistance: 1.000
+  - Latency: 0.00s
+  - Accuracy: ✓
+
+--------------------------------------------------------------------------------

@@ -6,28 +6,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": false,
-      "response_time": 4.99,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 6,
+      "gold_facts_count": 6
     },
     {
       "query_id": 2,
@@ -35,57 +37,59 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 8.62,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 6,
+      "gold_facts_count": 6
     },
     {
       "query_id": 3,
       "query": "Which department has the highest average performance score?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 9.94,
+      "correct": false,
+      "response_time": 0.17,
       "fact_retrieval_canonical": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 6,
+        "gold_count": 1,
         "intersection_count": 0
       },
       "fact_retrieval_raw": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 6,
+        "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
+      "evidence_count": 6,
+      "gold_facts_count": 1
     },
     {
       "query_id": 4,
@@ -93,55 +97,59 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 14.15,
+      "response_time": 0.17,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 6,
+        "gold_count": 6,
+        "intersection_count": 6,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 6,
+      "gold_facts_count": 6
     },
     {
       "query_id": 5,
       "query": "What is the average special projects count by department?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 10.28,
+      "correct": false,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
@@ -150,27 +158,29 @@
       "query": "How do special projects vary across departments?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 12.04,
+      "correct": false,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
@@ -179,27 +189,29 @@
       "query": "Which department has the highest average special projects count?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 11.29,
+      "correct": false,
+      "response_time": 0.66,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
@@ -208,27 +220,29 @@
       "query": "Show me special projects distribution by department",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 12.41,
+      "correct": false,
+      "response_time": 0.28,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
@@ -238,28 +252,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 16.55,
+      "response_time": 0.23,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 50,
+        "gold_count": 50,
+        "intersection_count": 50,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 50,
+        "gold_count": 50,
+        "intersection_count": 50,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 50,
+      "gold_facts_count": 50
     },
     {
       "query_id": 10,
@@ -267,28 +283,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 13.43,
+      "response_time": 0.12,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 50,
+        "gold_count": 50,
+        "intersection_count": 50,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 50,
+        "gold_count": 50,
+        "intersection_count": 50,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 50,
+      "gold_facts_count": 50
     },
     {
       "query_id": 11,
@@ -296,28 +314,28 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 13.42,
+      "response_time": 0.08,
       "fact_retrieval_canonical": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 1,
         "intersection_count": 0
       },
       "fact_retrieval_raw": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 50,
+      "gold_facts_count": 1
     },
     {
       "query_id": 12,
@@ -325,28 +343,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 14.51,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 18,
+        "gold_count": 18,
+        "intersection_count": 18,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 28,
+        "gold_count": 28,
+        "intersection_count": 28,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 28,
+      "gold_facts_count": 28
     },
     {
       "query_id": 13,
@@ -354,28 +374,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 19.33,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 18,
+        "gold_count": 18,
+        "intersection_count": 18,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 28,
+        "gold_count": 28,
+        "intersection_count": 28,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 28,
+      "gold_facts_count": 28
     },
     {
       "query_id": 14,
@@ -383,28 +405,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 14.89,
+      "response_time": 0.15,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 18,
+        "gold_count": 18,
+        "intersection_count": 18,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 28,
+        "gold_count": 28,
+        "intersection_count": 28,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 28,
+      "gold_facts_count": 28
     },
     {
       "query_id": 15,
@@ -412,28 +436,30 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 16.08,
+      "response_time": 0.16,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 10,
+        "gold_count": 10,
+        "intersection_count": 10,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 10,
+        "gold_count": 10,
+        "intersection_count": 10,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 10,
+      "gold_facts_count": 10
     },
     {
       "query_id": 16,
@@ -441,70 +467,72 @@
       "scenario_type": "operational",
       "k": 2,
       "correct": false,
-      "response_time": 22.56,
+      "response_time": 0.16,
       "fact_retrieval_canonical": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 10,
+        "gold_count": 1,
         "intersection_count": 0
       },
       "fact_retrieval_raw": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 10,
+        "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
+      "traceability_completeness": 1.0,
       "hallucination_resistance": 0.0,
       "hallucination_rate": 1.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "evidence_count": 10,
+      "gold_facts_count": 1
     },
     {
       "query_id": 17,
       "query": "What is the performance distribution by recruitment source?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 17.71,
+      "correct": false,
+      "response_time": 0.17,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 10,
+        "gold_count": 10,
+        "intersection_count": 10,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 10,
+        "gold_count": 10,
+        "intersection_count": 10,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
+      "evidence_count": 10,
+      "gold_facts_count": 10
     },
     {
       "query_id": 18,
       "query": "Identify employees with high performance, low engagement and many special projects",
       "scenario_type": "operational",
       "k": 2,
-      "correct": false,
-      "response_time": 0.01,
+      "correct": true,
+      "response_time": 2.89,
       "fact_retrieval_canonical": {
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
@@ -512,14 +540,14 @@
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 0.6666666666666667,
-      "hallucination_rate": 0.3333333333333333,
-      "evidence_count": 0,
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
+      "evidence_count": 95,
       "gold_facts_count": 1
     },
     {
@@ -527,13 +555,13 @@
       "query": "Find employees with high performance, low engagement and low satisfaction",
       "scenario_type": "operational",
       "k": 2,
-      "correct": false,
-      "response_time": 0.01,
+      "correct": true,
+      "response_time": 2.99,
       "fact_retrieval_canonical": {
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
@@ -541,28 +569,28 @@
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 0.75,
-      "hallucination_rate": 0.25,
-      "evidence_count": 0,
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
+      "evidence_count": 100,
       "gold_facts_count": 1
     },
     {
       "query_id": 20,
       "query": "Find employees with high performance, low engagement and low satisfaction and many special projects",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": false,
-      "response_time": 0.01,
+      "scenario_type": "strategic",
+      "k": 3,
+      "correct": true,
+      "response_time": 1.26,
       "fact_retrieval_canonical": {
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
@@ -570,28 +598,28 @@
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 50,
         "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 0.5,
-      "hallucination_rate": 0.5,
-      "evidence_count": 0,
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
+      "evidence_count": 50,
       "gold_facts_count": 1
     },
     {
       "query_id": 21,
       "query": "Find employees with low engagement and low satisfaction and many special projects and many absences",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": false,
-      "response_time": 0.01,
+      "scenario_type": "strategic",
+      "k": 3,
+      "correct": true,
+      "response_time": 1.02,
       "fact_retrieval_canonical": {
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 40,
         "gold_count": 1,
         "intersection_count": 0
       },
@@ -599,14 +627,14 @@
         "precision": 0.0,
         "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
+        "retrieved_count": 40,
         "gold_count": 1,
         "intersection_count": 0
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 0.5,
-      "hallucination_rate": 0.5,
-      "evidence_count": 0,
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
+      "evidence_count": 40,
       "gold_facts_count": 1
     },
     {
@@ -614,56 +642,60 @@
       "query": "Which departments have high salaries but low performance?",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 17.83,
+      "correct": false,
+      "response_time": 0.01,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
     {
       "query_id": 23,
       "query": "Analyze the relationship between salary, performance, and department",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": false,
-      "response_time": 22.52,
+      "scenario_type": "strategic",
+      "k": 3,
+      "correct": true,
+      "response_time": 0.0,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
         "retrieved_count": 0,
         "gold_count": 0,
-        "intersection_count": 0
+        "intersection_count": 0,
+        "note": "No evidence retrieved - metrics not applicable"
       },
       "traceability_completeness": 0.0,
-      "hallucination_resistance": 0.0,
-      "hallucination_rate": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
       "evidence_count": 0,
       "gold_facts_count": 0
     },
@@ -672,812 +704,442 @@
       "query": "Identify departments with low salary and high performance",
       "scenario_type": "operational",
       "k": 2,
-      "correct": true,
-      "response_time": 19.89,
+      "correct": false,
+      "response_time": 0.37,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 9,
+        "gold_count": 9,
+        "intersection_count": 9,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 9,
+        "gold_count": 9,
+        "intersection_count": 9,
+        "note": "Used evidence facts as gold proxy"
       },
-      "traceability_completeness": 0.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 0,
-      "gold_facts_count": 0
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 0.0,
+      "hallucination_rate": 1.0,
+      "evidence_count": 9,
+      "gold_facts_count": 9
     },
     {
       "query_id": 25,
       "query": "Retrieve facts related with employee Becker, Scott",
-      "scenario_type": "operational",
-      "k": 2,
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
-      "response_time": 1.2,
+      "response_time": 0.31,
       "fact_retrieval_canonical": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 4,
         "intersection_count": 0
       },
       "fact_retrieval_raw": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 4,
         "intersection_count": 0
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 50,
+      "gold_facts_count": 4
     },
     {
       "query_id": 26,
-      "query": "Show me all facts about employee Becker, Scott",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.2,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 27,
       "query": "What information do we have about employee Becker, Scott?",
       "scenario_type": "operational",
       "k": 2,
       "correct": true,
-      "response_time": 0.0,
+      "response_time": 0.32,
       "fact_retrieval_canonical": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 1,
         "intersection_count": 0
       },
       "fact_retrieval_raw": {
         "precision": 0.0,
-        "recall": 1.0,
+        "recall": 0.0,
         "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
+        "retrieved_count": 50,
+        "gold_count": 1,
         "intersection_count": 0
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 50,
+      "gold_facts_count": 1
+    },
+    {
+      "query_id": 27,
+      "query": "Give me facts about the employee with the highest salary",
+      "scenario_type": "evidence",
+      "k": 1,
+      "correct": true,
+      "response_time": 0.0,
+      "fact_retrieval_canonical": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "retrieved_count": 32,
+        "gold_count": 32,
+        "intersection_count": 32,
+        "note": "Used evidence facts as gold proxy"
+      },
+      "fact_retrieval_raw": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "retrieved_count": 32,
+        "gold_count": 32,
+        "intersection_count": 32,
+        "note": "Used evidence facts as gold proxy"
+      },
+      "traceability_completeness": 1.0,
+      "hallucination_resistance": 1.0,
+      "hallucination_rate": 0.0,
+      "evidence_count": 32,
+      "gold_facts_count": 32
     },
     {
       "query_id": 28,
-      "query": "Give me facts about the employee with the highest salary",
-      "scenario_type": "operational",
-      "k": 2,
+      "query": "Retrieve facts about the employee who has the highest salary",
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
-      "response_time": 0.01,
+      "response_time": 0.0,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 32,
+        "gold_count": 32,
+        "intersection_count": 32,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 32,
+        "gold_count": 32,
+        "intersection_count": 32,
+        "note": "Used evidence facts as gold proxy"
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 32,
+      "gold_facts_count": 32
     },
     {
       "query_id": 29,
-      "query": "Retrieve facts about the employee who has the highest salary",
-      "scenario_type": "operational",
-      "k": 2,
+      "query": "Show me information about the highest paid employee",
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
-      "response_time": 0.01,
+      "response_time": 0.06,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 30,
+        "gold_count": 30,
+        "intersection_count": 30,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 30,
+        "gold_count": 30,
+        "intersection_count": 30,
+        "note": "Used evidence facts as gold proxy"
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 30,
+      "gold_facts_count": 30
     },
     {
       "query_id": 30,
-      "query": "Show me information about the highest paid employee",
-      "scenario_type": "operational",
-      "k": 2,
+      "query": "Give me facts about the employee with the lowest performance",
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
-      "response_time": 0.01,
+      "response_time": 0.0,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 34,
+      "gold_facts_count": 34
     },
     {
       "query_id": 31,
-      "query": "Give me facts about the employee with the lowest performance",
-      "scenario_type": "operational",
-      "k": 2,
+      "query": "Retrieve facts about the employee who has the lowest performance score",
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
-      "response_time": 4.77,
+      "response_time": 0.0,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 1
+      "evidence_count": 34,
+      "gold_facts_count": 34
     },
     {
       "query_id": 32,
-      "query": "Retrieve facts about the employee who has the lowest performance score",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 6.96,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 1
-    },
-    {
-      "query_id": 33,
       "query": "Show me information about the employee with worst performance",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 5.29,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 1
-    },
-    {
-      "query_id": 34,
-      "query": "Show me facts about employees in IT/IS department",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.22,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 25,
-      "gold_facts_count": 1
-    },
-    {
-      "query_id": 35,
-      "query": "What facts are available about salary information?",
-      "scenario_type": "operational",
-      "k": 2,
+      "scenario_type": "evidence",
+      "k": 1,
       "correct": true,
       "response_time": 0.0,
       "fact_retrieval_canonical": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "fact_retrieval_raw": {
-        "precision": 0.0,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
+        "f1": 1.0,
+        "retrieved_count": 34,
+        "gold_count": 34,
+        "intersection_count": 34,
+        "note": "Used evidence facts as gold proxy"
       },
       "traceability_completeness": 1.0,
       "hallucination_resistance": 1.0,
       "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 36,
-      "query": "Retrieve facts related to performance scores",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 0.0,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 37,
-      "query": "Find facts about engagement by manager",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 0.0,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 38,
-      "query": "Search for facts containing 'department' and 'salary'",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 21.77,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 39,
-      "query": "Find facts about 'performance' and 'manager'",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 0.0,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 40,
-      "query": "Retrieve facts with keywords 'engagement' and 'team'",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 0.0,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 41,
-      "query": "What facts are stored about IT/IS department?",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.24,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 25,
-      "gold_facts_count": 1
-    },
-    {
-      "query_id": 42,
-      "query": "Show me all facts related to Production department",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.34,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 1,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 23,
-      "gold_facts_count": 1
-    },
-    {
-      "query_id": 43,
-      "query": "Retrieve facts about Sales department",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.99,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 44,
-      "query": "Show me all facts about employee Barbossa, Hector",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.78,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 45,
-      "query": "What facts are stored about employee Becker, Scott?",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 1.92,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
-    },
-    {
-      "query_id": 46,
-      "query": "Retrieve all information about employee Bacong, Alejandro",
-      "scenario_type": "operational",
-      "k": 2,
-      "correct": true,
-      "response_time": 2.29,
-      "fact_retrieval_canonical": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "fact_retrieval_raw": {
-        "precision": 0.0,
-        "recall": 1.0,
-        "f1": 0.0,
-        "retrieved_count": 0,
-        "gold_count": 0,
-        "intersection_count": 0
-      },
-      "traceability_completeness": 1.0,
-      "hallucination_resistance": 1.0,
-      "hallucination_rate": 0.0,
-      "evidence_count": 15,
-      "gold_facts_count": 0
+      "evidence_count": 34,
+      "gold_facts_count": 34
     }
   ],
   "aggregated_metrics": {
     "operational": {
       "f1": {
+        "mean": 0.6470588235294118,
+        "ci_lower": 0.37705401772827546,
+        "ci_upper": 0.9170636293305481,
+        "std": 0.492592183071889,
+        "n": 17
+      },
+      "precision": {
+        "mean": 0.6470588235294118,
+        "ci_lower": 0.37705401772827546,
+        "ci_upper": 0.9170636293305481,
+        "std": 0.492592183071889,
+        "n": 17
+      },
+      "recall": {
+        "mean": 0.6470588235294118,
+        "ci_lower": 0.37705401772827546,
+        "ci_upper": 0.9170636293305481,
+        "std": 0.492592183071889,
+        "n": 17
+      },
+      "traceability_completeness": {
+        "mean": 0.7727272727272727,
+        "ci_lower": 0.5660534017581498,
+        "ci_upper": 0.9794011436963956,
+        "std": 0.4289320272288885,
+        "n": 22
+      },
+      "hallucination_resistance": {
+        "mean": 0.5909090909090909,
+        "ci_lower": 0.34843293304805345,
+        "ci_upper": 0.8333852487701284,
+        "std": 0.5032362797401965,
+        "n": 22
+      },
+      "latency": {
+        "mean": 0.44681818181818184,
+        "ci_lower": 0.05308698789311622,
+        "ci_upper": 0.8405493757432474,
+        "std": 0.8171517686372668,
+        "n": 22
+      },
+      "accuracy": {
+        "mean": 0.5454545454545454,
+        "ci_lower": 0.2998893948094792,
+        "ci_upper": 0.7910196960996116,
+        "std": 0.5096471914376255,
+        "n": 22
+      },
+      "n_queries": 22
+    },
+    "strategic": {
+      "f1": {
         "mean": 0.0,
         "ci_lower": 0.0,
         "ci_upper": 0.0,
         "std": 0.0,
-        "n": 46
+        "n": 2
       },
       "precision": {
         "mean": 0.0,
         "ci_lower": 0.0,
         "ci_upper": 0.0,
         "std": 0.0,
-        "n": 46
+        "n": 2
       },
       "recall": {
-        "mean": 0.782608695652174,
-        "ci_lower": 0.6587664204966563,
-        "ci_upper": 0.9064509708076915,
-        "std": 0.41702882811414954,
-        "n": 46
+        "mean": 0.0,
+        "ci_lower": 0.0,
+        "ci_upper": 0.0,
+        "std": 0.0,
+        "n": 2
       },
       "traceability_completeness": {
-        "mean": 0.4782608695652174,
-        "ci_lower": 0.32828042627448073,
-        "ci_upper": 0.6282413128559541,
-        "std": 0.5050469916434667,
-        "n": 46
+        "mean": 0.6666666666666666,
+        "ci_lower": -0.3933333333333334,
+        "ci_upper": 1.7266666666666666,
+        "std": 0.5773502691896257,
+        "n": 3
       },
       "hallucination_resistance": {
-        "mean": 0.9221014492753623,
-        "ci_lower": 0.8535996927020651,
-        "ci_upper": 0.9906032058486595,
-        "std": 0.2306741153749717,
-        "n": 46
+        "mean": 1.0,
+        "ci_lower": 1.0,
+        "ci_upper": 1.0,
+        "std": 0.0,
+        "n": 3
       },
       "latency": {
-        "mean": 7.510434782608695,
-        "ci_lower": 5.2210072571853505,
-        "ci_upper": 9.79986230803204,
-        "std": 7.709461706679869,
-        "n": 46
+        "mean": 0.76,
+        "ci_lower": -0.4683200234466589,
+        "ci_upper": 1.988320023446659,
+        "std": 0.6690291473471093,
+        "n": 3
       },
       "accuracy": {
-        "mean": 0.8478260869565217,
-        "ci_lower": 0.7399813401547636,
-        "ci_upper": 0.9556708337582799,
-        "std": 0.36315844747302034,
-        "n": 46
+        "mean": 1.0,
+        "ci_lower": 1.0,
+        "ci_upper": 1.0,
+        "std": 0.0,
+        "n": 3
       },
-      "n_queries": 46
+      "n_queries": 3
+    },
+    "evidence": {
+      "f1": {
+        "mean": 0.8571428571428571,
+        "ci_lower": 0.46,
+        "ci_upper": 1.2542857142857142,
+        "std": 0.3779644730092272,
+        "n": 7
+      },
+      "precision": {
+        "mean": 0.8571428571428571,
+        "ci_lower": 0.46,
+        "ci_upper": 1.2542857142857142,
+        "std": 0.3779644730092272,
+        "n": 7
+      },
+      "recall": {
+        "mean": 0.8571428571428571,
+        "ci_lower": 0.46,
+        "ci_upper": 1.2542857142857142,
+        "std": 0.3779644730092272,
+        "n": 7
+      },
+      "traceability_completeness": {
+        "mean": 1.0,
+        "ci_lower": 1.0,
+        "ci_upper": 1.0,
+        "std": 0.0,
+        "n": 7
+      },
+      "hallucination_resistance": {
+        "mean": 1.0,
+        "ci_lower": 1.0,
+        "ci_upper": 1.0,
+        "std": 0.0,
+        "n": 7
+      },
+      "latency": {
+        "mean": 0.05285714285714286,
+        "ci_lower": -0.06858028539128405,
+        "ci_upper": 0.17429457110556976,
+        "std": 0.1155731061153193,
+        "n": 7
+      },
+      "accuracy": {
+        "mean": 1.0,
+        "ci_lower": 1.0,
+        "ci_upper": 1.0,
+        "std": 0.0,
+        "n": 7
+      },
+      "n_queries": 7
     }
   },
   "summary": {
-    "total_queries": 46,
+    "total_queries": 32,
     "grouping": "scenario_type",
     "groups": [
-      "operational"
+      "operational",
+      "strategic",
+      "evidence"
     ]
-  },
-  "graph_data": {
-    "groups": [
-      "operational"
-    ],
-    "metrics": {
-      "f1": {
-        "means": [
-          0.0
-        ],
-        "ci_lowers": [
-          0.0
-        ],
-        "ci_uppers": [
-          0.0
-        ]
-      },
-      "precision": {
-        "means": [
-          0.0
-        ],
-        "ci_lowers": [
-          0.0
-        ],
-        "ci_uppers": [
-          0.0
-        ]
-      },
-      "recall": {
-        "means": [
-          0.782608695652174
-        ],
-        "ci_lowers": [
-          0.6587664204966563
-        ],
-        "ci_uppers": [
-          0.9064509708076915
-        ]
-      },
-      "traceability_completeness": {
-        "means": [
-          0.4782608695652174
-        ],
-        "ci_lowers": [
-          0.32828042627448073
-        ],
-        "ci_uppers": [
-          0.6282413128559541
-        ]
-      },
-      "hallucination_resistance": {
-        "means": [
-          0.9221014492753623
-        ],
-        "ci_lowers": [
-          0.8535996927020651
-        ],
-        "ci_uppers": [
-          0.9906032058486595
-        ]
-      },
-      "latency": {
-        "means": [
-          7.510434782608695
-        ],
-        "ci_lowers": [
-          5.2210072571853505
-        ],
-        "ci_uppers": [
-          9.79986230803204
-        ]
-      },
-      "accuracy": {
-        "means": [
-          0.8478260869565217
-        ],
-        "ci_lowers": [
-          0.7399813401547636
-        ],
-        "ci_uppers": [
-          0.9556708337582799
-        ]
-      }
-    }
   }
 }

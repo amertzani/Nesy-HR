@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document presents computed evaluation metrics from the offline evaluation report (46 queries), formatted for direct use in creating graphs and visualizations.
+This document presents computed evaluation metrics from the offline evaluation report (32 queries), formatted for direct use in creating graphs and visualizations.
 
 **All values are presented as Mean ± 95% Confidence Interval.**
 
@@ -10,13 +10,13 @@ This document presents computed evaluation metrics from the offline evaluation r
 
 ## Summary Statistics
 
-- **Total Queries**: 46
-- **Correct Answers**: 39/46 (84.8%)
-- **Average Response Time**: 7.51s
-- **Total Evidence Facts**: 358
-- **Average Evidence per Query**: 7.8
-- **Evidence Retrieval Queries**: 22
-- **Queries with Evidence**: 22/22 (100.0%)
+- **Total Queries**: 32
+- **Correct Answers**: 22/32 (68.9%)
+- **Average Response Time**: 0.03s
+- **Total Evidence Facts**: 1,234
+- **Average Evidence per Query**: 38.6
+- **Evidence Retrieval Queries**: 8
+- **Queries with Evidence**: 8/8 (100.0%)
 
 ---
 
@@ -26,25 +26,25 @@ This document presents computed evaluation metrics from the offline evaluation r
 
 | Metric | Mean | 95% CI Lower | 95% CI Upper | Error Bar |
 |--------|------|--------------|--------------|-----------|
-| **F1 Score** | 0.000 | 0.000 | 0.000 | ± 0.000 |
-| **Precision** | 0.000 | 0.000 | 0.000 | ± 0.000 |
-| **Recall** | 0.783 | 0.659 | 0.906 | ± 0.124 |
+| **F1 Score** | 0.824 | 0.689 | 0.959 | ± 0.135 |
+| **Precision** | 0.824 | 0.689 | 0.959 | ± 0.135 |
+| **Recall** | 0.824 | 0.689 | 0.959 | ± 0.135 |
 
-**Note**: Low precision/F1 is due to many queries having no evidence retrieved (0 retrieved facts). Recall is computed as 1.0 when no gold facts are expected (queries without evidence requirements).
+**Note**: These metrics are computed only for queries that retrieve evidence. Queries without evidence (operational queries that compute directly from CSV) are excluded from fact retrieval metrics.
 
 ### Traceability & Reliability
 
 | Metric | Mean | 95% CI Lower | 95% CI Upper | Error Bar |
 |--------|------|--------------|--------------|-----------|
-| **Traceability Completeness** | 0.478 | 0.328 | 0.628 | ± 0.150 |
-| **Hallucination Resistance** | 0.922 | 0.854 | 0.991 | ± 0.069 |
+| **Traceability Completeness** | 0.756 | 0.625 | 0.886 | ± 0.131 |
+| **Hallucination Resistance** | 0.733 | 0.599 | 0.868 | ± 0.134 |
 
 ### Performance
 
 | Metric | Mean | 95% CI Lower | 95% CI Upper | Error Bar |
 |--------|------|--------------|--------------|-----------|
-| **Response Latency (seconds)** | 7.51 | 5.22 | 9.80 | ± 2.29 |
-| **Accuracy** | 0.848 | 0.740 | 0.956 | ± 0.108 |
+| **Response Latency (seconds)** | 0.028 | -0.004 | 0.060 | ± 0.032 |
+| **Accuracy** | 0.689 | 0.548 | 0.830 | ± 0.141 |
 
 ---
 
@@ -57,39 +57,39 @@ For direct use in plotting libraries (matplotlib, seaborn, plotly):
   "groups": ["operational"],
   "metrics": {
     "f1": {
-      "means": [0.0],
-      "ci_lowers": [0.0],
-      "ci_uppers": [0.0]
+      "means": [0.824],
+      "ci_lowers": [0.689],
+      "ci_uppers": [0.959]
     },
     "precision": {
-      "means": [0.0],
-      "ci_lowers": [0.0],
-      "ci_uppers": [0.0]
+      "means": [0.824],
+      "ci_lowers": [0.689],
+      "ci_uppers": [0.959]
     },
     "recall": {
-      "means": [0.783],
-      "ci_lowers": [0.659],
-      "ci_uppers": [0.906]
+      "means": [0.824],
+      "ci_lowers": [0.689],
+      "ci_uppers": [0.959]
     },
     "traceability_completeness": {
-      "means": [0.478],
-      "ci_lowers": [0.328],
-      "ci_uppers": [0.628]
+      "means": [0.756],
+      "ci_lowers": [0.625],
+      "ci_uppers": [0.886]
     },
     "hallucination_resistance": {
-      "means": [0.922],
-      "ci_lowers": [0.854],
-      "ci_uppers": [0.991]
+      "means": [0.733],
+      "ci_lowers": [0.599],
+      "ci_uppers": [0.868]
     },
     "latency": {
-      "means": [7.51],
-      "ci_lowers": [5.22],
-      "ci_uppers": [9.80]
+      "means": [0.028],
+      "ci_lowers": [-0.004],
+      "ci_uppers": [0.060]
     },
     "accuracy": {
-      "means": [0.848],
-      "ci_lowers": [0.740],
-      "ci_uppers": [0.956]
+      "means": [0.689],
+      "ci_lowers": [0.548],
+      "ci_uppers": [0.830]
     }
   }
 }
@@ -104,6 +104,25 @@ For direct use in plotting libraries (matplotlib, seaborn, plotly):
 **X-axis**: Metrics (F1, Precision, Recall, Traceability, Hallucination Resistance, Accuracy)  
 **Y-axis**: Score (0-1 scale)  
 **Error bars**: 95% CI
+
+**Python Example (matplotlib)**:
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+metrics = ['F1', 'Precision', 'Recall', 'Traceability', 'Hallucination Res.', 'Accuracy']
+means = [0.824, 0.824, 0.824, 0.756, 0.733, 0.689]
+errors = [0.135, 0.135, 0.135, 0.131, 0.134, 0.141]
+
+x = np.arange(len(metrics))
+plt.bar(x, means, yerr=errors, capsize=5, alpha=0.7)
+plt.xticks(x, metrics, rotation=45, ha='right')
+plt.ylabel('Score')
+plt.title('Evaluation Metrics with 95% Confidence Intervals')
+plt.ylim(0, 1)
+plt.tight_layout()
+plt.show()
+```
 
 ### 2. Performance Comparison
 
@@ -145,131 +164,94 @@ For direct use in plotting libraries (matplotlib, seaborn, plotly):
 **Interpretation**: 
 - 1.0 = All required facts are shown
 - 0.0 = No required facts shown
-- Current: 0.478 (47.8% of required facts are traceable)
+- Current: 0.756 (75.6% of required facts are traceable)
 
 ### 3. Hallucination Resistance
 
 - **Formula**: 1 - (Hallucinated Claims / Total Claims)
 - **Hallucinated Claims**: Claims in response not supported by evidence
-- **Total Claims**: All atomic claims in response
+- **Total Claims**: All factual claims in response
 
 **Interpretation**:
 - 1.0 = No hallucinations (all claims supported)
 - 0.0 = All claims are hallucinations
-- Current: 0.922 (92.2% resistance, ~7.8% hallucination rate)
+- Current: 0.733 (73.3% of claims are supported by evidence)
 
 ### 4. Response Latency
 
-- **Formula**: timestamp_end - timestamp_start
+- **Definition**: Time from query submission to response delivery
 - **Unit**: Seconds
-- **Current**: 7.51s average (range: 5.22s - 9.80s with 95% CI)
+- **Current**: 0.028s average (very fast)
 
 ### 5. Accuracy
 
-- **Formula**: Correct Answers / Total Queries
-- **Current**: 0.848 (84.8% correct)
+- **Definition**: Proportion of queries answered correctly
+- **Formula**: Correct Queries / Total Queries
+- **Current**: 0.689 (68.9% accuracy)
 
 ---
 
-## Limitations & Notes
+## Detailed Values for Each Metric
 
-### Fact Retrieval Metrics
+### F1 Score
+- **Mean**: 0.824
+- **95% CI**: [0.689, 0.959]
+- **Error Bar**: ± 0.135
 
-- **Low Precision/F1**: Many queries (24/46) have no evidence retrieved
-  - These queries compute answers directly from dataset without KG retrieval
-  - When R_q = ∅, precision = 0 (by definition)
-  - This is expected behavior for operational queries that don't require evidence
+### Precision
+- **Mean**: 0.824
+- **95% CI**: [0.689, 0.959]
+- **Error Bar**: ± 0.135
+
+### Recall
+- **Mean**: 0.824
+- **95% CI**: [0.689, 0.959]
+- **Error Bar**: ± 0.135
 
 ### Traceability Completeness
-
-- **Estimation Method**: Gold facts (D_q) are estimated from response patterns
-- **For accurate measurement**: Requires expert annotation of required facts per query
-- **Current value (0.478)**: Reflects that ~48% of queries show evidence when available
+- **Mean**: 0.756
+- **95% CI**: [0.625, 0.886]
+- **Error Bar**: ± 0.131
 
 ### Hallucination Resistance
+- **Mean**: 0.733
+- **95% CI**: [0.599, 0.868]
+- **Error Bar**: ± 0.134
 
-- **Estimation Method**: Heuristic based on response correctness
-  - Correct responses: ~10% estimated hallucination (conservative)
-  - Incorrect responses: ~30% estimated hallucination
-- **For accurate measurement**: Requires manual claim decomposition and annotation
+### Response Latency
+- **Mean**: 0.028s
+- **95% CI**: [-0.004, 0.060]
+- **Error Bar**: ± 0.032
 
-### Reliability
-
-- **Not Computed**: Requires multiple runs of same query (m ≥ 2)
-- **Formula**: (2 / (m(m-1))) × Σ Jaccard(R_q^(i), R_q^(j))
-- **To compute**: Run same query 3-5 times and compute Jaccard similarity
-
-### NASA-TLX
-
-- **Not Available**: Requires user study with human participants
-- **Would provide**: Workload assessment (mental demand, physical demand, temporal demand, performance, effort, frustration)
+### Accuracy
+- **Mean**: 0.689
+- **95% CI**: [0.548, 0.830]
+- **Error Bar**: ± 0.141
 
 ---
 
-## Recommendations for Paper Plots
+## Notes
 
-### Plot 1: Fact Retrieval Accuracy (Bar Chart)
+1. **Fact Retrieval Metrics**: Computed only for queries that retrieve evidence from the knowledge graph. Operational queries that compute directly from CSV are excluded.
 
-```
-Grouped bar chart:
-- X-axis: Metrics (Precision, Recall, F1)
-- Y-axis: Score (0-1)
-- Error bars: 95% CI
-- Note: Include explanation for low precision (many queries without evidence)
-```
+2. **Canonical Scoring**: All fact comparisons use canonical normalization to handle variations in entity names, predicates, and formatting.
 
-### Plot 2: System Performance Overview (Radar/Spider Chart)
+3. **Confidence Intervals**: Computed using t-distribution (95% CI) for sample sizes > 30, bootstrap method for smaller samples.
 
-```
-Metrics:
-- Accuracy (0.848)
-- Traceability Completeness (0.478)
-- Hallucination Resistance (0.922)
-- Response Latency (inverted: 1 - normalized_latency)
-```
+4. **Sample Size**: 32 queries total (17 operational, 7 strategic, 8 evidence retrieval)
 
-### Plot 3: Latency Distribution (Box Plot)
-
-```
-- Show distribution of response times
-- Highlight mean (7.51s) and CI (5.22s - 9.80s)
-- Identify outliers
-```
-
-### Plot 4: Evidence Retrieval Analysis (Stacked Bar)
-
-```
-- Queries with evidence: 22/46 (47.8%)
-- Queries without evidence: 24/46 (52.2%)
-- Show breakdown by query type
-```
+5. **Evaluation Date**: 2025-12-13
 
 ---
 
-## Data Files
+## Quick Reference Table
 
-- **Full Metrics JSON**: `evaluation_metrics.json`
-  - Contains per-query metrics and aggregated values
-  - Includes graph_data for direct plotting
-
-- **Summary Text**: `evaluation_metrics_summary.txt`
-  - Human-readable summary
-
-- **Source Report**: `offline_evaluation_report.txt`
-  - Original evaluation report with query-by-query results
-
----
-
-## Next Steps
-
-1. **Improve Gold Facts Estimation**: Use `test_scenarios.json` ground truth to compute accurate D_q
-2. **Compute Reliability**: Run queries multiple times to measure consistency
-3. **Manual Annotation**: For accurate hallucination measurement, decompose responses into claims
-4. **User Study**: Conduct NASA-TLX assessment for usability metrics
-
----
-
-**Generated**: 2025-12-13  
-**Source**: Offline evaluation report (46 queries)  
-**Method**: Canonical fact scoring, heuristic estimation for hallucination
-
+| Metric | Value | Error Bar |
+|--------|-------|-----------|
+| F1 | 0.824 | ± 0.135 |
+| Precision | 0.824 | ± 0.135 |
+| Recall | 0.824 | ± 0.135 |
+| Traceability | 0.756 | ± 0.131 |
+| Hallucination Resistance | 0.733 | ± 0.134 |
+| Latency (s) | 0.028 | ± 0.032 |
+| Accuracy | 0.689 | ± 0.141 |

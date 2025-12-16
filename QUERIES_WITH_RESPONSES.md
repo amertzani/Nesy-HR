@@ -1,7 +1,7 @@
 # All Tested Queries with System Responses and Extracted Facts
 
-**Total Queries**: 46  
-**Source**: Offline Evaluation Report (Generated: 2025-12-13 20:47:41)  
+**Total Queries**: 30
+**Source**: Offline Evaluation Report (Generated: 2025-12-14 19:26:01)
 **Dataset**: HRDataset_v14.csv (311 rows, 36 columns)
 
 ---
@@ -9,33 +9,59 @@
 ## Query 1
 **Query**: What is the distribution of performance scores by department?
 
-**Response** (4.99s):
+**Response** (0.15s):
 ```
 Average performance by department:
-• IT/IS: 3.20
-• Production: 3.14
-• Admin Offices: 3.00
-• Software Engineering: 3.00
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Executive Office: 3.00
+  • Admin Offices: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 6 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Department Admin Offices → has → average performance score of 3
+2. Department Executive Office → has → average performance score of 3
+3. Department IT/IS → has → average performance score of 3
+4. Department Production → has → average performance score of 2
+5. Department Sales → has → average performance score of 2
+6. Department Software Engineering → has → average performance score of 3
+
+**Result**: ✗ Incorrect: None
 
 ---
 
 ## Query 2
 **Query**: How do performance scores vary across departments?
 
-**Response** (8.62s):
+**Response** (0.15s):
 ```
 Average performance by department:
-• IT/IS: 3.20
-• Production: 3.14
-• Admin Offices: 3.00
-• Software Engineering: 3.00
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Executive Office: 3.00
+  • Admin Offices: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 6 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Department Admin Offices → has → average performance score of 3
+2. Department Executive Office → has → average performance score of 3
+3. Department IT/IS → has → average performance score of 3
+4. Department Production → has → average performance score of 2
+5. Department Sales → has → average performance score of 2
+6. Department Software Engineering → has → average performance score of 3
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -43,29 +69,53 @@ Average performance by department:
 ## Query 3
 **Query**: Which department has the highest average performance score?
 
-**Response** (9.94s):
+**Response** (0.16s):
 ```
-IT/IS has the highest average performance of 3.20
+Software Engineering has the highest average performance of 3.09
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: 6 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Department Admin Offices → has → average performance score of 3
+2. Department Executive Office → has → average performance score of 3
+3. Department IT/IS → has → average performance score of 3
+4. Department Production → has → average performance score of 2
+5. Department Sales → has → average performance score of 2
+6. Department Software Engineering → has → average performance score of 3
+
+**Result**: ✗ Incorrect: None
 
 ---
 
 ## Query 4
 **Query**: Show me performance metrics by department
 
-**Response** (14.15s):
+**Response** (0.17s):
 ```
 Average performance by department:
-• IT/IS: 3.20
-• Production: 3.14
-• Admin Offices: 3.00
-• Software Engineering: 3.00
+  • Software Engineering: 3.09
+  • IT/IS: 3.06
+  • Executive Office: 3.00
+  • Admin Offices: 3.00
+  • Production       : 2.98
+  • Sales: 2.77
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 6 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Department Admin Offices → has → average performance score of 3
+2. Department Executive Office → has → average performance score of 3
+3. Department IT/IS → has → average performance score of 3
+4. Department Production → has → average performance score of 2
+5. Department Sales → has → average performance score of 2
+6. Department Software Engineering → has → average performance score of 3
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -73,79 +123,135 @@ Average performance by department:
 ## Query 5
 **Query**: What is the average special projects count by department?
 
-**Response** (10.28s):
+**Response** (0.15s):
 ```
-Average special projects count by department:
-• IT/IS: 5.80
-• Admin Offices: 4.50
-• Software Engineering: 4.00
-• Production: 0.00
+No relevant facts found in knowledge graph.
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: No facts retrieved
+
+**Result**: ✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
 
 ---
 
 ## Query 6
 **Query**: How do special projects vary across departments?
 
-**Response** (12.04s):
+**Response** (0.16s):
 ```
-Average special projects count by department:
-• IT/IS: 5.80
-• Admin Offices: 4.50
-• Software Engineering: 4.00
-• Production: 0.00
+No relevant facts found in knowledge graph.
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: No facts retrieved
+
+**Result**: ✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
 
 ---
 
 ## Query 7
 **Query**: Which department has the highest average special projects count?
 
-**Response** (11.29s):
+**Response** (0.16s):
 ```
-IT/IS has the highest average special projects count of 5.80
+No relevant facts found in knowledge graph.
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: No facts retrieved
+
+**Result**: ✗ Incorrect: None
 
 ---
 
 ## Query 8
 **Query**: Show me special projects distribution by department
 
-**Response** (12.41s):
+**Response** (0.15s):
 ```
-Average special projects count by department:
-• IT/IS: 5.80
-• Admin Offices: 4.50
-• Software Engineering: 4.00
-• Production: 0.00
+No relevant facts found in knowledge graph.
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: No facts retrieved
+
+**Result**: ✗ Incorrect: Only 0/6 entities matched (need 2+ or 50%+)
 
 ---
 
 ## Query 9
 **Query**: What is the team-level engagement by manager?
 
-**Response** (16.55s):
+**Response** (0.08s):
 ```
 Average engagement by manager:
-• Simon Roup: 4.49
-• Amy Dunn: 4.43
-• Michael Albert: 4.29
+  • Eric Dougall: 4.58
+  • Kelley Spirea: 4.48
+  • Brandon R. LeBlanc: 4.35
+  • Webster Butler: 4.33
+  • Simon Roup: 4.23
+  • Janet King: 4.18
+  • David Stanley: 4.15
+  • Alex Sweetwater: 4.08
+  • Elijiah Gray: 4.07
+  • Michael Albert: 4.07
+  • Brian Champaigne: 4.06
+ ...
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. LeBlanc's team → has → average engagement survey value of 4
+2. Manager Alex Sweetwater → has average engagement survey value → 4.08
+3. Manager Alex Sweetwater → has → average engagement survey value of 4
+4. Manager Amy Dunn → has average engagement survey value → 3.92
+5. Manager Amy Dunn → has → average team engagement score of 3
+6. Manager Board of Directors → has average engagement survey value → 4.92
+7. Manager Board of Directors → has → average engagement survey score of 4
+8. Manager Board of Directors → has → average team engagement score of 4
+9. Manager Brandon R. LeBlanc → has average engagement survey value → 4.35
+10. Manager Brannon Miller → has → average engagement survey score of 4
+11. Manager Brannon Miller's team → has → average engagement survey value of 4
+12. Manager Brian Champaigne → has → average engagement survey score of 4
+13. Manager Brian Champaigne → has → average team engagement score of 4
+14. Manager David Stanley → has average engagement survey value → 4.15
+15. Manager David Stanley → has → average engagement survey value of 4
+16. Manager David Stanley's team → has → average engagement survey value of 4
+17. Manager Debra Houlihan → has average engagement survey value → 3.84
+18. Manager Debra Houlihan → has → average team engagement score of 3
+19. Manager Debra Houlihan's team → has → average engagement survey value of 3
+20. Manager Elijiah Gray → has → average engagement survey score of 4
+21. Manager Elijiah Gray → has → average team engagement score of 4
+22. Manager Eric Dougall → has → average engagement survey score of 4
+23. Manager Eric Dougall → has → average team engagement score of 4
+24. Manager Janet King's team → has → average engagement survey value of 4
+25. Manager Jennifer Zamora → has → average engagement survey score of 3
+26. Manager John Smith → has → average engagement survey value of 3
+27. Manager Kelley Spirea → has → average engagement survey score of 4
+28. Manager Kelley Spirea → has → average team engagement score of 4
+29. Manager Kelley Spirea's team → has → average engagement survey value of 4
+30. Manager Ketsia Liebig → has average engagement survey value → 4.05
+31. Manager Ketsia Liebig → has → average engagement survey score of 4
+32. Manager Ketsia Liebig → has → average engagement survey value of 4
+33. Manager Ketsia Liebig → has → average team engagement score of 4
+34. Manager Kissy Sullivan → has → average engagement survey value of 4
+35. Manager Kissy Sullivan → has → average team engagement score of 4
+36. Manager Kissy Sullivan's team → has → average engagement survey value of 4
+37. Manager Lynn Daneault → has average engagement survey value → 3.80
+38. Manager Lynn Daneault → has → average engagement survey score of 3
+39. Manager Lynn Daneault → has → average engagement survey value of 3
+40. Manager Michael Albert → has → average engagement survey score of 4
+41. Manager Michael Albert → has → average team engagement score of 4
+42. Manager Peter Monroe → has average engagement survey value → 4.03
+43. Manager Peter Monroe → has → average engagement survey score of 4
+44. Manager Peter Monroe → has → average team engagement score of 4
+45. Manager Simon Roup → has average engagement survey value → 4.23
+46. Manager Simon Roup → has → average engagement survey score of 4
+47. Manager Simon Roup's team → has → average engagement survey value of 4
+48. Manager Webster Butler → has → average engagement survey value of 4
+49. Manager Webster Butler's team → has → average engagement survey value of 4
+50. s team → has → average engagement survey value of 4
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -153,15 +259,79 @@ Average engagement by manager:
 ## Query 10
 **Query**: How does engagement vary by manager?
 
-**Response** (13.43s):
+**Response** (0.07s):
 ```
 Average engagement by manager:
-• Simon Roup: 4.49
-• Amy Dunn: 4.43
-• Michael Albert: 4.29
+  • Eric Dougall: 4.58
+  • Kelley Spirea: 4.48
+  • Brandon R. LeBlanc: 4.35
+  • Webster Butler: 4.33
+  • Simon Roup: 4.23
+  • Janet King: 4.18
+  • David Stanley: 4.15
+  • Alex Sweetwater: 4.08
+  • Elijiah Gray: 4.07
+  • Michael Albert: 4.07
+  • Brian Champaigne: 4.06
+ ...
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. LeBlanc's team → has → average engagement survey value of 4
+2. Manager Alex Sweetwater → has average engagement survey value → 4.08
+3. Manager Alex Sweetwater → has → average engagement survey value of 4
+4. Manager Amy Dunn → has average engagement survey value → 3.92
+5. Manager Amy Dunn → has → average team engagement score of 3
+6. Manager Board of Directors → has average engagement survey value → 4.92
+7. Manager Board of Directors → has → average engagement survey score of 4
+8. Manager Board of Directors → has → average team engagement score of 4
+9. Manager Brandon R. LeBlanc → has average engagement survey value → 4.35
+10. Manager Brannon Miller → has → average engagement survey score of 4
+11. Manager Brannon Miller's team → has → average engagement survey value of 4
+12. Manager Brian Champaigne → has → average engagement survey score of 4
+13. Manager Brian Champaigne → has → average team engagement score of 4
+14. Manager David Stanley → has average engagement survey value → 4.15
+15. Manager David Stanley → has → average engagement survey value of 4
+16. Manager David Stanley's team → has → average engagement survey value of 4
+17. Manager Debra Houlihan → has average engagement survey value → 3.84
+18. Manager Debra Houlihan → has → average team engagement score of 3
+19. Manager Debra Houlihan's team → has → average engagement survey value of 3
+20. Manager Elijiah Gray → has → average engagement survey score of 4
+21. Manager Elijiah Gray → has → average team engagement score of 4
+22. Manager Eric Dougall → has → average engagement survey score of 4
+23. Manager Eric Dougall → has → average team engagement score of 4
+24. Manager Janet King's team → has → average engagement survey value of 4
+25. Manager Jennifer Zamora → has → average engagement survey score of 3
+26. Manager John Smith → has → average engagement survey value of 3
+27. Manager Kelley Spirea → has → average engagement survey score of 4
+28. Manager Kelley Spirea → has → average team engagement score of 4
+29. Manager Kelley Spirea's team → has → average engagement survey value of 4
+30. Manager Ketsia Liebig → has average engagement survey value → 4.05
+31. Manager Ketsia Liebig → has → average engagement survey score of 4
+32. Manager Ketsia Liebig → has → average engagement survey value of 4
+33. Manager Ketsia Liebig → has → average team engagement score of 4
+34. Manager Kissy Sullivan → has → average engagement survey value of 4
+35. Manager Kissy Sullivan → has → average team engagement score of 4
+36. Manager Kissy Sullivan's team → has → average engagement survey value of 4
+37. Manager Lynn Daneault → has average engagement survey value → 3.80
+38. Manager Lynn Daneault → has → average engagement survey score of 3
+39. Manager Lynn Daneault → has → average engagement survey value of 3
+40. Manager Michael Albert → has → average engagement survey score of 4
+41. Manager Michael Albert → has → average team engagement score of 4
+42. Manager Peter Monroe → has average engagement survey value → 4.03
+43. Manager Peter Monroe → has → average engagement survey score of 4
+44. Manager Peter Monroe → has → average team engagement score of 4
+45. Manager Simon Roup → has average engagement survey value → 4.23
+46. Manager Simon Roup → has → average engagement survey score of 4
+47. Manager Simon Roup's team → has → average engagement survey value of 4
+48. Manager Webster Butler → has → average engagement survey value of 4
+49. Manager Webster Butler's team → has → average engagement survey value of 4
+50. s team → has → average engagement survey value of 4
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -169,12 +339,67 @@ Average engagement by manager:
 ## Query 11
 **Query**: Which manager has the highest team engagement?
 
-**Response** (13.42s):
+**Response** (0.07s):
 ```
-Simon Roup has the highest average engagement of 4.49
+Eric Dougall has the highest average engagement of 4.58
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. LeBlanc's team → has → average engagement survey value of 4
+2. Manager Alex Sweetwater → has average engagement survey value → 4.08
+3. Manager Alex Sweetwater → has → average engagement survey value of 4
+4. Manager Amy Dunn → has average engagement survey value → 3.92
+5. Manager Amy Dunn → has → average team engagement score of 3
+6. Manager Board of Directors → has average engagement survey value → 4.92
+7. Manager Board of Directors → has → average engagement survey score of 4
+8. Manager Board of Directors → has → average team engagement score of 4
+9. Manager Brandon R. LeBlanc → has average engagement survey value → 4.35
+10. Manager Brannon Miller → has → average engagement survey score of 4
+11. Manager Brannon Miller's team → has → average engagement survey value of 4
+12. Manager Brian Champaigne → has → average engagement survey score of 4
+13. Manager Brian Champaigne → has → average team engagement score of 4
+14. Manager David Stanley → has average engagement survey value → 4.15
+15. Manager David Stanley → has → average engagement survey value of 4
+16. Manager David Stanley's team → has → average engagement survey value of 4
+17. Manager Debra Houlihan → has average engagement survey value → 3.84
+18. Manager Debra Houlihan → has → average team engagement score of 3
+19. Manager Debra Houlihan's team → has → average engagement survey value of 3
+20. Manager Elijiah Gray → has → average engagement survey score of 4
+21. Manager Elijiah Gray → has → average team engagement score of 4
+22. Manager Eric Dougall → has → average engagement survey score of 4
+23. Manager Eric Dougall → has → average team engagement score of 4
+24. Manager Janet King's team → has → average engagement survey value of 4
+25. Manager Jennifer Zamora → has → average engagement survey score of 3
+26. Manager John Smith → has → average engagement survey value of 3
+27. Manager Kelley Spirea → has → average engagement survey score of 4
+28. Manager Kelley Spirea → has → average team engagement score of 4
+29. Manager Kelley Spirea's team → has → average engagement survey value of 4
+30. Manager Ketsia Liebig → has average engagement survey value → 4.05
+31. Manager Ketsia Liebig → has → average engagement survey score of 4
+32. Manager Ketsia Liebig → has → average engagement survey value of 4
+33. Manager Ketsia Liebig → has → average team engagement score of 4
+34. Manager Kissy Sullivan → has → average engagement survey value of 4
+35. Manager Kissy Sullivan → has → average team engagement score of 4
+36. Manager Kissy Sullivan's team → has → average engagement survey value of 4
+37. Manager Lynn Daneault → has average engagement survey value → 3.80
+38. Manager Lynn Daneault → has → average engagement survey score of 3
+39. Manager Lynn Daneault → has → average engagement survey value of 3
+40. Manager Michael Albert → has → average engagement survey score of 4
+41. Manager Michael Albert → has → average team engagement score of 4
+42. Manager Peter Monroe → has average engagement survey value → 4.03
+43. Manager Peter Monroe → has → average engagement survey score of 4
+44. Manager Peter Monroe → has → average team engagement score of 4
+45. Manager Simon Roup → has average engagement survey value → 4.23
+46. Manager Simon Roup → has → average engagement survey score of 4
+47. Manager Simon Roup's team → has → average engagement survey value of 4
+48. Manager Webster Butler → has → average engagement survey value of 4
+49. Manager Webster Butler's team → has → average engagement survey value of 4
+50. s team → has → average engagement survey value of 4
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -182,16 +407,51 @@ Simon Roup has the highest average engagement of 4.49
 ## Query 12
 **Query**: What is the average salary by department?
 
-**Response** (14.51s):
+**Response** (0.16s):
 ```
 Average salary by department:
-• Software Engineering: $95,660.00
-• IT/IS: $92,111.20
-• Admin Offices: $84,683.50
-• Production: $58,741.64
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 28 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Average salary for department Admin Offices → is → 71791
+2. Average salary for department Admin Offices → relates to → 71791
+3. Average salary for department Executive Office → is → 250000
+4. Average salary for department Executive Office → relates to → 250000
+5. Average salary for department IT/IS → is → 97064
+6. Average salary for department Production → is → 59953
+7. Average salary for department Production → relates to → 59953
+8. Average salary for department Sales → is → 69061
+9. Average salary for department Sales → relates to → 69061
+10. Average salary for department Software Engineering → is → 94989
+11. Average salary for department Software Engineering → relates to → 94989
+12. Department Admin Offices → has → average salary of 71791
+13. Department Executive Office → has → average salary of 250000
+14. Department IT/IS → has → average salary of 97064
+15. Department Production → has → average salary of 59953
+16. Department Sales → has → average salary of 69061
+17. Department Software Engineering → has → average salary of 94989
+18. average salary in department Admin Offices → is → 71791
+19. average salary in department Admin Offices → relates to → 71791
+20. average salary in department Executive Office → is → 250000
+21. average salary in department Executive Office → relates to → 250000
+22. average salary in department IT/IS → is → 97064
+23. average salary in department Production → is → 59953
+24. average salary in department Production → relates to → 59953
+25. average salary in department Sales → is → 69061
+26. average salary in department Sales → relates to → 69061
+27. average salary in department Software Engineering → is → 94989
+28. average salary in department Software Engineering → relates to → 94989
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -199,16 +459,51 @@ Average salary by department:
 ## Query 13
 **Query**: How does salary distribution vary across departments?
 
-**Response** (19.33s):
+**Response** (0.14s):
 ```
 Average salary by department:
-• Software Engineering: $95,660.00
-• IT/IS: $92,111.20
-• Admin Offices: $84,683.50
-• Production: $58,741.64
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 28 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Average salary for department Admin Offices → is → 71791
+2. Average salary for department Admin Offices → relates to → 71791
+3. Average salary for department Executive Office → is → 250000
+4. Average salary for department Executive Office → relates to → 250000
+5. Average salary for department IT/IS → is → 97064
+6. Average salary for department Production → is → 59953
+7. Average salary for department Production → relates to → 59953
+8. Average salary for department Sales → is → 69061
+9. Average salary for department Sales → relates to → 69061
+10. Average salary for department Software Engineering → is → 94989
+11. Average salary for department Software Engineering → relates to → 94989
+12. Department Admin Offices → has → average salary of 71791
+13. Department Executive Office → has → average salary of 250000
+14. Department IT/IS → has → average salary of 97064
+15. Department Production → has → average salary of 59953
+16. Department Sales → has → average salary of 69061
+17. Department Software Engineering → has → average salary of 94989
+18. average salary in department Admin Offices → is → 71791
+19. average salary in department Admin Offices → relates to → 71791
+20. average salary in department Executive Office → is → 250000
+21. average salary in department Executive Office → relates to → 250000
+22. average salary in department IT/IS → is → 97064
+23. average salary in department Production → is → 59953
+24. average salary in department Production → relates to → 59953
+25. average salary in department Sales → is → 69061
+26. average salary in department Sales → relates to → 69061
+27. average salary in department Software Engineering → is → 94989
+28. average salary in department Software Engineering → relates to → 94989
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -216,12 +511,45 @@ Average salary by department:
 ## Query 14
 **Query**: Which department has the highest average salary?
 
-**Response** (14.89s):
+**Response** (0.16s):
 ```
-Software Engineering has the highest average salary of $95,660.00
+Executive Office has the highest average salary of $250,000.00
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 28 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Average salary for department Admin Offices → is → 71791
+2. Average salary for department Admin Offices → relates to → 71791
+3. Average salary for department Executive Office → is → 250000
+4. Average salary for department Executive Office → relates to → 250000
+5. Average salary for department IT/IS → is → 97064
+6. Average salary for department Production → is → 59953
+7. Average salary for department Production → relates to → 59953
+8. Average salary for department Sales → is → 69061
+9. Average salary for department Sales → relates to → 69061
+10. Average salary for department Software Engineering → is → 94989
+11. Average salary for department Software Engineering → relates to → 94989
+12. Department Admin Offices → has → average salary of 71791
+13. Department Executive Office → has → average salary of 250000
+14. Department IT/IS → has → average salary of 97064
+15. Department Production → has → average salary of 59953
+16. Department Sales → has → average salary of 69061
+17. Department Software Engineering → has → average salary of 94989
+18. average salary in department Admin Offices → is → 71791
+19. average salary in department Admin Offices → relates to → 71791
+20. average salary in department Executive Office → is → 250000
+21. average salary in department Executive Office → relates to → 250000
+22. average salary in department IT/IS → is → 97064
+23. average salary in department Production → is → 59953
+24. average salary in department Production → relates to → 59953
+25. average salary in department Sales → is → 69061
+26. average salary in department Sales → relates to → 69061
+27. average salary in department Software Engineering → is → 94989
+28. average salary in department Software Engineering → relates to → 94989
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -229,19 +557,36 @@ Software Engineering has the highest average salary of $95,660.00
 ## Query 15
 **Query**: How does performance vary by recruitment source?
 
-**Response** (16.08s):
+**Response** (0.16s):
 ```
 Distribution of performance by recruitment:
-• Employee Referral: 3.50
-• LinkedIn: 3.33
-• Diversity Job Fair: 3.17
-• Indeed: 3.17
-• Google Search: 3.00
-• On-line Web application: 3.00
-• CareerBuilder: 2.00
+  • Employee Referral: 3.10
+  • On-line Web application: 3.00
+  • Diversity Job Fair: 3.00
+  • Other: 3.00
+  • LinkedIn: 3.00
+  • Indeed: 2.98
+  • Google Search: 2.94
+  • CareerBuilder: 2.91
+  • Website: 2.77
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: 10 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Recruitment source CareerBuilder → has → average performance score of 2
+2. Recruitment source Diversity Job Fair → has → average performance score of 3
+3. Recruitment source Employee Referral → has → average performance score of 3
+4. Recruitment source Google Search → has → average performance score of 2
+5. Recruitment source Indeed → has → average performance score of 2
+6. Recruitment source LinkedIn → has → average performance score of 3
+7. Recruitment source On-line Web application → has → average performance score of 3
+8. Recruitment source Other → has → average performance score of 3
+9. Recruitment source Website → has → average performance score of 2
+10. the average performance score for recruitment source on → is → line Web application is 3.00
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
@@ -249,906 +594,713 @@ Distribution of performance by recruitment:
 ## Query 16
 **Query**: Which recruitment sources have the employees with highest performance score?
 
-**Response** (22.56s):
+**Response** (0.19s):
 ```
-Employee Referral has the highest average performance of 3.50
+Employee Referral has the highest average performance of 3.10
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 10 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Recruitment source CareerBuilder → has → average performance score of 2
+2. Recruitment source Diversity Job Fair → has → average performance score of 3
+3. Recruitment source Employee Referral → has → average performance score of 3
+4. Recruitment source Google Search → has → average performance score of 2
+5. Recruitment source Indeed → has → average performance score of 2
+6. Recruitment source LinkedIn → has → average performance score of 3
+7. Recruitment source On-line Web application → has → average performance score of 3
+8. Recruitment source Other → has → average performance score of 3
+9. Recruitment source Website → has → average performance score of 2
+10. the average performance score for recruitment source on → is → line Web application is 3.00
+
+**Result**: ✗ Incorrect: None
 
 ---
 
 ## Query 17
 **Query**: What is the performance distribution by recruitment source?
 
-**Response** (17.71s):
+**Response** (0.22s):
 ```
 Distribution of performance by recruitment:
-• Employee Referral: 3.50
-• LinkedIn: 3.33
-• Diversity Job Fair: 3.17
-• Indeed: 3.17
-• Google Search: 3.00
-• On-line Web application: 3.00
-• CareerBuilder: 2.00
+  • Employee Referral: 3.10
+  • On-line Web application: 3.00
+  • Diversity Job Fair: 3.00
+  • Other: 3.00
+  • LinkedIn: 3.00
+  • Indeed: 2.98
+  • Google Search: 2.94
+  • CareerBuilder: 2.91
+  • Website: 2.77
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
+**Evidence**: 10 facts retrieved
+
+**Extracted Facts:**
+
+**❓ Other Facts:**
+1. Recruitment source CareerBuilder → has → average performance score of 2
+2. Recruitment source Diversity Job Fair → has → average performance score of 3
+3. Recruitment source Employee Referral → has → average performance score of 3
+4. Recruitment source Google Search → has → average performance score of 2
+5. Recruitment source Indeed → has → average performance score of 2
+6. Recruitment source LinkedIn → has → average performance score of 3
+7. Recruitment source On-line Web application → has → average performance score of 3
+8. Recruitment source Other → has → average performance score of 3
+9. Recruitment source Website → has → average performance score of 2
+10. the average performance score for recruitment source on → is → line Web application is 3.00
+
+**Result**: ✗ Incorrect: None
 
 ---
 
 ## Query 18
 **Query**: Identify employees with high performance, low engagement and many special projects
 
-**Response** (0.01s):
+**Response** (2.89s):
 ```
-Found 2 employee(s) matching the criteria:
-1. Andreola, Colby
-2. Booth, Frank
+Found 20 employee(s) matching the criteria:
+  1. Andreola, Colby
+      - Employee Andreola, Colby has RaceDesc White
+      - Employee Andreola, Colby has EngagementSurvey 3.04
+      - Employee Andreola, Colby has EmploymentStatus Active
+      - Employee Andreola, Colby has DeptID 4
+      - HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+  2. Booth, Frank
+      - Employee Booth, Frank has EmpSatisfaction 5
+      - Employee Booth, Frank has FromDiversityJobFairID 0
+      - Employee Booth, Frank has Sex M
+      - Employee Booth, Frank has DateofTermination 2/19/2016
+      - Employee Booth, Frank has MarriedID 0
+  3. Cady, Max
+      - Employee Cady, Max has Zip 2184
+      - Employee Cady, Max has HispanicLatino No
+      - Employee Cady, Max has State MA
+      - Employee Cady, Max has SpecialProjectsCount 5
+      - Employee Cady, Max has RaceDesc White
+  ... and 17 more employees
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 95 facts retrieved
+
+**Extracted Facts:**
+1. Employee Andreola, Colby has RaceDesc White
+2. Employee Andreola, Colby has EngagementSurvey 3.04
+3. Employee Andreola, Colby has EmploymentStatus Active
+4. Employee Andreola, Colby has DeptID 4
+5. HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+6. Employee Booth, Frank has EmpSatisfaction 5
+7. Employee Booth, Frank has FromDiversityJobFairID 0
+8. Employee Booth, Frank has Sex M
+9. Employee Booth, Frank has DateofTermination 2/19/2016
+10. Employee Booth, Frank has MarriedID 0
+... and 85 more facts
+
+**Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 19
 **Query**: Find employees with high performance, low engagement and low satisfaction
 
-**Response** (0.01s):
+**Response** (2.99s):
 ```
-Found 3 employee(s) matching the criteria:
-1. Akinkuolie, Sarah
-2. Andreola, Colby
-3. Bozzi, Charles
+Found 33 employee(s) matching the criteria:
+  1. Akinkuolie, Sarah
+      - Employee Akinkuolie, Sarah has MaritalDesc Married
+      - Employee Akinkuolie, Sarah has EngagementSurvey 3.02
+      - Employee Akinkuolie, Sarah has DOB 09/19/88
+      - Employee Akinkuolie, Sarah has EmpID 10196
+      - Employee Akinkuolie, Sarah has State MA
+  2. Andreola, Colby
+      - Employee Andreola, Colby has RaceDesc White
+      - Employee Andreola, Colby has EngagementSurvey 3.04
+      - Employee Andreola, Colby has EmploymentStatus Active
+      - Employee Andreola, Colby has DeptID 4
+      - HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+  ... and 31 more employees
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 100 facts retrieved
+
+**Extracted Facts:**
+1. Employee Akinkuolie, Sarah has MaritalDesc Married
+2. Employee Akinkuolie, Sarah has EngagementSurvey 3.02
+3. Employee Akinkuolie, Sarah has DOB 09/19/88
+4. Employee Akinkuolie, Sarah has EmpID 10196
+5. Employee Akinkuolie, Sarah has State MA
+6. Employee Andreola, Colby has RaceDesc White
+7. Employee Andreola, Colby has EngagementSurvey 3.04
+8. Employee Andreola, Colby has EmploymentStatus Active
+9. Employee Andreola, Colby has DeptID 4
+10. HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+... and 90 more facts
+
+**Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 20
 **Query**: Find employees with high performance, low engagement and low satisfaction and many special projects
 
-**Response** (0.01s):
+**Response** (1.26s):
 ```
-Found 1 employee(s) matching the criteria:
-1. Andreola, Colby
+Found 10 employee(s) matching the criteria:
+  1. Andreola, Colby
+      - Employee Andreola, Colby has RaceDesc White
+      - Employee Andreola, Colby has EngagementSurvey 3.04
+      - Employee Andreola, Colby has EmploymentStatus Active
+      - Employee Andreola, Colby has DeptID 4
+      - HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+  2. Cady, Max
+      - Employee Cady, Max has Zip 2184
+      - Employee Cady, Max has HispanicLatino No
+      - Employee Cady, Max has State MA
+      - Employee Cady, Max has SpecialProjectsCount 5
+      - Employee Cady, Max has RaceDesc White
+  ... and 8 more employees
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+1. Employee Andreola, Colby has RaceDesc White
+2. Employee Andreola, Colby has EngagementSurvey 3.04
+3. Employee Andreola, Colby has EmploymentStatus Active
+4. Employee Andreola, Colby has DeptID 4
+5. HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+6. Employee Cady, Max has Zip 2184
+7. Employee Cady, Max has HispanicLatino No
+8. Employee Cady, Max has State MA
+9. Employee Cady, Max has SpecialProjectsCount 5
+10. Employee Cady, Max has RaceDesc White
+... and 40 more facts
+
+**Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 21
 **Query**: Find employees with low engagement and low satisfaction and many special projects and many absences
 
-**Response** (0.01s):
+**Response** (1.02s):
 ```
-Found 1 employee(s) matching the criteria:
-1. Andreola, Colby
+Found 8 employee(s) matching the criteria:
+  1. Andreola, Colby
+      - Employee Andreola, Colby has RaceDesc White
+      - Employee Andreola, Colby has EngagementSurvey 3.04
+      - Employee Andreola, Colby has EmploymentStatus Active
+      - Employee Andreola, Colby has DeptID 4
+      - HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+  2. Howard, Estelle
+      - Employee Howard, Estelle has EmpStatusID 1
+      - Employee Howard, Estelle has EmpID 10182
+      - Employee Howard, Estelle has Absences 6
+      - Employee Howard, Estelle has DateofHire 2/16/2015
+      - Employee Howard, Estelle has PositionID 2
+  ... and 6 more employees
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect
+**Evidence**: 40 facts retrieved
+
+**Extracted Facts:**
+1. Employee Andreola, Colby has RaceDesc White
+2. Employee Andreola, Colby has EngagementSurvey 3.04
+3. Employee Andreola, Colby has EmploymentStatus Active
+4. Employee Andreola, Colby has DeptID 4
+5. HRDataset v14.csv Row 6 has Employee Name Andreola, Colby
+6. Employee Howard, Estelle has EmpStatusID 1
+7. Employee Howard, Estelle has EmpID 10182
+8. Employee Howard, Estelle has Absences 6
+9. Employee Howard, Estelle has DateofHire 2/16/2015
+10. Employee Howard, Estelle has PositionID 2
+... and 30 more facts
+
+**Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 22
 **Query**: Which departments have high salaries but low performance?
 
-**Response** (17.83s):
+**Response** (0.01s):
 ```
 No departments found with high salaries but low performance.
 ```
 
-**Evidence**: No facts retrieved  
+**Evidence**: No facts retrieved
+
+**Result**: ✗ Incorrect: Only 0/17 entities matched (need 3+ or 50%+)
+
+---
+
+## Query 23
+**Query**: Retrieve facts related with employee Becker, Scott
+
+**Response** (0.30s):
+```
+Related facts (34):
+  1. Employee Becker, Scott has EmpID 10277
+  2. Employee Becker, Scott has Zip 2452
+  3. Employee Becker, Scott has MarriedID 0
+  4. Employee Becker, Scott has DateofHire 7/8/2013
+  5. Employee Becker, Scott has MaritalDesc Single
+  6. Employee Becker, Scott has Department Prod...
+```
+
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+31. Employee Becker, Scott has EmpID 10277
+32. Employee Becker, Scott has Zip 2452
+33. Employee Becker, Scott has MarriedID 0
+34. Employee Becker, Scott has DateofHire 7/8/2013
+35. Employee Becker, Scott has MaritalDesc Single
+36. Employee Becker, Scott has Department Production
+37. Employee Becker, Scott has Position Production Technician I
+38. Employee Becker, Scott has EngagementSurvey 4.2
+39. Employee Becker, Scott has CitizenDesc US Citizen
+40. Employee Becker, Scott has EmpStatusID 3
+41. Employee Becker, Scott has RecruitmentSource LinkedIn
+42. Employee Becker, Scott has GenderID 1
+43. Employee Becker, Scott has DaysLateLast30 0
+44. Employee Becker, Scott has TermReason N/A-StillEmployed
+45. Employee Becker, Scott has FromDiversityJobFairID 0
+46. Employee Becker, Scott has SpecialProjectsCount 0
+47. Employee Becker, Scott has PerfScoreID 3
+48. Employee Becker, Scott has Sex M
+49. Employee Becker, Scott has LastPerformanceReview Date 1/11/2019
+50. Employee Becker, Scott has Termd 0
+
+**Result**: ✓ Correct (matches ground truth)
+
+---
+
+## Query 24
+**Query**: What information do we have about employee Becker, Scott?
+
+**Response** (0.31s):
+```
+Related facts (34):
+  1. Employee Becker, Scott has EmpID 10277
+  2. Employee Becker, Scott has Zip 2452
+  3. Employee Becker, Scott has MarriedID 0
+  4. Employee Becker, Scott has DateofHire 7/8/2013
+  5. Employee Becker, Scott has MaritalDesc Single
+  6. Employee Becker, Scott has Department Prod...
+```
+
+**Evidence**: 50 facts retrieved
+
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+31. Employee Becker, Scott has EmpID 10277
+32. Employee Becker, Scott has Zip 2452
+33. Employee Becker, Scott has MarriedID 0
+34. Employee Becker, Scott has DateofHire 7/8/2013
+35. Employee Becker, Scott has MaritalDesc Single
+36. Employee Becker, Scott has Department Production
+37. Employee Becker, Scott has Position Production Technician I
+38. Employee Becker, Scott has EngagementSurvey 4.2
+39. Employee Becker, Scott has CitizenDesc US Citizen
+40. Employee Becker, Scott has EmpStatusID 3
+41. Employee Becker, Scott has RecruitmentSource LinkedIn
+42. Employee Becker, Scott has GenderID 1
+43. Employee Becker, Scott has DaysLateLast30 0
+44. Employee Becker, Scott has TermReason N/A-StillEmployed
+45. Employee Becker, Scott has FromDiversityJobFairID 0
+46. Employee Becker, Scott has SpecialProjectsCount 0
+47. Employee Becker, Scott has PerfScoreID 3
+48. Employee Becker, Scott has Sex M
+49. Employee Becker, Scott has LastPerformanceReview Date 1/11/2019
+50. Employee Becker, Scott has Termd 0
+
 **Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 23
-**Query**: Analyze the relationship between salary, performance, and department
+**Query**: Give me facts about the employee with the highest salary
 
-**Response** (22.52s):
+**Response** (0.00s):
 ```
-Department Analysis (Salary vs Performance):
-• IT/IS: Salary $92,111.20, Performance 3.20
-• Production: Salary $58,741.64, Performance 3.14
-• Admin Offices: Salary $84,683.50, Performance 3.00
-• Software Engineering: Salary $95,660.00, Performance 3.00
+Could not determine employee with highest salary.
 ```
 
-**Evidence**: No facts retrieved  
-**Result**: ✗ Incorrect: Only 0/17 entities matched (need 3+ or 50%+)
+**Evidence**: 34 facts retrieved
+
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+
+**❓ Other Facts:**
+1. HRDataset v14.csv Row 309 → has Salary → 89292
+2. HRDataset v14.csv Row 115 → has Salary → 48285
+3. HRDataset v14.csv Row 34 → has Salary → 62162
+4. HRDataset v14.csv Row 13 → has Salary → 58709
+
+**Result**: ✓ Correct (matches ground truth)
 
 ---
 
 ## Query 24
-**Query**: Identify departments with low salary and high performance
-
-**Response** (19.89s):
-```
-Departments with low salary but high performance:
-• Production: Salary $58,741.64, Performance 3.14
-```
-
-**Evidence**: No facts retrieved  
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 25
-**Query**: Retrieve facts related with employee Becker, Scott
-
-**Response** (1.20s):
-```
-No facts found for employee Becker, Scott
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. lowest engagement → is → Becker, Scott
-3. Bottom 2 employee → is → Andreola, Colby
-4. Employee Becker, Scott → has → engagement score of 4
-5. Recruitment source Employee Referral → has → average salary of 64748
-6. Bottom 1 employee → is → Blount, Dianna
-7. employees by absences → is → 1. Andreola, Colby
-8. Employees from recruitment source Employee Referral → have → average salary of 64748
-9. absences and → is → ranked 2 in top employees
-10. employee → relates to → Athwal, Sam
-11. Employee Biden, Lowan  M → has → engagement score of 4
-12. employee → is → Biden, Lowan  M
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 26
-**Query**: Show me all facts about employee Becker, Scott
-
-**Response** (1.20s):
-```
-No facts found for employee Becker, Scott
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. lowest engagement → is → Becker, Scott
-3. Bottom 2 employee → is → Andreola, Colby
-4. Employee Becker, Scott → has → engagement score of 4
-5. Recruitment source Employee Referral → has → average salary of 64748
-6. Bottom 1 employee → is → Blount, Dianna
-7. employees by absences → is → 1. Andreola, Colby
-8. Employees from recruitment source Employee Referral → have → average salary of 64748
-9. absences and → is → ranked 2 in top employees
-10. employee → relates to → Athwal, Sam
-11. Employee Biden, Lowan  M → has → engagement score of 4
-12. employee → is → Biden, Lowan  M
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 27
-**Query**: What information do we have about employee Becker, Scott?
-
-**Response** (0.00s):
-```
-Could not parse query. Detected: metric=None, group_by=None
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. lowest engagement → is → Becker, Scott
-3. Bottom 2 employee → is → Andreola, Colby
-4. Employee Becker, Scott → has → engagement score of 4
-5. Recruitment source Employee Referral → has → average salary of 64748
-6. Bottom 1 employee → is → Blount, Dianna
-7. employees by absences → is → 1. Andreola, Colby
-8. Employees from recruitment source Employee Referral → have → average salary of 64748
-9. absences and → is → ranked 2 in top employees
-10. employee → relates to → Athwal, Sam
-11. Employee Biden, Lowan  M → has → engagement score of 4
-12. employee → is → Biden, Lowan  M
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 28
-**Query**: Give me facts about the employee with the highest salary
-
-**Response** (0.01s):
-```
-Employee with highest salary: Boutwell, Bonalyn ($106,367.00), but no additional facts found in knowledge graph.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → 5 employees
-13. Employee Referral → type → entity
-14. employee → is → Becker, Scott
-15. Employee Bacong, Alejandro → has → 16 absences (rank 4 highest)
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 29
 **Query**: Retrieve facts about the employee who has the highest salary
 
-**Response** (0.01s):
+**Response** (0.00s):
 ```
-Employee with highest salary: Boutwell, Bonalyn ($106,367.00), but no additional facts found in knowledge graph.
+Could not determine employee with highest salary.
 ```
 
-**Evidence**: 15 facts retrieved
+**Evidence**: 34 facts retrieved
 
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → 5 employees
-13. Employee Referral → type → entity
-14. employee → is → Becker, Scott
-15. Employee Bacong, Alejandro → has → 16 absences (rank 4 highest)
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+
+**❓ Other Facts:**
+1. HRDataset v14.csv Row 309 → has Salary → 89292
+2. HRDataset v14.csv Row 115 → has Salary → 48285
+3. HRDataset v14.csv Row 34 → has Salary → 62162
+4. HRDataset v14.csv Row 13 → has Salary → 58709
 
 **Result**: ✓ Correct (matches ground truth)
 
 ---
 
-## Query 30
+## Query 23
 **Query**: Show me information about the highest paid employee
 
-**Response** (0.01s):
+**Response** (0.00s):
 ```
-Employee with highest salary: Boutwell, Bonalyn ($106,367.00), but no additional facts found in knowledge graph.
+Could not determine employee with highest salary.
 ```
 
-**Evidence**: 15 facts retrieved
+**Evidence**: 30 facts retrieved
 
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → 5 employees
-13. Employee Referral → type → entity
-14. employee → is → Becker, Scott
-15. Employee Bacong, Alejandro → has → 16 absences (rank 4 highest)
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
 
 **Result**: ✓ Correct (matches ground truth)
 
 ---
 
-## Query 31
+## Query 24
 **Query**: Give me facts about the employee with the lowest performance
 
-**Response** (4.77s):
+**Response** (0.00s):
 ```
-Employee with lowest performance: Blount, Dianna (Performance: 2.0), but no facts found in knowledge graph.
+Could not determine employee with lowest performance.
 ```
 
-**Evidence**: 15 facts retrieved
+**Evidence**: 35 facts retrieved
 
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → average performance score of 3
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+
+**❓ Other Facts:**
+1. HRDataset v14.csv Row 113 → has LastPerformanceReview Date → 1/28/2019
+2. HRDataset v14.csv Row 212 → has LastPerformanceReview Date → 8/16/2015
+3. HRDataset v14.csv Row 20 → has PerformanceScore → Fully Meets
+4. HRDataset v14.csv Row 284 → has LastPerformanceReview Date → 4/15/2015
+5. HRDataset v14.csv Row 7 → has PerformanceScore → Fully Meets
 
 **Result**: ✓ Correct (matches ground truth)
 
 ---
 
-## Query 32
+## Query 23
 **Query**: Retrieve facts about the employee who has the lowest performance score
 
-**Response** (6.96s):
+**Response** (0.00s):
 ```
-Employee with lowest performance: Blount, Dianna (Performance: 2.0), but no facts found in knowledge graph.
+Could not determine employee with lowest performance.
 ```
 
-**Evidence**: 15 facts retrieved
+**Evidence**: 35 facts retrieved
 
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → average performance score of 3
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
+**Extracted Facts:**
+
+**📄 Document Agent Facts (Direct CSV):**
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
+
+**❓ Other Facts:**
+1. HRDataset v14.csv Row 113 → has LastPerformanceReview Date → 1/28/2019
+2. HRDataset v14.csv Row 212 → has LastPerformanceReview Date → 8/16/2015
+3. HRDataset v14.csv Row 20 → has PerformanceScore → Fully Meets
+4. HRDataset v14.csv Row 284 → has LastPerformanceReview Date → 4/15/2015
+5. HRDataset v14.csv Row 7 → has PerformanceScore → Fully Meets
 
 **Result**: ✓ Correct (matches ground truth)
 
 ---
 
-## Query 33
+## Query 24
 **Query**: Show me information about the employee with worst performance
 
-**Response** (5.29s):
+**Response** (0.00s):
 ```
-Employee with lowest performance: Blount, Dianna (Performance: 2.0), but no facts found in knowledge graph.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → average performance score of 3
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 34
-**Query**: Show me facts about employees in IT/IS department
-
-**Response** (1.22s):
-```
-Facts about employees in IT/IS department (10 facts):
-1. Department IT/IS has average performance score of 3
-2. Department IT/IS has 5 employees
-3. Barbossa, Hector from IT/IS department has engagement score of 4
-4. IS department has engagement score of 4
-5. IS department has 16 absences (rank 4)
-...
+Could not determine employee with lowest performance.
 ```
 
-**Evidence**: 25 facts retrieved
+**Evidence**: 35 facts retrieved
+
+**Extracted Facts:**
 
 **📄 Document Agent Facts (Direct CSV):**
-1. Barbossa, Hector from IT/IS department has engagement score of 4
-2. Bacong, Alejandro  from IT/IS department has 16 absences (rank 4)
+1. Employee O'hare, Lynn → has Salary → 52674
+2. Employee Guilianno, Mike → has ManagerName → John Smith
+3. Employee Veera, Abdellah → has Sex → M
+4. Employee Becker, Scott → has EmpID → 10277
+5. Employee Gross, Paula → has PerformanceScore → Fully Meets
+6. Employee Keatts, Kramer → has EmpID → 10192
+7. Employee Stoica, Rick → has MaritalDesc → Married
+8. Employee Gonzalez, Juan → has DeptID → 5
+9. HRDataset v14.csv Row 35 → has Employee Name → Cady, Max
+10. Employee Wallace, Courtney  E → has MarriedID → 1
+11. Employee Dietrich, Jenna → has EmploymentStatus → Active
+12. Employee Buccheri, Joseph → has MarriedID → 0
+13. Employee Rhoads, Thomas → has Termd → 1
+14. Employee Trzeciak, Cybil → has Sex → F
+15. Employee Bacong, Alejandro → has DeptID → 3
+16. Employee Gonzalez, Maria → has PerformanceScore → Fully Meets
+17. Employee Szabo, Andrew → has GenderID → 1
+18. Employee Sloan, Constance → has State → MA
+19. Employee Billis, Helen → has Termd → 0
+20. HRDataset v14.csv Row 10 → has Employee Name → Baczenski, Rachael
+21. Employee Clukey, Elijian → has MaritalDesc → Married
+22. Employee Szabo, Andrew → has EmpID → 10024
+23. Employee Kinsella, Kathleen → has Department → Production
+24. Employee Smith, Sade → has State → MA
+25. Employee Dolan, Linda → has Position → IT Support
+26. Employee Soto, Julia → has GenderID → 0
+27. Employee Foreman, Tanya → has State → MA
+28. Employee Sutwell, Barbara → has ManagerID → 16.0
+29. Employee Soto, Julia → has RecruitmentSource → LinkedIn
+30. Employee Leruth, Giovanni → has Salary → 70468
 
-**📊 Operational Insights:**
-3. employee → relates to → Barbossa, Hector
-4. Bottom 2 employee → is → Andreola, Colby
-5. Employee Becker, Scott → has → engagement score of 4
-6. Recruitment source Employee Referral → has → average salary of 64748
-7. Bottom 1 employee → is → Blount, Dianna
-8. employees by absences → is → 1. Andreola, Colby
-9. Employees from recruitment source Employee Referral → have → average salary of 64748
-10. absences and → is → ranked 2 in top employees
-11. employee → relates to → Athwal, Sam
-12. Employee Biden, Lowan  M → has → engagement score of 4
-13. employee → is → Biden, Lowan  M
-14. Department IT/IS → has → average performance score of 3
-15. Department IT/IS → has → 5 employees
-16. Employee Referral → type → entity
-17. employee → is → Becker, Scott
-18. Department IT/IS has average performance score of 3
-19. Department IT/IS has 5 employees
-20. IS department has engagement score of 4
-21. IS department has 16 absences (rank 4)
-22. Department IT/IS has average absences of 10
-23. average salary in department IT/IS is 92111
-24. Department IT/IS has average salary of 92111
-25. Average salary for department IT/IS is 92111
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 35
-**Query**: What facts are available about salary information?
-
-**Response** (0.00s):
-```
-Could not parse fact-based query. Please specify an employee name or ask for highest/lowest employee.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. Recruitment source Employee Referral → has → average salary of 64748
-2. Employees from recruitment source Employee Referral → have → average salary of 64748
-3. Department Production → has → average salary of 58741
-4. Employees from recruitment source On-line Web application → have → average salary of 52505
-5. average salary in department Admin Offices → relates to → 84683
-6. Employees from recruitment source CareerBuilder → has → average salary of 66441
-7. Department Software Engineering → has → average salary of 95660
-8. average salary in department Software Engineering → relates to → 95660
-9. Recruitment source CareerBuilder → has → average salary of 66441
-10. average salary in department Admin Offices → is → 84683
-11. Employees from recruitment source LinkedIn → have → average salary of 72925
-12. Recruitment source LinkedIn → has → average salary of 72925
-13. Employees from recruitment source CareerBuilder → have → average salary of 66441
-14. Recruitment source On-line Web application → has → average salary of 52505
-15. Employees from recruitment source Employee Referral → has → average salary of 64748
+**❓ Other Facts:**
+1. HRDataset v14.csv Row 113 → has LastPerformanceReview Date → 1/28/2019
+2. HRDataset v14.csv Row 212 → has LastPerformanceReview Date → 8/16/2015
+3. HRDataset v14.csv Row 20 → has PerformanceScore → Fully Meets
+4. HRDataset v14.csv Row 284 → has LastPerformanceReview Date → 4/15/2015
+5. HRDataset v14.csv Row 7 → has PerformanceScore → Fully Meets
 
 **Result**: ✓ Correct (matches ground truth)
 
 ---
-
-## Query 36
-**Query**: Retrieve facts related to performance scores
-
-**Response** (0.00s):
-```
-Could not parse fact-based query. Please specify an employee name or ask for highest/lowest employee.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. Department IT/IS → has → average performance score of 3
-2. line Web application → has → average performance score of 3
-3. Recruitment source CareerBuilder → has → average performance score of 2
-4. Department Software Engineering → has → average performance score of 3
-5. Recruitment source LinkedIn → has → average performance score of 3
-6. Manager Amy Dunn → has → average team performance score of 3
-7. Recruitment source Diversity Job Fair → has → average performance score of 3
-8. Manager Michael Albert → has → average team performance score of 3
-9. Recruitment source Indeed → has → average performance score of 3
-10. Department Production → has → average performance score of 3
-11. Recruitment source Employee Referral → has → average performance score of 3
-12. Department Admin Offices → has → average performance score of 3
-13. Recruitment source On-line Web application → has → average performance score of 3
-14. the average performance score for recruitment source on → is → line Web application is 3.00
-15. Manager Simon Roup → has → average team performance score of 3
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 37
-**Query**: Find facts about engagement by manager
-
-**Response** (0.00s):
-```
-Could not parse fact-based query. Please specify an employee name or ask for highest/lowest employee.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. lowest engagement → is → Becker, Scott
-2. Employee Becker, Scott → has → engagement score of 4
-3. Manager Simon Roup → type → entity
-4. Blount, Dianna → has → engagement score of 2
-5. Employee Biden, Lowan  M → has → engagement score of 4
-6. Manager Michael Albert → has → average engagement survey value of 4
-7. Manager Michael Albert → has → average team engagement score of 4
-8. Biden, Lowan  M (managed → has → engagement score of 4
-9. lowest engagement → relates to → Andreola, Colby
-10. Manager Amy Dunn → has → average engagement survey score of 4
-11. Manager Simon Roup → has → average engagement survey value of 4
-12. Barbossa, Hector from IT/IS department → has → engagement score of 4
-13. Andreola, Colby (managed → has → engagement score of 3
-14. Blount, Dianna (managed → has → engagement score of 2
-15. Manager Michael Albert → has → average engagement survey score of 4
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 38
-**Query**: Search for facts containing 'department' and 'salary'
-
-**Response** (21.77s):
-```
-Average salary by department:
-• Software Engineering: $95,660.00
-• IT/IS: $92,111.20
-• Admin Offices: $84,683.50
-• Production: $58,741.64
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. Recruitment source Employee Referral → has → average salary of 64748
-2. Employees from recruitment source Employee Referral → have → average salary of 64748
-3. Department IT/IS → has → average performance score of 3
-4. Department IT/IS → has → 5 employees
-5. Department Production → has → average salary of 58741
-6. Department Software Engineering → has → average absences of 19
-7. Employees from recruitment source On-line Web application → have → average salary of 52505
-8. Barbossa, Hector from IT/IS department → has → engagement score of 4
-9. IS department → has → engagement score of 4
-10. department → is → Production is 9.86 days
-11. average salary in department Admin Offices → relates to → 84683
-12. Employees from recruitment source CareerBuilder → has → average salary of 66441
-13. Department Software Engineering → has → average salary of 95660
-14. average salary in department Software Engineering → relates to → 95660
-15. Recruitment source CareerBuilder → has → average salary of 66441
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 39
-**Query**: Find facts about 'performance' and 'manager'
-
-**Response** (0.00s):
-```
-Could not parse fact-based query. Please specify an employee name or ask for highest/lowest employee.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. Manager Simon Roup → type → entity
-2. Manager Michael Albert → has → average engagement survey value of 4
-3. Department IT/IS → has → average performance score of 3
-4. Manager Michael Albert → has → average team engagement score of 4
-5. Manager Amy Dunn → has → average engagement survey score of 4
-6. Manager Simon Roup → has → average engagement survey value of 4
-7. Manager Michael Albert → has → average engagement survey score of 4
-8. Manager Amy Dunn → has → average team satisfaction score of 3
-9. line Web application → has → average performance score of 3
-10. Recruitment source CareerBuilder → has → average performance score of 2
-11. Manager Amy Dunn's team → has → average engagement survey value of 4
-12. Manager Simon Roup's team → has → average engagement survey value of 4
-13. Department Software Engineering → has → average performance score of 3
-14. Recruitment source LinkedIn → has → average performance score of 3
-15. Manager Amy Dunn → has → average team performance score of 3
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 40
-**Query**: Retrieve facts with keywords 'engagement' and 'team'
-
-**Response** (0.00s):
-```
-Could not parse fact-based query. Please specify an employee name or ask for highest/lowest employee.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. lowest engagement → is → Becker, Scott
-2. Employee Becker, Scott → has → engagement score of 4
-3. Blount, Dianna → has → engagement score of 2
-4. Employee Biden, Lowan  M → has → engagement score of 4
-5. Manager Michael Albert → has → average engagement survey value of 4
-6. Manager Michael Albert → has → average team engagement score of 4
-7. Biden, Lowan  M (managed → has → engagement score of 4
-8. lowest engagement → relates to → Andreola, Colby
-9. Manager Amy Dunn → has → average engagement survey score of 4
-10. Manager Simon Roup → has → average engagement survey value of 4
-11. Barbossa, Hector from IT/IS department → has → engagement score of 4
-12. Andreola, Colby (managed → has → engagement score of 3
-13. Blount, Dianna (managed → has → engagement score of 2
-14. Manager Michael Albert → has → average engagement survey score of 4
-15. IS department → has → engagement score of 4
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 41
-**Query**: What facts are stored about IT/IS department?
-
-**Response** (1.24s):
-```
-Facts about IT/IS department (10 facts):
-1. Department IT/IS has average performance score of 3
-2. Department IT/IS has 5 employees
-3. Barbossa, Hector from IT/IS department has engagement score of 4
-4. IS department has engagement score of 4
-5. IS department has 16 absences (rank 4)
-...
-```
-
-**Evidence**: 25 facts retrieved
-
-**📄 Document Agent Facts (Direct CSV):**
-1. Barbossa, Hector from IT/IS department has engagement score of 4
-2. Bacong, Alejandro  from IT/IS department has 16 absences (rank 4)
-
-**📊 Operational Insights:**
-3. Department IT/IS → has → average performance score of 3
-4. Department IT/IS → has → 5 employees
-5. Department Production → has → average salary of 58741
-6. Department Software Engineering → has → average absences of 19
-7. Barbossa, Hector from IT/IS department → has → engagement score of 4
-8. IS department → has → engagement score of 4
-9. department → is → Production is 9.86 days
-10. average salary in department Admin Offices → relates to → 84683
-11. Department Software Engineering → has → average salary of 95660
-12. average salary in department Software Engineering → relates to → 95660
-13. average salary in department Admin Offices → is → 84683
-14. IS department → has → 16 absences (rank 4)
-15. Department Software Engineering → has → average performance score of 3
-16. Department Admin Offices → has → 2 employees
-17. Billis, Helen from Production        department → has → 19 absences (rank 3)
-18. Department IT/IS has average performance score of 3
-19. Department IT/IS has 5 employees
-20. IS department has engagement score of 4
-21. IS department has 16 absences (rank 4)
-22. Department IT/IS has average absences of 10
-23. average salary in department IT/IS is 92111
-24. Department IT/IS has average salary of 92111
-25. Average salary for department IT/IS is 92111
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 42
-**Query**: Show me all facts related to Production department
-
-**Response** (1.34s):
-```
-Facts about Production department (8 facts):
-1. Department Production has average salary of 58741
-2. Average salary for department Production relates to 58741
-3. Department Production has average performance score of 3
-4. average salary in department Production relates to 58741
-5. Average ...
-```
-
-**Evidence**: 23 facts retrieved
-
-**📊 Operational Insights:**
-1. Department IT/IS → has → average performance score of 3
-2. Department IT/IS → has → 5 employees
-3. Department Production → has → average salary of 58741
-4. Department Software Engineering → has → average absences of 19
-5. Barbossa, Hector from IT/IS department → has → engagement score of 4
-6. IS department → has → engagement score of 4
-7. department → is → Production is 9.86 days
-8. average salary in department Admin Offices → relates to → 84683
-9. Department Software Engineering → has → average salary of 95660
-10. average salary in department Software Engineering → relates to → 95660
-11. average salary in department Admin Offices → is → 84683
-12. IS department → has → 16 absences (rank 4)
-13. Department Software Engineering → has → average performance score of 3
-14. Department Admin Offices → has → 2 employees
-15. Billis, Helen from Production        department → has → 19 absences (rank 3)
-16. Department Production has average salary of 58741
-17. Average salary for department Production relates to 58741
-18. Department Production has average performance score of 3
-19. average salary in department Production relates to 58741
-20. Average salary for department Production is 58741
-21. Department Production has 22 employees
-22. Department Production has average absences of 9
-23. average salary in department Production is 58741
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 43
-**Query**: Retrieve facts about Sales department
-
-**Response** (1.99s):
-```
-No facts found specifically about Sales department.
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. Department IT/IS → has → average performance score of 3
-2. Department IT/IS → has → 5 employees
-3. Department Production → has → average salary of 58741
-4. Department Software Engineering → has → average absences of 19
-5. Barbossa, Hector from IT/IS department → has → engagement score of 4
-6. IS department → has → engagement score of 4
-7. department → is → Production is 9.86 days
-8. average salary in department Admin Offices → relates to → 84683
-9. Department Software Engineering → has → average salary of 95660
-10. average salary in department Software Engineering → relates to → 95660
-11. average salary in department Admin Offices → is → 84683
-12. IS department → has → 16 absences (rank 4)
-13. Department Software Engineering → has → average performance score of 3
-14. Department Admin Offices → has → 2 employees
-15. Billis, Helen from Production        department → has → 19 absences (rank 3)
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 44
-**Query**: Show me all facts about employee Barbossa, Hector
-
-**Response** (1.78s):
-```
-No facts found for employee Barbossa, Hector
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → 5 employees
-13. Employee Referral → type → entity
-14. employee → is → Becker, Scott
-15. Employee Bacong, Alejandro → has → 16 absences (rank 4 highest)
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 45
-**Query**: What facts are stored about employee Becker, Scott?
-
-**Response** (1.92s):
-```
-No facts found for employee Becker, Scott
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. lowest engagement → is → Becker, Scott
-3. Bottom 2 employee → is → Andreola, Colby
-4. Employee Becker, Scott → has → engagement score of 4
-5. Recruitment source Employee Referral → has → average salary of 64748
-6. Bottom 1 employee → is → Blount, Dianna
-7. employees by absences → is → 1. Andreola, Colby
-8. Employees from recruitment source Employee Referral → have → average salary of 64748
-9. absences and → is → ranked 2 in top employees
-10. employee → relates to → Athwal, Sam
-11. Employee Biden, Lowan  M → has → engagement score of 4
-12. employee → is → Biden, Lowan  M
-13. Department IT/IS → has → 5 employees
-14. Employee Referral → type → entity
-15. employee → is → Becker, Scott
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Query 46
-**Query**: Retrieve all information about employee Bacong, Alejandro
-
-**Response** (2.29s):
-```
-No facts found for employee Bacong, Alejandro
-```
-
-**Evidence**: 15 facts retrieved
-
-**📊 Operational Insights:**
-1. employee → relates to → Barbossa, Hector
-2. Bottom 2 employee → is → Andreola, Colby
-3. Employee Becker, Scott → has → engagement score of 4
-4. Recruitment source Employee Referral → has → average salary of 64748
-5. Bottom 1 employee → is → Blount, Dianna
-6. employees by absences → is → 1. Andreola, Colby
-7. Employees from recruitment source Employee Referral → have → average salary of 64748
-8. absences and → is → ranked 2 in top employees
-9. employee → relates to → Athwal, Sam
-10. Employee Biden, Lowan  M → has → engagement score of 4
-11. employee → is → Biden, Lowan  M
-12. Department IT/IS → has → 5 employees
-13. Employee Referral → type → entity
-14. employee → is → Becker, Scott
-15. Employee Bacong, Alejandro → has → 16 absences (rank 4 highest)
-
-**Result**: ✓ Correct (matches ground truth)
-
----
-
-## Summary Statistics
-
-- **Total Queries**: 46
-- **Correct Answers**: 39/46 (84.8%)
-- **Incorrect Answers**: 7/46 (15.2%)
-- **Average Response Time**: 7.51s
-- **Total Evidence Facts**: 358
-- **Average Evidence per Query**: 7.8
-- **Evidence Retrieval Queries**: 22
-- **Queries with Evidence**: 22/22 (100.0%)
-
-## Incorrect Queries
-
-The following 7 queries were marked as incorrect:
-
-1. **Query 1**: What is the distribution of performance scores by department?
-2. **Query 16**: Which recruitment sources have the employees with highest performance score?
-3. **Query 18**: Identify employees with high performance, low engagement and many special projects
-4. **Query 19**: Find employees with high performance, low engagement and low satisfaction
-5. **Query 20**: Find employees with high performance, low engagement and low satisfaction and many special projects
-6. **Query 21**: Find employees with low engagement and low satisfaction and many special projects and many absences
-7. **Query 23**: Analyze the relationship between salary, performance, and department
-
-## Response Patterns
-
-1. **Operational Queries (1-17, 22-24)**: Most provide structured lists with bullet points showing department/manager/recruitment source metrics
-2. **Strategic Queries (18-21, 23)**: Return employee names or department analysis, but some fail evaluation criteria
-3. **Evidence Queries (25-46)**: Many return "No facts found" or parsing errors, but still retrieve evidence from knowledge graph
-4. **Parsing Errors**: Several queries (27, 35-37, 39-40) show "Could not parse fact-based query" but still retrieve evidence
-
-## Evidence Fact Categories
-
-- **Document Agent Facts**: Direct facts extracted from CSV (highest priority, most reliable)
-- **Operational Insights**: Aggregated/computed facts from knowledge graph
-- **Statistics**: Statistical analysis facts (correlations, distributions)

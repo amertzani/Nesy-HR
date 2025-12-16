@@ -1,53 +1,86 @@
-================================================================================
+==================================================================================
 EVALUATION METRICS SUMMARY - VALUES FOR GRAPHING
-================================================================================
+==================================================================================
 
 This document contains computed metrics from the offline evaluation report.
 All values are presented as Mean ± 95% Confidence Interval.
 
-METRICS BY GROUP
---------------------------------------------------------------------------------
+Total Queries: 32 (as per ALL_TESTED_QUERIES.md)
 
-Group: OPERATIONAL
-  Sample size (n): 46
+METRICS BY GROUP
+----------------------------------------------------------------------------------
+
+Group: EVIDENCE
+  Sample size (n): 7
 
   Fact Retrieval Accuracy (Canonical Scoring):
-    F1 Score:           0.000 ± 0.000
-    Precision:          0.000 ± 0.000
-    Recall:             0.783 ± 0.124
+    F1 Score:           0.857 ± 0.397
+    Precision:          0.857 ± 0.397
+    Recall:             0.857 ± 0.397
 
   Traceability & Reliability:
-    Traceability Completeness: 0.478 ± 0.150
-    Hallucination Resistance:  0.922 ± 0.069
+    Traceability Completeness: 1.000 ± 0.000
+    Hallucination Resistance:  1.000 ± 0.000
 
   Performance:
-    Response Latency (seconds): 7.51 ± 2.29
-    Accuracy:                   0.848 ± 0.108
+    Response Latency (seconds): 0.001 ± 0.004
+    Accuracy:                  1.000 ± 0.000
 
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+
+Group: OPERATIONAL
+  Sample size (n): 22
+
+  Fact Retrieval Accuracy (Canonical Scoring):
+    F1 Score:           0.857 ± 0.219
+    Precision:          0.857 ± 0.219
+    Recall:             0.857 ± 0.219
+
+  Traceability & Reliability:
+    Traceability Completeness: 0.636 ± 0.237
+    Hallucination Resistance:  0.545 ± 0.246
+
+  Performance:
+    Response Latency (seconds): 0.025 ± 0.037
+    Accuracy:                  0.455 ± 0.246
+
+----------------------------------------------------------------------------------
+
+Group: STRATEGIC
+  Sample size (n): 3
+
+  Traceability & Reliability:
+    Traceability Completeness: 0.000 ± 0.000
+    Hallucination Resistance:  0.333 ± 1.060
+
+  Performance:
+    Response Latency (seconds): 0.000 ± 0.000
+    Accuracy:                  0.333 ± 1.060
+
+----------------------------------------------------------------------------------
 
 GRAPH DATA (for plotting)
---------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
 The following data is formatted for direct use in plotting libraries
 (matplotlib, seaborn, plotly, etc.):
 
-Metric                    | operational    
--------------------------------------------
-F1                        | 0.000         
-Precision                 | 0.000         
-Recall                    | 0.783         
-Traceability Completeness | 0.478         
-Hallucination Resistance  | 0.922         
-Latency                   | 7.510         
-Accuracy                  | 0.848         
+Metric                    | operational | strategic | evidence
+--------------------------------------------------------------
+F1                       | 0.857 | 0.000 | 0.857
+Precision                | 0.857 | 0.000 | 0.857
+Recall                   | 0.857 | 0.000 | 0.857
+Traceability Completeness | 0.636 | 0.000 | 1.000
+Hallucination Resistance | 0.545 | 0.333 | 1.000
+Latency                  | 0.025 | 0.000 | 0.001
+Accuracy                 | 0.455 | 0.333 | 1.000
 
 Error bars (95% CI):
   Use 'ci_lowers' and 'ci_uppers' arrays from graph_data in JSON
 
-================================================================================
+==================================================================================
 NOTES
-================================================================================
+==================================================================================
 
 1. Fact Retrieval Metrics:
    - Precision: |R_q ∩ G_q| / |R_q|

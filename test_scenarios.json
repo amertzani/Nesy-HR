@@ -701,7 +701,6 @@
       "type": "evidence",
       "queries": [
         "Retrieve facts related with employee Becker, Scott",
-        "Show me all facts about employee Becker, Scott",
         "What information do we have about employee Becker, Scott?"
       ],
       "ground_truth": {

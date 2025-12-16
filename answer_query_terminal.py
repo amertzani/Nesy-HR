@@ -18,6 +18,10 @@ import argparse
 from typing import List, Dict, Any, Optional, Tuple
 from urllib.parse import unquote
 from collections import defaultdict
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -52,7 +56,7 @@ def extract_query_intent(query: str) -> Dict[str, Any]:
     # Detect fact-based queries
     fact_keywords = ["retrieve facts", "give me facts", "show me facts", "facts about", 
                      "information about", "facts related", "what facts", "all facts", 
-                     "stored about", "facts stored"]
+                     "stored about", "facts stored", "what information", "information do we have"]
     if any(kw in query_lower for kw in fact_keywords):
         intent["fact_query"] = True
         intent["operation"] = "fact_retrieval"
@@ -152,11 +156,15 @@ def extract_query_intent(query: str) -> Dict[str, Any]:
             conditions.append({"metric": "engagement", "operator": "low"})
         if "low satisfaction" in query_lower:
             conditions.append({"metric": "satisfaction", "operator": "low"})
-        if "many special projects" in query_lower or "special projects" in query_lower:
+        if "many special projects" in query_lower or ("special projects" in query_lower and "many" in query_lower):
             conditions.append({"metric": "special_projects", "operator": "high"})
         if "many absences" in query_lower or "high absences" in query_lower:
             conditions.append({"metric": "absences", "operator": "high"})
         intent["conditions"] = conditions
+        
+        # Mark as strategic query if conditions are present
+        if conditions:
+            intent["strategic_query"] = True
     
     # Detect correlation queries (department-salary-performance)
     if any(phrase in query_lower for phrase in ["high salaries but low performance", "low salary and high performance", 
@@ -401,13 +409,119 @@ def extract_entity_from_fact(fact: Dict[str, Any], entity_type: str) -> Optional
     return None
 
 
+def transform_insights_to_list_format(insights: Dict[str, Any], df: Any = None) -> Dict[str, Any]:
+    """
+    Transform insights from dict format to list format expected by answer_query.
+    Preserves all decimal precision.
+    """
+    from operational_queries import normalize_column_name
+    
+    result = {
+        "by_department": [],
+        "by_manager": [],
+        "by_recruitment_source": []
+    }
+    
+    # Transform by_department
+    if "by_department" in insights and isinstance(insights["by_department"], dict):
+        dept_data = insights["by_department"]
+        
+        # Get all unique departments
+        departments = set()
+        if "performance" in dept_data:
+            departments.update(dept_data["performance"].keys())
+        if "salary" in dept_data:
+            departments.update(dept_data["salary"].keys())
+        if "engagement" in dept_data:
+            departments.update(dept_data["engagement"].keys())
+        
+        # Compute employee counts if df is provided
+        employee_counts = {}
+        if df is not None:
+            dept_col = normalize_column_name(df, "Department")
+            if dept_col:
+                employee_counts = df[dept_col].value_counts().to_dict()
+        
+        for dept in departments:
+            dept_obj = {"department": dept}
+            if "performance" in dept_data and dept in dept_data["performance"]:
+                dept_obj["avg_performance_score"] = dept_data["performance"][dept]
+            if "salary" in dept_data and dept in dept_data["salary"]:
+                dept_obj["avg_salary"] = dept_data["salary"][dept]
+            if "engagement" in dept_data and dept in dept_data["engagement"]:
+                dept_obj["avg_engagement"] = dept_data["engagement"][dept]
+            if dept in employee_counts:
+                dept_obj["employee_count"] = employee_counts[dept]
+            result["by_department"].append(dept_obj)
+    
+    # Transform by_manager
+    if "by_manager" in insights and isinstance(insights["by_manager"], dict):
+        mgr_data = insights["by_manager"]
+        
+        managers = set()
+        if "engagement" in mgr_data:
+            managers.update(mgr_data["engagement"].keys())
+        if "performance" in mgr_data:
+            managers.update(mgr_data["performance"].keys())
+        if "salary" in mgr_data:
+            managers.update(mgr_data["salary"].keys())
+        
+        employee_counts = {}
+        if df is not None:
+            mgr_col = normalize_column_name(df, "ManagerName")
+            if mgr_col:
+                employee_counts = df[mgr_col].value_counts().to_dict()
+        
+        for mgr in managers:
+            mgr_obj = {"manager": mgr}
+            if "engagement" in mgr_data and mgr in mgr_data["engagement"]:
+                mgr_obj["avg_engagement"] = mgr_data["engagement"][mgr]
+            if "performance" in mgr_data and mgr in mgr_data["performance"]:
+                mgr_obj["avg_performance_score"] = mgr_data["performance"][mgr]
+            if "salary" in mgr_data and mgr in mgr_data["salary"]:
+                mgr_obj["avg_salary"] = mgr_data["salary"][mgr]
+            if mgr in employee_counts:
+                mgr_obj["employee_count"] = employee_counts[mgr]
+            result["by_manager"].append(mgr_obj)
+    
+    # Transform by_recruitment
+    if "by_recruitment" in insights and isinstance(insights["by_recruitment"], dict):
+        rec_data = insights["by_recruitment"]
+        
+        sources = set()
+        if "performance" in rec_data:
+            sources.update(rec_data["performance"].keys())
+        if "salary" in rec_data:
+            sources.update(rec_data["salary"].keys())
+        
+        employee_counts = {}
+        if df is not None:
+            rec_col = normalize_column_name(df, "RecruitmentSource")
+            if rec_col:
+                employee_counts = df[rec_col].value_counts().to_dict()
+        
+        for source in sources:
+            source_obj = {"recruitment_source": source}
+            if "performance" in rec_data and source in rec_data["performance"]:
+                source_obj["avg_performance_score"] = rec_data["performance"][source]
+            if "salary" in rec_data and source in rec_data["salary"]:
+                source_obj["avg_salary"] = rec_data["salary"][source]
+            if source in employee_counts:
+                source_obj["employee_count"] = employee_counts[source]
+            result["by_recruitment_source"].append(source_obj)
+    
+    return result
+
+
 def get_operational_insights_from_csv() -> Optional[Dict[str, Any]]:
     """
     Get operational insights by computing them directly from CSV (same as frontend).
     This ensures we get the exact same data the frontend sees.
+    Returns insights in list format for answer_query.
     """
     try:
-        from strategic_queries import find_csv_file_path, load_csv_data
+        from strategic_queries import find_csv_file_path
+        from operational_queries import load_csv_data
         from operational_queries import compute_operational_insights
         from documents_store import get_all_documents
         import tempfile
@@ -475,8 +589,12 @@ def get_operational_insights_from_csv() -> Optional[Dict[str, Any]]:
             return None
         
         print(f"✅ Loaded {len(df)} rows, {len(df.columns)} columns")
-        insights = compute_operational_insights(df=df)
-        return insights
+        insights_dict = compute_operational_insights(df=df)
+        if insights_dict:
+            # Transform to list format
+            insights = transform_insights_to_list_format(insights_dict, df)
+            return insights
+        return None
     except Exception as e:
         print(f"⚠️  Error computing operational insights: {e}")
         import traceback
@@ -567,6 +685,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities[:15]:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "performance":
@@ -594,6 +715,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities[:15]:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "salary":
@@ -617,6 +741,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities[:15]:
                         answer_parts.append(f"  • {entity}: ${avg:,.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
     
     elif insights and intent["group_by"] == "department" and "by_department" in insights:
@@ -640,6 +767,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "performance":
@@ -659,6 +789,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "salary":
@@ -678,6 +811,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: ${avg:,.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "special_projects":
@@ -701,6 +837,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
     
     elif insights and intent["group_by"] == "recruitment" and "by_recruitment_source" in insights:
@@ -728,6 +867,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: {avg:.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
         
         elif intent["metric"] == "salary":
@@ -747,6 +889,9 @@ def answer_query(query: str) -> Dict[str, Any]:
                     for entity, avg in sorted_entities:
                         answer_parts.append(f"  • {entity}: ${avg:,.2f}")
                     result["answer"] = "\n".join(answer_parts)
+                # Retrieve facts for evidence
+                facts = search_facts_for_answer(intent, limit=50)
+                result["facts_used"] = facts[:50]
                 return result
     
     # FALLBACK: Search knowledge graph (old method)
@@ -918,10 +1063,21 @@ def handle_fact_based_query(query: str, intent: Dict[str, Any], result: Dict[str
                         
                         fact_text = f"{subject} {predicate} {obj}".lower()
                         
-                        # Check if this fact mentions the employee (exact name or parts)
-                        if (emp_name_lower in fact_text or 
-                            (last_name in fact_text and first_name in fact_text) or
-                            employee_name in f"{subject} {predicate} {obj}"):
+                        # STRICT FILTER: Only include facts where the employee name appears in subject or object
+                        # This ensures we only get facts ABOUT this employee, not just mentioning them
+                        subject_lower = subject.lower()
+                        obj_lower = obj.lower()
+                        
+                        # Check if employee name appears in subject (most common case)
+                        name_in_subject = (emp_name_lower in subject_lower or 
+                                         (last_name and last_name in subject_lower and first_name and first_name in subject_lower))
+                        
+                        # Check if employee name appears in object (less common but valid)
+                        name_in_object = (emp_name_lower in obj_lower or
+                                        (last_name and last_name in obj_lower and first_name and first_name in obj_lower))
+                        
+                        # Only include if name is in subject OR object (not just anywhere in the fact)
+                        if name_in_subject or name_in_object:
                             emp_facts_from_kg.append({
                                 "fact_text": f"{subject} {predicate} {obj}",
                                 "subject": subject,
@@ -1270,24 +1426,34 @@ def handle_strategic_query(query: str, intent: Dict[str, Any], result: Dict[str,
     """
     try:
         from operational_queries import load_csv_data, normalize_column_name
+        from strategic_queries import find_csv_file_path
+        from knowledge import graph, load_knowledge_graph
+        from urllib.parse import unquote
         import pandas as pd
         import os
         
+        # Ensure KG is loaded
+        if graph is None:
+            load_knowledge_graph()
+        
         result["method"] = "strategic_employee_search"
         
-        # Load CSV data
-        csv_paths = [
-            os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HR_S.csv"),
-            os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HRDataset_v14.csv"),
-        ]
-        
-        csv_path = None
-        for path in csv_paths:
-            if os.path.exists(path):
-                csv_path = path
-                break
-        
+        # Load CSV data - use same logic as other functions
+        csv_path = find_csv_file_path()
         if not csv_path:
+            # Fallback to direct paths
+            csv_paths = [
+                "/Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv",
+                "/Users/s20/Desktop/Gnoses/HR Data/HR_S.csv",
+                os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HRDataset_v14.csv"),
+                os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HR_S.csv"),
+            ]
+            for path in csv_paths:
+                if os.path.exists(path):
+                    csv_path = path
+                    break
+        
+        if not csv_path or not os.path.exists(csv_path):
             result["answer"] = "Could not find employee data file."
             return result
         
@@ -1304,6 +1470,9 @@ def handle_strategic_query(query: str, intent: Dict[str, Any], result: Dict[str,
                 df['_PerfNumeric'] = df[perf_col].map(perf_map)
             else:
                 df['_PerfNumeric'] = df[perf_col]
+        else:
+            # If no performance column, create dummy numeric column
+            df['_PerfNumeric'] = 3.0
         
         # Apply filters based on conditions
         conditions = intent.get("conditions", [])
@@ -1321,43 +1490,109 @@ def handle_strategic_query(query: str, intent: Dict[str, Any], result: Dict[str,
             elif metric == "engagement" and operator == "low":
                 eng_col = normalize_column_name(df, "EngagementSurvey")
                 if eng_col and eng_col in filtered_df.columns:
-                    # Low engagement: < 4.0 (below average)
+                    # Low engagement: < 4.0 (below average) - more lenient threshold
                     filtered_df = filtered_df[pd.to_numeric(filtered_df[eng_col], errors='coerce') < 4.0]
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[eng_col], errors='coerce').notna()]
             
             elif metric == "satisfaction" and operator == "low":
                 sat_col = normalize_column_name(df, "EmpSatisfaction")
                 if sat_col and sat_col in filtered_df.columns:
-                    # Low satisfaction: < 4.0 (below average)
+                    # Low satisfaction: < 4.0 (below average) - more lenient threshold
                     filtered_df = filtered_df[pd.to_numeric(filtered_df[sat_col], errors='coerce') < 4.0]
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[sat_col], errors='coerce').notna()]
             
             elif metric == "special_projects" and operator == "high":
                 sp_col = normalize_column_name(df, "SpecialProjectsCount")
                 if sp_col and sp_col in filtered_df.columns:
-                    # Many special projects: >= 3
-                    filtered_df = filtered_df[pd.to_numeric(filtered_df[sp_col], errors='coerce') >= 3]
+                    # Many special projects: >= 2 (more lenient)
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[sp_col], errors='coerce') >= 2]
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[sp_col], errors='coerce').notna()]
             
             elif metric == "absences" and operator == "high":
                 abs_col = normalize_column_name(df, "Absences")
                 if abs_col and abs_col in filtered_df.columns:
-                    # Many absences: >= 8
-                    filtered_df = filtered_df[pd.to_numeric(filtered_df[abs_col], errors='coerce') >= 8]
+                    # Many absences: >= 5 (more lenient)
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[abs_col], errors='coerce') >= 5]
+                    filtered_df = filtered_df[pd.to_numeric(filtered_df[abs_col], errors='coerce').notna()]
         
         # Get employee names
         emp_name_col = normalize_column_name(df, "Employee_Name")
+        if not emp_name_col or emp_name_col not in filtered_df.columns:
+            # Try alternative column names
+            for col in df.columns:
+                if 'name' in col.lower() and 'employee' in col.lower():
+                    emp_name_col = col
+                    break
+        
         if emp_name_col and emp_name_col in filtered_df.columns:
             employees = filtered_df[emp_name_col].dropna().unique().tolist()
             
             if len(employees) > 0:
                 answer_parts = [f"Found {len(employees)} employee(s) matching the criteria:"]
-                for i, emp_name in enumerate(employees[:20], 1):  # Limit to 20
-                    answer_parts.append(f"  {i}. {emp_name}")
+                facts = []
+                
+                # Retrieve facts from KG for each employee
+                if graph and len(graph) > 0:
+                    from knowledge import get_fact_source_document
+                    
+                    for i, emp_name in enumerate(employees[:20], 1):  # Limit to 20
+                        answer_parts.append(f"  {i}. {emp_name}")
+                        
+                        # Search KG for facts about this employee
+                        emp_name_parts = emp_name.split(', ')
+                        if len(emp_name_parts) == 2:
+                            last_name, first_name = emp_name_parts[0].strip(), emp_name_parts[1].strip()
+                            emp_name_lower = emp_name.lower()
+                            
+                            # Search KG for facts about this employee
+                            emp_facts = []
+                            for s, p, o in graph:
+                                predicate_str = str(p)
+                                if any(x in predicate_str for x in ['fact_subject', 'fact_predicate', 'fact_object', 
+                                                                    'has_details', 'source_document', 'uploaded_at',
+                                                                    'is_inferred', 'confidence', 'agent_id']):
+                                    continue
+                                
+                                subject = unquote(str(s).split(':')[-1] if ':' in str(s) else str(s)).replace('_', ' ')
+                                predicate = unquote(str(p).split(':')[-1] if ':' in str(p) else str(p)).replace('_', ' ')
+                                obj = str(o)
+                                
+                                fact_text = f"{subject} {predicate} {obj}".lower()
+                                
+                                # Check if fact mentions this employee
+                                name_in_subject = (emp_name_lower in subject.lower() or 
+                                                 (last_name.lower() in subject.lower() and first_name.lower() in subject.lower()))
+                                name_in_object = (emp_name_lower in obj.lower() or
+                                                (last_name.lower() in obj.lower() and first_name.lower() in obj.lower()))
+                                
+                                if name_in_subject or name_in_object:
+                                    # Check source - prefer document_agent
+                                    sources = get_fact_source_document(subject, predicate, obj)
+                                    is_operational = any('operational_insights' in str(src).lower() for src, _ in sources)
+                                    
+                                    if not is_operational:  # Only document_agent facts
+                                        emp_facts.append({
+                                            "fact_text": f"{subject} {predicate} {obj}",
+                                            "subject": subject,
+                                            "predicate": predicate,
+                                            "object": obj,
+                                            "source": "document_agent"
+                                        })
+                            
+                            # Add up to 5 facts per employee
+                            for fact in emp_facts[:5]:
+                                facts.append(fact)
+                                answer_parts.append(f"      - {fact['fact_text']}")
+                
                 if len(employees) > 20:
                     answer_parts.append(f"  ... and {len(employees) - 20} more")
+                
                 result["answer"] = "\n".join(answer_parts)
+                result["facts_used"] = facts[:100]  # Limit total facts
             else:
                 result["answer"] = "No employees found matching the specified criteria."
         else:
-            result["answer"] = "Could not find employee names in data."
+            result["answer"] = f"Could not find employee names in data. Available columns: {list(df.columns)[:10]}"
         
         return result
         
@@ -1382,19 +1617,29 @@ def handle_correlation_query(query: str, intent: Dict[str, Any], result: Dict[st
         
         result["method"] = "correlation_analysis"
         
-        # Get operational insights
-        csv_paths = [
-            os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HR_S.csv"),
-            os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HRDataset_v14.csv"),
-        ]
+        # Get operational insights - use same CSV finding logic
+        from strategic_queries import find_csv_file_path
+        from knowledge import graph, load_knowledge_graph
+        from urllib.parse import unquote
         
-        csv_path = None
-        for path in csv_paths:
-            if os.path.exists(path):
-                csv_path = path
-                break
+        # Ensure KG is loaded
+        if graph is None:
+            load_knowledge_graph()
         
+        csv_path = find_csv_file_path()
         if not csv_path:
+            csv_paths = [
+                "/Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv",
+                "/Users/s20/Desktop/Gnoses/HR Data/HR_S.csv",
+                os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HRDataset_v14.csv"),
+                os.path.join(os.path.expanduser("~"), "Desktop", "Gnoses", "HR Data", "HR_S.csv"),
+            ]
+            for path in csv_paths:
+                if os.path.exists(path):
+                    csv_path = path
+                    break
+        
+        if not csv_path or not os.path.exists(csv_path):
             result["answer"] = "Could not find employee data file."
             return result
         
@@ -1409,20 +1654,37 @@ def handle_correlation_query(query: str, intent: Dict[str, Any], result: Dict[st
             result["answer"] = "Could not load department insights."
             return result
         
-        departments = insights["by_department"]
+        # Transform insights to list format (same as frontend)
+        from answer_query_terminal import transform_insights_to_list_format
+        insights_list = transform_insights_to_list_format(insights, df)
+        departments = insights_list.get("by_department", [])
+        
         operation = intent.get("operation")
         
         answer_parts = []
+        facts = []
+        matching_depts = []
+        
+        # Calculate average salary and performance for thresholds
+        all_salaries = []
+        all_perfs = []
+        for d in departments:
+            if isinstance(d, dict):
+                if d.get("avg_salary"):
+                    all_salaries.append(d.get("avg_salary", 0))
+                if d.get("avg_performance_score"):
+                    all_perfs.append(d.get("avg_performance_score", 0))
+        avg_salary = sum(all_salaries) / len(all_salaries) if all_salaries else 70000
+        avg_perf = sum(all_perfs) / len(all_perfs) if all_perfs else 3.0
         
         if operation == "high_salary_low_perf":
             # Find departments with high salary but low performance
-            matching_depts = []
             for dept in departments:
                 if "department" in dept and "avg_salary" in dept and "avg_performance_score" in dept:
                     salary = dept.get("avg_salary", 0)
                     perf = dept.get("avg_performance_score", 0)
-                    # High salary: above average, Low performance: below 3.0
-                    if salary and perf and salary > 70000 and perf < 3.0:
+                    # High salary: above average, Low performance: below average
+                    if salary and perf and salary > avg_salary and perf < avg_perf:
                         matching_depts.append((dept["department"], salary, perf))
             
             if matching_depts:
@@ -1434,13 +1696,12 @@ def handle_correlation_query(query: str, intent: Dict[str, Any], result: Dict[st
         
         elif operation == "low_salary_high_perf":
             # Find departments with low salary but high performance
-            matching_depts = []
             for dept in departments:
                 if "department" in dept and "avg_salary" in dept and "avg_performance_score" in dept:
                     salary = dept.get("avg_salary", 0)
                     perf = dept.get("avg_performance_score", 0)
-                    # Low salary: below 70000, High performance: above 3.0
-                    if salary and perf and salary < 70000 and perf > 3.0:
+                    # Low salary: below average, High performance: above average
+                    if salary and perf and salary < avg_salary and perf > avg_perf:
                         matching_depts.append((dept["department"], salary, perf))
             
             if matching_depts:
@@ -1466,7 +1727,48 @@ def handle_correlation_query(query: str, intent: Dict[str, Any], result: Dict[st
             for dept_name, salary, perf in dept_data:
                 answer_parts.append(f"  • {dept_name}: Salary ${salary:,.2f}, Performance {perf:.2f}")
         
+        # Retrieve facts from KG for matching departments
+        if graph and len(graph) > 0 and matching_depts:
+            from knowledge import get_fact_source_document
+            
+            for dept_name, salary, perf in matching_depts[:5]:  # Limit to 5 departments
+                dept_name_lower = dept_name.lower()
+                dept_facts = []
+                
+                for s, p, o in graph:
+                    predicate_str = str(p)
+                    if any(x in predicate_str for x in ['fact_subject', 'fact_predicate', 'fact_object', 
+                                                        'has_details', 'source_document', 'uploaded_at',
+                                                        'is_inferred', 'confidence', 'agent_id']):
+                        continue
+                    
+                    subject = unquote(str(s).split(':')[-1] if ':' in str(s) else str(s)).replace('_', ' ')
+                    predicate = unquote(str(p).split(':')[-1] if ':' in str(p) else str(p)).replace('_', ' ')
+                    obj = str(o)
+                    
+                    fact_text = f"{subject} {predicate} {obj}".lower()
+                    
+                    # Check if fact mentions this department
+                    if dept_name_lower in fact_text or dept_name_lower.replace('/', ' ') in fact_text:
+                        sources = get_fact_source_document(subject, predicate, obj)
+                        is_operational = any('operational_insights' in str(src).lower() for src, _ in sources)
+                        
+                        if not is_operational:  # Only document_agent facts
+                            dept_facts.append({
+                                "fact_text": f"{subject} {predicate} {obj}",
+                                "subject": subject,
+                                "predicate": predicate,
+                                "object": obj,
+                                "source": "document_agent"
+                            })
+                
+                # Add up to 3 facts per department
+                for fact in dept_facts[:3]:
+                    facts.append(fact)
+                    answer_parts.append(f"      - {fact['fact_text']}")
+        
         result["answer"] = "\n".join(answer_parts)
+        result["facts_used"] = facts[:50]  # Limit total facts
         return result
         
     except Exception as e:

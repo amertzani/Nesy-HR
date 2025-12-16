@@ -1,193 +1,148 @@
 """
-Document Metadata Management Module
-====================================
+Documents Store Module
+======================
 
-This module manages metadata about uploaded documents (name, size, type, 
-number of facts extracted). It stores this information in documents_store.json.
-
-Key Features:
-- Only stores documents that contributed facts (facts_extracted > 0)
-- Automatically cleans up documents without facts
-- Tracks document statistics
-
-Key Functions:
-- add_document(): Add new document metadata (only if facts_extracted > 0)
-- get_all_documents(): Get all document metadata
-- cleanup_documents_without_facts(): Remove documents with 0 facts
-- delete_document(): Delete a specific document
-
-Storage:
-- documents_store.json: JSON file with document metadata array
-
-Author: Research Brain Team
-Last Updated: 2025-01-15
+Provides access to stored document metadata.
 """
 
-import os
 import json
-from datetime import datetime
-from typing import List, Dict, Optional
+import os
+from typing import List, Dict, Any
 
-DOCUMENTS_FILE = "documents_store.json"
 
-def load_documents() -> List[Dict]:
-    """Load documents from storage"""
-    try:
-        if os.path.exists(DOCUMENTS_FILE):
-            with open(DOCUMENTS_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data.get('documents', [])
-        return []
-    except Exception as e:
-        print(f"Error loading documents: {e}")
-        return []
-
-def save_documents(documents: List[Dict]):
-    """Save documents to storage"""
-    try:
-        data = {
-            'last_updated': datetime.now().isoformat(),
-            'total_documents': len(documents),
-            'documents': documents
-        }
-        with open(DOCUMENTS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        return True
-    except Exception as e:
-        print(f"Error saving documents: {e}")
-        return False
-
-def add_document(name: str, size: int, file_type: str, facts_extracted: int = 0, agent_id: Optional[str] = None) -> Dict:
+def get_all_documents() -> List[Dict[str, Any]]:
     """
-    Add a new document to storage.
-    IMPORTANT: Only saves documents with facts_extracted > 0.
-    Documents with 0 facts are NEVER saved.
+    Get all documents from the documents store.
+    
+    Returns:
+        List of document dictionaries
+    """
+    store_file = "documents_store.json"
+    
+    if not os.path.exists(store_file):
+        return []
+    
+    try:
+        with open(store_file, 'r') as f:
+            data = json.load(f)
+            return data.get('documents', [])
+    except Exception:
+        return []
+
+
+def add_document(
+    name: str,
+    file_type: str,
+    file_path: str,
+    size: int = 0
+) -> None:
+    """
+    Add a document to the documents store.
     
     Args:
         name: Document name
+        file_type: File extension/type
+        file_path: Path to the file
         size: File size in bytes
-        file_type: File type (pdf, docx, txt, csv)
-        facts_extracted: Number of facts extracted
-        agent_id: ID of the worker agent that processed this document
     """
-    # NEVER save documents with 0 facts
-    if facts_extracted <= 0:
-        print(f"⚠️  Skipping document {name}: has 0 facts (not saved)")
-        return None
+    store_file = "documents_store.json"
     
-    documents = load_documents()
+    # Load existing documents
+    if os.path.exists(store_file):
+        try:
+            with open(store_file, 'r') as f:
+                data = json.load(f)
+        except Exception:
+            data = {"documents": [], "last_updated": None, "total_documents": 0}
+    else:
+        data = {"documents": [], "last_updated": None, "total_documents": 0}
     
     # Check if document already exists
-    existing = next((d for d in documents if d['name'] == name), None)
+    existing = next((d for d in data.get("documents", []) if d.get("name") == name), None)
+    
     if existing:
-        # Update existing document
-        existing['size'] = size
-        existing['type'] = file_type
-        existing['uploaded_at'] = datetime.now().isoformat()
-        existing['facts_extracted'] = facts_extracted
-        existing['status'] = 'completed'
-        if agent_id:
-            existing['agent_id'] = agent_id
-        save_documents(documents)
-        return existing
+        # Update existing
+        existing.update({
+            "file_path": file_path,
+            "size": size,
+            "type": file_type,
+            "status": "completed"
+        })
+    else:
+        # Add new document
+        from datetime import datetime
+        # Get next ID
+        existing_ids = [int(d.get("id", "0")) for d in data.get("documents", []) if d.get("id", "0").isdigit()]
+        next_id = str(max(existing_ids) + 1) if existing_ids else "1"
+        
+        doc = {
+            "id": next_id,
+            "name": name,
+            "type": file_type,
+            "file_path": file_path,
+            "size": size,
+            "uploaded_at": datetime.now().isoformat(),
+            "status": "completed",
+            "facts_extracted": 0
+        }
+        data["documents"].append(doc)
     
-    # Create new document (only if facts_extracted > 0)
-    new_doc = {
-        'id': str(len(documents) + 1),
-        'name': name,
-        'type': file_type,
-        'size': size,
-        'uploaded_at': datetime.now().isoformat(),
-        'status': 'completed',
-        'facts_extracted': facts_extracted
-    }
+    # Update metadata
+    from datetime import datetime
+    data["last_updated"] = datetime.now().isoformat()
+    data["total_documents"] = len(data.get("documents", []))
     
-    # Add agent_id if provided
-    if agent_id:
-        new_doc['agent_id'] = agent_id
-    
-    documents.append(new_doc)
-    save_documents(documents)
-    return new_doc
-
-def get_document_by_name(name: str) -> Optional[Dict]:
-    """Get a document by name"""
-    documents = load_documents()
-    return next((d for d in documents if d['name'] == name), None)
-
-def get_all_documents() -> List[Dict]:
-    """Get all documents"""
-    return load_documents()
+    # Save
+    with open(store_file, 'w') as f:
+        json.dump(data, f, indent=2)
 
 
-def delete_document(document_id: str) -> bool:
-    """Delete a document by ID"""
-    documents = load_documents()
-    original_count = len(documents)
-    documents = [d for d in documents if d.get('id') != document_id]
-    
-    if len(documents) < original_count:
-        save_documents(documents)
-        return True
-    return False
-
-def delete_all_documents() -> int:
-    """Delete all documents and return the count deleted"""
-    documents = load_documents()
-    count = len(documents)
-    if count > 0:
-        save_documents([])  # Save empty list
-    return count
-
-def cleanup_documents_without_facts() -> int:
+def delete_document(name: str = None, document_id: str = None) -> bool:
     """
-    PERMANENTLY remove documents that have facts_extracted=0 OR documents whose
-    claimed facts don't actually exist in the knowledge graph.
+    Delete a document from the documents store.
     
-    This ensures documents from previous sessions that don't have facts are removed,
-    and also removes documents that claim to have facts but those facts were deleted
-    or never actually added to the graph.
+    Args:
+        name: Document name to delete
+        document_id: Document ID to delete
     
     Returns:
-        Number of documents removed
+        True if deleted, False if not found
     """
-    documents = load_documents()
+    store_file = "documents_store.json"
+    
+    if not os.path.exists(store_file):
+        return False
+    
+    try:
+        with open(store_file, 'r') as f:
+            data = json.load(f)
+    except Exception:
+        return False
+    
+    documents = data.get("documents", [])
     original_count = len(documents)
     
-    # Import knowledge graph to verify facts exist
-    try:
-        from knowledge import graph as kb_graph
-        graph_fact_count = len(kb_graph)
-    except:
-        # If we can't load the graph, assume it's empty
-        graph_fact_count = 0
-        print("⚠️  Warning: Could not load knowledge graph for verification")
+    # Remove document by name or ID
+    if name:
+        documents = [d for d in documents if d.get("name") != name]
+    elif document_id:
+        documents = [d for d in documents if d.get("id") != document_id]
+    else:
+        return False
     
-    # PERMANENTLY REMOVE all documents with facts_extracted = 0
-    # OR documents that claim facts but the graph is empty/has fewer facts
-    cleaned_documents = []
-    removed_count = 0
+    # Check if anything was removed
+    if len(documents) == original_count:
+        return False
     
-    for doc in documents:
-        facts_claimed = doc.get('facts_extracted', 0)
-        
-        if facts_claimed <= 0:
-            # Document has 0 facts - PERMANENTLY REMOVE IT
-            removed_count += 1
-            print(f"   🗑️  Removing {doc.get('name', 'unknown')}: claims 0 facts")
-        elif graph_fact_count == 0:
-            # Graph is empty but document claims facts - REMOVE IT
-            removed_count += 1
-            print(f"   🗑️  Removing {doc.get('name', 'unknown')}: claims {facts_claimed} facts but graph is empty")
-        else:
-            # Document has facts - KEEP IT (we trust the count if graph has facts)
-            cleaned_documents.append(doc)
+    # Update metadata
+    from datetime import datetime
+    data["documents"] = documents
+    data["last_updated"] = datetime.now().isoformat()
+    data["total_documents"] = len(documents)
     
-    if removed_count > 0:
-        save_documents(cleaned_documents)
-        print(f"🧹 PERMANENTLY removed {removed_count} documents without valid facts (from {original_count} total)")
-        print(f"✅ {len(cleaned_documents)} documents with facts remain")
-        print(f"📊 Knowledge graph has {graph_fact_count} facts")
+    # Save
+    with open(store_file, 'w') as f:
+        json.dump(data, f, indent=2)
     
-    return removed_count
+    return True
 
