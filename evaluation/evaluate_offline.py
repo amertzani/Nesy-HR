@@ -20,7 +20,8 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from collections import defaultdict
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path to import from root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     from answer_query_terminal import answer_query
@@ -39,7 +40,7 @@ except ImportError:
 
 def load_test_scenarios() -> List[Dict[str, Any]]:
     """Load test scenarios with ground truth."""
-    scenarios_file = "test_scenarios.json"
+    scenarios_file = os.path.join(os.path.dirname(__file__), "test_scenarios.json")
     if not os.path.exists(scenarios_file):
         print(f"❌ Test scenarios file not found: {scenarios_file}")
         return []
@@ -502,7 +503,7 @@ def test_consistency(query: str, num_runs: int = 3) -> Dict[str, Any]:
 
 def generate_evaluation_report(
     evaluations: List[Dict[str, Any]],
-    output_file: str = "offline_evaluation_report.txt"
+    output_file: str = os.path.join(os.path.dirname(__file__), "offline_evaluation_report.txt")
 ) -> str:
     """Generate comprehensive evaluation report."""
     report = []
@@ -1051,7 +1052,7 @@ Examples:
     parser.add_argument("--evidence", action="store_true", help="Test evidence retrieval scenarios")
     parser.add_argument("--max-queries", type=int, help="Maximum queries per scenario")
     parser.add_argument("--consistency", help="Test consistency of a specific query")
-    parser.add_argument("--output", default="offline_evaluation_report.txt", help="Output file")
+    parser.add_argument("--output", default=os.path.join(os.path.dirname(__file__), "offline_evaluation_report.txt"), help="Output file")
     
     args = parser.parse_args()
     

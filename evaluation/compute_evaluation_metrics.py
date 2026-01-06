@@ -644,9 +644,11 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Compute evaluation metrics from offline report')
-    parser.add_argument('--report', default='offline_evaluation_report.txt',
+    import os
+    eval_dir = os.path.dirname(__file__)
+    parser.add_argument('--report', default=os.path.join(eval_dir, 'offline_evaluation_report.txt'),
                        help='Path to offline evaluation report')
-    parser.add_argument('--output', default='evaluation_metrics.json',
+    parser.add_argument('--output', default=os.path.join(eval_dir, 'evaluation_metrics.json'),
                        help='Output JSON file for metrics')
     parser.add_argument('--group-by', choices=['scenario_type', 'k', 'all'],
                        default='scenario_type', help='Grouping for aggregation')
