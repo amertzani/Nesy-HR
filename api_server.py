@@ -190,11 +190,11 @@ async def upload_documents(files: List[UploadFile] = File(...)):
                 # are computed directly from the CSV using pandas, so they
                 # remain fully functional.
                 print(
-                    f\"ℹ️  Skipping heavy per-cell fact extraction for {file.filename} "
-                    \"(agent_system not available). Operational insights and statistics "
-                    \"will still be computed from the CSV.\"
+                    f"ℹ️  Skipping heavy per-cell fact extraction for {file.filename} "
+                    "(agent_system not available). Operational insights and statistics "
+                    "will still be computed from the CSV."
                 )
-                result = {\"facts_count\": 0, \"status\": \"processed_light\"}
+                result = {"facts_count": 0, "status": "processed_light"}
             
             # Add to documents store with facts count
             add_document(
