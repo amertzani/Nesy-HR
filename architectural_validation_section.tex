@@ -1,0 +1,40 @@
+\section{Architectural Validation of Trustworthiness}
+
+The evaluation focuses on validating architectural properties rather than benchmarking model performance. We employ trust-oriented metrics such as traceability completeness, absence of unsupported claims, task-level correctness, and latency. The results demonstrate that the proposed architecture enforces trustworthiness as an invariant system property.
+
+\subsection{Evaluation Methodology}
+
+Our evaluation framework validates four architectural properties that collectively ensure trustworthiness:
+
+\textbf{Traceability Completeness (T$_q$/D$_q$):} For each query $q$, we measure the ratio of facts shown in evidence (T$_q$) to the number of required facts (D$_q$). This metric validates that the architecture makes all necessary evidence visible to users, enabling verification of claims. A value of 1.0 indicates that all required facts are traceable, while lower values indicate gaps in evidence visibility. The required facts D$_q$ are estimated based on query type: distribution queries require one fact per entity mentioned, single-entity queries require at least one fact, and comparison queries require facts supporting the comparison result.
+
+\textbf{Absence of Unsupported Claims:} We extract factual claims from each response and verify that each claim is supported by evidence facts retrieved from the knowledge graph. The metric is computed as 1 - (Unsupported Claims / Total Claims), where a claim is considered unsupported if its key entities, values, or relationships cannot be found in the retrieved evidence set. This metric validates the architectural constraint that responses are assembled from retrieved symbolic facts rather than generated through free-form LLM text generation.
+
+\textbf{Task-Level Correctness:} We compare system responses against ground truth answers to measure whether the architecture produces correct results when evidence is available. This metric validates that the deterministic query processing and evidence-based response assembly do not compromise answer accuracy. Correctness is evaluated through fuzzy matching that considers key values (numbers, entity names) and semantic equivalence.
+
+\textbf{Response Latency:} We measure end-to-end response time from query submission to response delivery. This metric validates that the architectural design (deterministic processing, knowledge graph traversal, direct CSV computation) maintains acceptable performance characteristics. Latency is measured as an architectural property rather than a model performance metric, reflecting the system's efficiency in evidence retrieval and response assembly.
+
+\subsection{Architectural Invariants}
+
+These metrics validate that the architecture enforces trustworthiness as an invariant system property:
+
+\textbf{Evidence-Bounded Responses:} The traceability completeness metric validates that responses include sufficient evidence to verify claims. The absence of unsupported claims metric validates that all claims are grounded in retrieved evidence. Together, these metrics demonstrate that the architecture prevents hallucination through structural constraints rather than post-hoc filtering.
+
+\textbf{Deterministic Behavior:} Task-level correctness and latency metrics validate that the deterministic query processing (rule-based pattern matching, knowledge graph traversal, direct computation) produces consistent, correct results. The architecture's avoidance of LLM-based query interpretation and response generation ensures that identical queries produce identical responses, enabling reproducibility and auditability.
+
+\textbf{Provenance Preservation:} The traceability completeness metric implicitly validates that the architecture preserves provenance information (source documents, agent attribution) throughout the query processing pipeline. Evidence facts include source attribution, enabling users to trace claims back to original documents.
+
+\subsection{Results Interpretation}
+
+Results are interpreted as architectural properties rather than model performance benchmarks:
+
+\textbf{High Traceability Completeness:} Indicates that the architecture successfully makes evidence visible to users, fulfilling the governance requirement of transparency. Low traceability suggests gaps in evidence retrieval or display mechanisms.
+
+\textbf{High Absence of Unsupported Claims:} Indicates that the architectural constraints (evidence-bounded generation, no free-form LLM text) successfully prevent hallucination. Low values suggest that some claims are not properly grounded in evidence.
+
+\textbf{High Task Correctness:} Indicates that the deterministic processing and evidence-based assembly maintain answer accuracy. This validates that architectural constraints do not compromise correctness.
+
+\textbf{Low Latency:} Indicates that the architectural design (symbolic reasoning, direct computation) maintains efficiency. This validates that governance mechanisms do not introduce unacceptable performance overhead.
+
+These metrics collectively demonstrate that the proposed architecture enforces trustworthiness as a structural property, not as an external validation layer. The system's design ensures that trustworthiness is maintained by construction rather than by verification.
+

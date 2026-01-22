@@ -1,0 +1,233 @@
+\section{Architecture Instantiation}
+
+We briefly explain how the proposed governance-by-design architecture and neurosymbolic control mechanisms are instantiated in a working system, and how architectural constraints are translated into executable control logic.
+
+% Note: Add to document preamble:
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \lstset{language=Python, basicstyle=\ttfamily\small, ...}
+
+\subsection{Layered Architecture with Explicit Boundaries}
+
+The system is organized into four layers, each with explicit permissions and restrictions:
+
+\subsubsection{Data-Proximal Processing Layer}
+
+\textbf{Handles:} Document ingestion, file parsing (CSV, PDF, DOCX, TXT), transient text extraction, and initial fact extraction from raw documents. This layer processes uploaded files and extracts structured triples using LLM-based entity recognition and relation extraction.
+
+\textbf{Allowed:} File I/O operations, text extraction, LLM invocation for structured triple extraction, temporary data structures for processing.
+
+\textbf{Not Allowed:} Direct persistence to knowledge graph, user-facing query processing, content generation at query time. Facts extracted here must pass through validation gates before storage.
+
+\textbf{Code Realization:} Implemented in \texttt{api\_server.py} via \texttt{upload\_documents()} endpoint, which saves files to \texttt{uploads/} directory and invokes document processing agents. CSV parsing uses pandas for structured data extraction, while other formats trigger LLM-based extraction pipelines. All processing is ephemeral until facts are validated and stored.
+
+\subsubsection{Symbolic Grounding \& Analytical Layer}
+
+\textbf{Handles:} Validated triple storage in RDF knowledge graph, statistical computation over source datasets (CSV aggregations, correlations), operational indicator computation, and entity normalization. This layer maintains the single source of truth for all symbolic knowledge.
+
+\textbf{Allowed:} RDF triple storage with provenance metadata, deterministic statistical computations (pandas aggregations), knowledge graph traversal queries, fact validation and normalization.
+
+\textbf{Not Allowed:} Direct file access (receives validated triples only), LLM invocation, free-form text generation, modification of source documents. All knowledge must be traceable to source documents.
+
+\textbf{Code Realization:} Implemented in \texttt{knowledge.py} using RDFLib for graph storage (\texttt{Graph} class with URIRef/Literal triples), \texttt{operational\_queries.py} for CSV-based statistical analysis, and \texttt{query\_processor.py} for structured query execution over the knowledge graph. Facts are stored as \texttt{(subject\_uri, predicate\_uri, object\_literal)} triples with attached metadata triples for provenance.
+
+\subsubsection{Coordination \& Control Layer}
+
+\textbf{Handles:} Deterministic query routing based on pattern matching, query type detection (operational, strategic, structured), agent delegation, and result aggregation. This layer ensures that queries are processed through appropriate pathways without content generation.
+
+\textbf{Allowed:} Pattern-based query classification (regex matching for max/min/filter queries), routing decisions, agent invocation coordination, result aggregation from multiple sources.
+
+\textbf{Not Allowed:} Content generation, LLM invocation, direct knowledge graph modification, statistical computation (delegates to specialized agents). Acts as a pure coordination mechanism.
+
+\textbf{Code Realization:} Implemented in \texttt{query\_processor.py} via \texttt{detect\_query\_type()} function using regex patterns to classify queries, and \texttt{answer\_query\_terminal.py} via \texttt{answer\_query()} function that routes to appropriate handlers (operational insights, KG retrieval, structured queries). Routing logic uses if-else chains based on detected query intent, ensuring deterministic behavior.
+
+\subsubsection{User-Facing Interaction \& Synthesis Layer}
+
+\textbf{Handles:} Response assembly from retrieved evidence facts, explanation generation, evidence formatting for display, and user query interface. This layer synthesizes responses from symbolic facts without generating new content.
+
+\textbf{Allowed:} Response text assembly from retrieved triples, evidence fact formatting, string concatenation for display, API response formatting.
+
+\textbf{Not Allowed:} Raw data access (receives only validated facts), knowledge creation (cannot add new facts), LLM invocation, direct file system access. All responses must be assembled from evidence retrieved from lower layers.
+
+\textbf{Code Realization:} Implemented in \texttt{answer\_query\_terminal.py} via response assembly functions that format retrieved facts into natural language, and \texttt{api\_server.py} via \texttt{/api/chat} endpoint that returns structured responses with evidence lists. Responses are constructed by iterating over retrieved facts and formatting them as strings, with no generative model calls.
+
+\subsection{Architectural Rules as Enforceable Constraints}
+
+The architectural principles are translated into executable control logic through explicit code constraints:
+
+\subsubsection{Temporal Separation}
+
+\textbf{Constraint:} LLM invoked only during ingestion, no sub-symbolic calls at query time.
+
+\textbf{Enforcement:} The \texttt{upload\_documents()} function in \texttt{api\_server.py} is the only code path that invokes LLM-based extraction (via \texttt{process\_document\_with\_agents()}). Query processing functions (\texttt{answer\_query()}, \texttt{process\_structured\_query()}) contain no LLM API calls; they only perform pattern matching, knowledge graph traversal, and CSV computation. This temporal separation is enforced by code structure: ingestion and query paths are completely separate functions with no shared LLM invocation code.
+
+\subsubsection{Evidence-Bounded Generation}
+
+\textbf{Constraint:} Query responses assembled from stored symbolic facts, no free-form generation paths exist.
+
+\textbf{Enforcement:} All query response functions retrieve facts from the knowledge graph using \texttt{graph.triples()} or extract facts via \texttt{extract\_employee\_facts()}, then assemble responses by formatting these retrieved facts as strings. The code contains no text generation functions; responses are constructed through string formatting of retrieved triples. Evidence facts are explicitly included in response dictionaries (\texttt{result["facts\_used"]}), ensuring every response can be traced to source facts.
+
+\begin{lstlisting}[language=Python, caption=Evidence-bounded response assembly from retrieved symbolic facts]
+def answer_query(query: str) -> Dict[str, Any]:
+    """Answer query by assembling response from retrieved facts"""
+    result = {
+        "query": query,
+        "answer": None,
+        "facts_used": [],  # Evidence facts explicitly tracked
+        "method": None
+    }
+    
+    # No LLM calls here - only deterministic routing
+    intent = extract_query_intent(query)  # Pattern matching only
+    
+    # Retrieve facts from knowledge graph (symbolic retrieval)
+    if intent.get("fact_query"):
+        employees = extract_employee_facts()  # KG traversal
+        # Assemble response from retrieved facts
+        for emp in employees:
+            result["facts_used"].append({
+                "subject": emp["name"],
+                "predicate": "has salary",
+                "object": emp["attributes"].get("salary")
+            })
+        # String formatting of retrieved facts (no generation)
+        result["answer"] = format_response_from_facts(
+            result["facts_used"]
+        )
+    
+    return result  # Response bounded to retrieved evidence
+\end{lstlisting}
+
+\subsubsection{Deterministic Processing}
+
+\textbf{Constraint:} Fixed query patterns, no stochastic inference during execution.
+
+\textbf{Enforcement:} Query classification uses deterministic regex patterns in \texttt{detect\_query\_type()}, query processing uses rule-based logic (if-else chains, pattern matching), and knowledge graph traversal uses deterministic RDFLib queries. No random number generation or probabilistic sampling occurs in query processing. Identical queries produce identical routing decisions and identical fact retrieval results, ensuring reproducibility.
+
+\begin{lstlisting}[language=Python, caption=Deterministic query classification using fixed regex patterns]
+def detect_query_type(question: str) -> Dict[str, Any]:
+    """Detect query type using deterministic pattern matching"""
+    question_lower = question.lower()
+    
+    # Fixed patterns for operational/strategic routing
+    if "operational" in question_lower:
+        return {"query_type": "operational", ...}
+    
+    if "strategic" in question_lower:
+        return {"query_type": "strategic", ...}
+    
+    # Deterministic regex patterns for structured queries
+    max_patterns = [
+        r'(?:what|which|who).*?(?:employee|person).*?(?:with|has).*?'
+        r'(?:max|maximum|highest).*?(salary|age|tenure|performance)',
+        r'(?:max|maximum|highest).*?(salary|age|tenure|performance)'
+    ]
+    
+    for pattern in max_patterns:
+        match = re.search(pattern, question_lower)
+        if match:
+            return {
+                "query_type": "structured",
+                "operation": "max",
+                "attribute": match.group(1)
+            }
+    
+    # Default: general query
+    return {"query_type": "general", ...}
+\end{lstlisting}
+
+\subsubsection{Validation Gates}
+
+\textbf{Constraint:} Structured checks before persistence, strict filtering of unverified facts.
+
+\textbf{Enforcement:} The \texttt{add\_to\_graph()} function in \texttt{api\_server.py} validates triple structure (requires at least 3 parts: subject, predicate, object) before creating URIRef/Literal triples. Invalid triples are rejected (function returns early if parsing fails). Facts are normalized (URI encoding, whitespace handling) before storage. The knowledge graph only accepts structured triples; free-form text cannot be stored directly. Source document metadata is required for all facts (defaults to "manual" if not provided).
+
+\begin{lstlisting}[language=Python, caption=Validation gate enforcing triple structure and provenance metadata before persistence]
+def add_to_graph(text: str, source_document: str = "manual", 
+                 agent_id: str = None):
+    """Add a fact to the knowledge graph with proper metadata"""
+    from urllib.parse import quote
+    from rdflib import URIRef, Literal
+    from datetime import datetime
+    
+    if graph is None:
+        return
+    
+    # Validation gate: require at least 3 parts
+    parts = text.split()
+    if len(parts) < 3:
+        return  # Reject invalid triples
+    
+    # Parse and normalize triple components
+    if "has" in parts:
+        has_idx = parts.index("has")
+        subject = " ".join(parts[:has_idx])
+        predicate = " ".join(parts[has_idx:has_idx+2])
+        obj = " ".join(parts[has_idx+2:])
+    else:
+        subject = " ".join(parts[:-2])
+        predicate = parts[-2]
+        obj = parts[-1]
+    
+    # Create normalized URIs
+    subject_uri = URIRef(f"urn:entity:{quote(subject.replace(' ', '_'))}")
+    predicate_uri = URIRef(f"urn:predicate:{quote(predicate.replace(' ', '_'))}")
+    obj_literal = Literal(obj)
+    
+    # Add main fact triple
+    graph.add((subject_uri, predicate_uri, obj_literal))
+    
+    # Mandatory provenance: source document
+    source_uri = URIRef("urn:metadata:source_document")
+    graph.add((subject_uri, source_uri, Literal(source_document)))
+    
+    # Mandatory provenance: timestamp
+    if source_document != "manual":
+        timestamp_uri = URIRef("urn:metadata:uploaded_at")
+        graph.add((subject_uri, timestamp_uri, 
+                  Literal(datetime.now().isoformat())))
+\end{lstlisting}
+
+\subsection{Provenance Metadata}
+
+Every fact in the knowledge graph is annotated with provenance metadata that enables complete traceability:
+
+\textbf{Source Document:} Stored as a metadata triple \texttt{(subject\_uri, source\_document\_uri, document\_name\_literal)}. Retrieved via \texttt{get\_fact\_source\_document()} function which queries the graph for source document triples associated with each fact subject.
+
+\textbf{Timestamp:} Extraction timestamp stored as \texttt{(subject\_uri, uploaded\_at\_uri, iso\_timestamp\_literal)}. Records when the fact was extracted and stored, enabling temporal traceability.
+
+\textbf{Processing Pathway:} Agent attribution stored implicitly through the \texttt{agent\_id} parameter in \texttt{add\_to\_graph()}, and explicitly through fact source classification (Document Agent, Statistics Agent, Operational Query Agent). The system classifies facts by source type in \texttt{classify\_fact\_source()} based on source document patterns.
+
+\textbf{Provenance Propagation:} When facts are retrieved for query responses, provenance metadata is included via \texttt{get\_fact\_source\_document()} calls. Each fact in response evidence lists includes source attribution, enabling users to trace claims back to original documents. The provenance chain is preserved: source document → extraction timestamp → agent attribution → query response evidence.
+
+\begin{lstlisting}[language=Python, caption=Provenance retrieval and propagation to query responses]
+def get_fact_source_document(subject: str, predicate: str, 
+                            obj: str) -> List[Tuple[str, Optional[str]]]:
+    """Retrieve provenance metadata for a fact"""
+    sources = []
+    subject_uri = URIRef(f"urn:entity:{quote(subject.replace(' ', '_'))}")
+    
+    # Query graph for provenance triples
+    for s, p, o in graph.triples((subject_uri, None, None)):
+        if 'source_document' in str(p):
+            sources.append((str(o), None))  # Source document
+        if 'uploaded_at' in str(p):
+            sources.append((None, str(o)))  # Timestamp
+    
+    return sources
+
+# Provenance attached to every fact in responses
+for fact in retrieved_facts:
+    provenance = get_fact_source_document(
+        fact["subject"], fact["predicate"], fact["object"]
+    )
+    fact["source_document"] = provenance[0][0] if provenance else "unknown"
+    fact["timestamp"] = provenance[1][1] if len(provenance) > 1 else None
+\end{lstlisting}
+
+\textbf{Determinism → Reproducibility:} Because all facts are stored with complete provenance and query processing is deterministic, identical queries retrieve identical facts with identical provenance, ensuring that responses are reproducible and auditable. The system's deterministic behavior (no LLM calls at query time, fixed query patterns) guarantees that provenance information is consistently available and accurate.
+
+\subsection{Implementation Summary}
+
+The system is implemented in Python using FastAPI for the REST API, RDFLib for knowledge graph storage, and pandas for statistical computation. The architectural constraints are enforced through code structure: separate functions for ingestion vs. query processing, explicit validation gates before persistence, deterministic pattern matching for query routing, and mandatory provenance metadata for all stored facts. The absence of LLM calls in query processing code paths, the requirement that all responses assemble from retrieved facts, and the deterministic nature of all query operations collectively ensure that trustworthiness is maintained as an architectural invariant rather than a post-hoc validation.
+

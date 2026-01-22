@@ -1,0 +1,74 @@
+\section{Neurosymbolic Control Mechanisms}
+
+We describe the architectural mechanisms through which governance is enforced. These include evidence-bounded generation, explicit responsibility allocation, and conservative failure. Hallucination is prevented structurally by restricting the LLM to operate only over retrieved symbolic evidence, while accountability is achieved through explicit provenance and component-level responsibility.
+
+\subsection{Evidence-Bounded Generation}
+
+Our system enforces evidence-bounded generation through multiple architectural constraints:
+
+\textbf{Temporal Separation:} The LLM is exclusively invoked during document ingestion for fact extraction (entity recognition, relation extraction), never during query answering. This temporal boundary ensures that all query responses are generated through deterministic symbolic operations over the knowledge graph or direct statistical computation over source data, not through LLM text generation.
+
+\textbf{Structured Triple Constraint:} When the LLM processes documents during ingestion, it is constrained to produce structured triples in subject-predicate-object format. These triples are immediately validated by the Knowledge Graph Agent's normalization pipeline before storage. The LLM cannot directly modify the knowledge graph; all facts must pass through validation gates that enforce structural integrity and provenance annotation.
+
+\textbf{Query-Time Evidence Retrieval:} At query time, the Query Processor retrieves evidence facts from the knowledge graph using pattern-matching algorithms (e.g., extracting employee facts by name matching, filtering by predicate patterns). Responses are constructed by aggregating these retrieved symbolic facts, with each fact displaying its source document attribution. The system prioritizes evidence by source type (Document Agent facts > Operational facts > Statistics facts), ensuring that primary source evidence takes precedence.
+
+\textbf{No Free-Form Generation:} The system explicitly avoids LLM-based response generation at query time. Instead, answers are assembled from retrieved KG triples or computed directly from CSV datasets using pandas aggregations. This ensures that every claim in a response can be traced to specific knowledge graph facts or computational results, preventing hallucination through architectural design rather than post-hoc filtering.
+
+\subsection{Explicit Responsibility Allocation}
+
+Responsibility is allocated explicitly through agent-based architecture with well-defined boundaries:
+
+\textbf{Orchestrator Agent:} Coordinates query routing and delegates tasks to specialized agents, but does not generate content itself. It acts as a governance boundary, ensuring each agent operates within its designated scope without overstepping into other domains.
+
+\textbf{Knowledge Graph Agent:} Solely responsible for fact extraction, entity recognition, and relation extraction. All facts stored in the knowledge graph are attributed to this agent, enabling accountability for knowledge quality.
+
+\textbf{Statistics Agent:} Performs computational analysis directly on source datasets (CSV files), computing aggregations, correlations, and distributions. Results are grounded in verifiable data transformations, with no LLM intervention in statistical computation.
+
+\textbf{Operational Query Agent:} Handles operational-level multi-variable queries using both statistics and knowledge graph retrieval. It combines results from multiple sources but maintains clear attribution of which agent contributed which evidence.
+
+\textbf{Query Processor:} Implements deterministic, rule-based query interpretation using pattern matching (regex patterns for max/min queries, filter queries, count queries). It routes queries to appropriate agents based on detected query type, ensuring predictable behavior.
+
+\textbf{LLM Agent:} Bounded to document ingestion only, with responsibility limited to structured triple extraction. It cannot participate in query answering, ensuring that its generative capabilities are constrained to the ingestion phase where outputs can be validated before storage.
+
+\subsection{Conservative Failure}
+
+The system implements conservative failure modes that prioritize safety over completeness:
+
+\textbf{Empty Result on Missing Evidence:} When queries cannot be answered from available evidence, the system returns \texttt{None} or empty result sets rather than generating plausible-sounding but unsupported answers. For example, if an employee name is not found in the knowledge graph, the filter query returns \texttt{None} with an empty evidence list, not a fabricated answer.
+
+\textbf{Fallback Mechanisms:} The system attempts multiple computation paths (operational insights from CSV, then KG retrieval, then structured query processing) but fails gracefully if none succeed. Each fallback maintains the same conservative principle: no answer is preferable to an ungrounded answer.
+
+\textbf{Strict Evidence Filtering:} Fact-based queries apply strict filters to ensure only relevant evidence is included. For employee queries, the system only includes facts where the employee name appears in the subject or object of the triple, excluding facts that merely mention the employee name tangentially. This conservative filtering prevents over-inclusion of potentially irrelevant evidence.
+
+\textbf{Validation Gates:} Before storing facts extracted by the LLM, the Knowledge Graph Agent validates triple structure and enforces normalization. Invalid triples are rejected rather than stored, preventing corruption of the knowledge base.
+
+\textbf{Error Propagation:} When components fail (e.g., CSV file not found, knowledge graph unavailable), errors are propagated explicitly with clear error messages rather than masked by default responses. This ensures that system state is transparent to users.
+
+\subsection{Hallucination Prevention Through Structural Constraints}
+
+Hallucination is prevented structurally through the following mechanisms:
+
+\textbf{No Runtime LLM Generation:} By eliminating LLM-based text generation at query time, the system removes the primary source of hallucination risk. All responses are assembled from retrieved symbolic facts or deterministic computations, ensuring that every claim has a verifiable source.
+
+\textbf{Evidence Requirement:} Query responses must include evidence facts retrieved from the knowledge graph. The system computes traceability completeness metrics (T$_q$/D$_q$) to measure the proportion of required facts that are made visible. Responses with insufficient evidence are flagged, and the system prioritizes showing evidence over generating fluent text.
+
+\textbf{Source Attribution:} Every fact in query responses displays its source document, enabling users to verify claims against original data. The system classifies facts by source type (document agent, operational, statistics) and prioritizes primary source evidence, ensuring that derived or computed facts do not obscure original source attribution.
+
+\textbf{Deterministic Query Processing:} Query interpretation uses rule-based pattern matching rather than LLM-based intent detection. This ensures that identical queries produce identical interpretations and routing decisions, eliminating variance that could lead to inconsistent or hallucinated responses.
+
+\subsection{Accountability Through Provenance and Component Attribution}
+
+Accountability is achieved through explicit provenance tracking and component-level responsibility:
+
+\textbf{Provenance Metadata:} Every fact in the knowledge graph is annotated with source document identifiers, extraction timestamps, and agent identifiers. This enables complete traceability from any query response back to source documents and extraction processes. The system's \texttt{get\_fact\_source\_document()} function retrieves this provenance information for every fact used in responses.
+
+\textbf{Agent Attribution:} All knowledge artifacts are tagged with the agent responsible for their creation (KG Agent for extracted facts, Statistics Agent for computed aggregations, Operational Query Agent for combined results). This enables accountability at the component level, allowing users to understand which agents contributed to each response.
+
+\textbf{Evidence Prioritization:} The system prioritizes evidence by source quality (Document Agent facts > Operational facts > Statistics facts), ensuring that primary source evidence is always preferred. This prioritization is explicit and traceable, enabling users to understand the reliability hierarchy of different evidence types.
+
+\textbf{Query Method Attribution:} Each query response includes a \texttt{method} field indicating how the answer was computed (e.g., "operational\_insights\_api", "kg\_direct\_search", "structured\_query"). This enables users to understand the computation path and verify results against the appropriate source.
+
+\textbf{Deterministic Behavior:} By ensuring deterministic processing (identical queries produce identical responses), the system enables reproducibility and auditability. Users can verify responses by re-running queries and comparing results, and system behavior can be audited through query logs that capture both inputs and computation paths.
+
+These neurosymbolic control mechanisms work together to ensure that governance is not an external validation layer but is fundamentally embedded in the system's architecture, making trustworthiness a structural property rather than a post-hoc assessment.
+

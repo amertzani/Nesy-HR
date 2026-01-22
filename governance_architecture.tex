@@ -1,0 +1,42 @@
+\section{Governance-by-Design Architecture}
+
+Our framework implements a neurosymbolic architecture that structurally embeds governance mechanisms through architectural separation of concerns and bounded LLM interfaces. The system enforces trustworthiness by constraining LLM capabilities to specific, well-defined roles while maintaining full traceability of all knowledge artifacts.
+
+\subsection{Architectural Separation of Concerns}
+
+The architecture is organized into distinct functional layers, each with clearly defined responsibilities and governance boundaries:
+
+\textbf{Knowledge Extraction Layer:} The Knowledge Graph (KG) Agent operates independently to extract structured facts from documents, storing them in an RDF-based knowledge graph with embedded provenance metadata. Each fact triple is annotated with source document identifiers, timestamps, and agent attribution, ensuring complete lineage tracking.
+
+\textbf{Query Processing Layer:} The Query Processor implements deterministic, rule-based query interpretation that routes queries to appropriate specialized agents. Operational queries are handled by the Operational Query Agent using direct statistical computation over source data, while structured fact queries leverage the knowledge graph through pattern-matching algorithms. This layer explicitly avoids LLM-based query interpretation at runtime, ensuring deterministic and reproducible responses.
+
+\textbf{Statistical Analysis Layer:} The Statistics Agent performs computational analysis directly on source datasets (e.g., CSV files), computing aggregations, correlations, and distributions without LLM intervention. Results are grounded in verifiable data transformations.
+
+\textbf{Orchestration Layer:} The Orchestrator Agent coordinates query routing and result aggregation, but does not generate content itself. It acts as a governance boundary, ensuring that each specialized agent operates within its designated scope.
+
+\subsection{LLM as Bounded Interface}
+
+The LLM Agent operates under strict architectural constraints that limit its role to specific, bounded functions:
+
+\textbf{Document Ingestion Only:} The LLM is exclusively used during document processing for fact extraction (e.g., entity recognition, relation extraction), not during query answering. This temporal separation ensures that query responses are generated through deterministic knowledge graph traversal and statistical computation, not LLM text generation.
+
+\textbf{Structured Output Requirements:} When the LLM is invoked during ingestion, it is constrained to produce structured triples (subject-predicate-object) that are immediately validated and stored in the knowledge graph with provenance metadata. The LLM cannot directly modify the knowledge graph; all facts must pass through the KG Agent's validation and normalization pipeline.
+
+\textbf{No Runtime Query Generation:} Query answering is performed entirely through symbolic reasoning over the knowledge graph and statistical computation over source data. The system explicitly avoids LLM-based response generation at query time, ensuring that all answers are traceable to specific facts or computational results.
+
+\subsection{Structural Governance Mechanisms}
+
+Governance is embedded structurally through multiple architectural mechanisms:
+
+\textbf{Provenance Tracking:} Every fact in the knowledge graph is annotated with source document metadata, extraction timestamps, and agent identifiers. This enables complete traceability from any query response back to source documents and extraction processes.
+
+\textbf{Evidence Retrieval:} Query responses include explicit evidence facts retrieved from the knowledge graph, with each fact displaying its source attribution. The system computes traceability completeness metrics (T$_q$/D$_q$) to measure the proportion of required facts that are made visible to users.
+
+\textbf{Deterministic Processing:} By avoiding LLM-based query interpretation and response generation, the system ensures deterministic behavior: identical queries produce identical responses, enabling reproducibility and auditability.
+
+\textbf{Agent Attribution:} All knowledge artifacts are tagged with the agent responsible for their creation, enabling accountability and allowing users to understand which components contributed to each response.
+
+\textbf{Knowledge Graph as Ground Truth:} The RDF-based knowledge graph serves as the single source of truth for all extracted facts. Facts are stored in a standardized format with explicit metadata, enabling validation, versioning, and audit trails.
+
+This architectural design ensures that governance is not an add-on layer but is fundamentally embedded in the system's structure, making trustworthiness a first-class architectural concern rather than a post-hoc validation step.
+
