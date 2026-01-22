@@ -1,0 +1,104 @@
+{
+  "evidence_boundedness": {
+    "total_queries": 24,
+    "responses_with_evidence": 9,
+    "responses_without_evidence": 15,
+    "answers_with_evidence": 9,
+    "answers_without_evidence": 15,
+    "examples": [
+      {
+        "type": "evidence_exists_answer_produced",
+        "query": "What is the average salary by department?",
+        "answer": "Average salary by department:\n  \u2022 Executive Office: $250,000.00\n  \u2022 IT/IS: $97,064.64\n  \u2022 Software E...",
+        "evidence_count": 28
+      },
+      {
+        "type": "evidence_exists_answer_produced",
+        "query": "What is the average salary by recruitment source?",
+        "answer": "Average salary by recruitment:\n  \u2022 Other: 83263.00\n  \u2022 Employee Referral: 77862.00\n  \u2022 Indeed: 75495...",
+        "evidence_count": 10
+      }
+    ],
+    "pct_with_evidence": 37.5,
+    "pct_without_evidence": 62.5,
+    "pct_answers_with_evidence": 37.5
+  },
+  "conservative_failure": {
+    "categories": {
+      "fully_supported": 9,
+      "partially_supported": 0,
+      "unsupported": 15
+    },
+    "handling": {
+      "fully_supported": {
+        "full_answer": 9,
+        "partial_answer": 0,
+        "no_answer": 0
+      },
+      "partially_supported": {
+        "full_answer": 0,
+        "partial_answer": 0,
+        "no_answer": 0
+      },
+      "unsupported": {
+        "full_answer": 13,
+        "partial_answer": 2,
+        "no_answer": 0
+      }
+    },
+    "total": 24
+  },
+  "provenance_completeness": {
+    "total_facts": 264,
+    "facts_with_source": 225,
+    "facts_with_timestamp": 225,
+    "facts_with_pathway": 225,
+    "facts_with_complete": 225,
+    "pct_complete": 85.22727272727273,
+    "example_chain": {
+      "query": "What is the average salary by department?",
+      "fact": {
+        "subject": "Average salary for department Admin Offices",
+        "predicate": "is",
+        "object": "71791",
+        "fact_text": "Average salary for department Admin Offices \u2192 is \u2192 71791",
+        "is_operational": false,
+        "sources": [
+          "unknown"
+        ],
+        "source_document": "operational_insights|2025-12-13T20:57:59.928783",
+        "timestamp": "2025-12-13T20:57:59.928783",
+        "agent_id": "operational_query_agent",
+        "source_type": "operational"
+      },
+      "source": "operational_insights|2025-12-13T20:57:59.928783",
+      "timestamp": "2025-12-13T20:57:59.928783",
+      "pathway": "operational_query_agent"
+    }
+  },
+  "determinism": {
+    "total_queries": 24,
+    "num_runs": 3,
+    "consistent": 24,
+    "inconsistent": 0,
+    "consistency_pct": 100.0,
+    "inconsistencies": []
+  },
+  "summary": {
+    "evidence_boundedness": {
+      "pct_with_evidence": 37.5,
+      "pct_answers_with_evidence": 37.5
+    },
+    "conservative_failure": {
+      "fully_supported": 9,
+      "partially_supported": 0,
+      "unsupported": 15
+    },
+    "provenance_completeness": {
+      "pct_complete": 85.22727272727273
+    },
+    "determinism": {
+      "consistency_pct": 100.0
+    }
+  }
+}

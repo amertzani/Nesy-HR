@@ -202,6 +202,41 @@ def extract_query_intent(query: str) -> Dict[str, Any]:
     return intent
 
 
+def enrich_fact_with_provenance(fact: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Ensure a fact has complete provenance metadata.
+    If missing, retrieve from knowledge graph.
+    """
+    # If already has provenance, return as-is
+    if (fact.get("source_document") and fact.get("source_document") != "unknown" and
+        fact.get("timestamp") and fact.get("source_type")):
+        return fact
+    
+    # Try to get provenance from KG
+    subject = fact.get("subject", "")
+    predicate = fact.get("predicate", "")
+    obj = fact.get("object", "")
+    
+    if subject and predicate and obj:
+        try:
+            from knowledge import get_fact_provenance
+            provenance = get_fact_provenance(subject, predicate, obj)
+            
+            # Update fact with provenance if missing
+            if not fact.get("source_document") or fact.get("source_document") == "unknown":
+                fact["source_document"] = provenance.get("source_document", "unknown")
+            if not fact.get("timestamp"):
+                fact["timestamp"] = provenance.get("timestamp")
+            if not fact.get("agent_id"):
+                fact["agent_id"] = provenance.get("agent_id")
+            if not fact.get("source_type") or fact.get("source_type") == "unknown":
+                fact["source_type"] = provenance.get("source_type", "unknown")
+        except Exception:
+            pass  # If provenance retrieval fails, keep fact as-is
+    
+    return fact
+
+
 def search_facts_for_answer(intent: Dict[str, Any], limit: int = 200) -> List[Dict[str, Any]]:
     """
     Search knowledge graph for facts matching the query intent.
@@ -295,13 +330,21 @@ def search_facts_for_answer(intent: Dict[str, Any], limit: int = 200) -> List[Di
         sources = get_fact_source_document(subject, predicate, obj)
         has_operational = any('operational_insights' in str(src).lower() for src, _ in sources)
         
+        # Get complete provenance metadata
+        from knowledge import get_fact_provenance
+        provenance = get_fact_provenance(subject, predicate, obj)
+        
         matches.append({
             "subject": subject,
             "predicate": predicate,
             "object": obj,
             "fact_text": f"{subject} → {predicate} → {obj}",
             "is_operational": has_operational,
-            "sources": [str(src) for src, _ in sources]
+            "sources": [str(src) for src, _ in sources],
+            "source_document": provenance.get("source_document", "unknown"),
+            "timestamp": provenance.get("timestamp"),
+            "agent_id": provenance.get("agent_id"),
+            "source_type": provenance.get("source_type", "unknown")
         })
         
         if len(matches) >= limit:
@@ -1078,12 +1121,20 @@ def handle_fact_based_query(query: str, intent: Dict[str, Any], result: Dict[str
                         
                         # Only include if name is in subject OR object (not just anywhere in the fact)
                         if name_in_subject or name_in_object:
+                            # Get complete provenance metadata
+                            from knowledge import get_fact_provenance
+                            provenance = get_fact_provenance(subject, predicate, obj)
+                            
                             emp_facts_from_kg.append({
                                 "fact_text": f"{subject} {predicate} {obj}",
                                 "subject": subject,
                                 "predicate": predicate,
                                 "object": obj,
-                                "source": "document_agent"
+                                "source": sources,  # Keep original format for compatibility
+                                "source_document": provenance.get("source_document", "unknown"),
+                                "timestamp": provenance.get("timestamp"),
+                                "agent_id": provenance.get("agent_id"),
+                                "source_type": provenance.get("source_type", "document_agent")
                             })
             
             # Combine results - ONLY use Document Agent facts
@@ -1186,19 +1237,35 @@ def handle_fact_based_query(query: str, intent: Dict[str, Any], result: Dict[str
                         if is_operational:
                             # Check if the fact is specifically about this department
                             if any(f"{keyword} department" in fact_text or f"department {keyword}" in fact_text for keyword in dept_keywords):
+                                # Get complete provenance
+                                from knowledge import get_fact_provenance
+                                provenance = get_fact_provenance(subject, predicate, obj)
+                                
                                 dept_facts.append({
                                     "fact_text": f"{subject} {predicate} {obj}",
                                     "subject": subject,
                                     "predicate": predicate,
-                                    "object": obj
+                                    "object": obj,
+                                    "source_document": provenance.get("source_document", "unknown"),
+                                    "timestamp": provenance.get("timestamp"),
+                                    "agent_id": provenance.get("agent_id"),
+                                    "source_type": provenance.get("source_type", "unknown")
                                 })
                         else:
                             # Document Agent facts - include if they mention this department
+                            # Get complete provenance
+                            from knowledge import get_fact_provenance
+                            provenance = get_fact_provenance(subject, predicate, obj)
+                            
                             dept_facts.append({
                                 "fact_text": f"{subject} {predicate} {obj}",
                                 "subject": subject,
                                 "predicate": predicate,
-                                "object": obj
+                                "object": obj,
+                                "source_document": provenance.get("source_document", "unknown"),
+                                "timestamp": provenance.get("timestamp"),
+                                "agent_id": provenance.get("agent_id"),
+                                "source_type": provenance.get("source_type", "unknown")
                             })
                 
                 if dept_facts:
@@ -1336,11 +1403,19 @@ def handle_fact_based_query(query: str, intent: Dict[str, Any], result: Dict[str
                                 
                                 # Only facts about this employee
                                 if emp_name_lower in fact_text or emp_name in f"{subject} {predicate} {obj}":
+                                    # Get complete provenance
+                                    from knowledge import get_fact_provenance
+                                    provenance = get_fact_provenance(subject, predicate, obj)
+                                    
                                     emp_facts.append({
                                         "fact_text": f"{subject} {predicate} {obj}",
                                         "subject": subject,
                                         "predicate": predicate,
-                                        "object": obj
+                                        "object": obj,
+                                        "source_document": provenance.get("source_document", "unknown"),
+                                        "timestamp": provenance.get("timestamp"),
+                                        "agent_id": provenance.get("agent_id"),
+                                        "source_type": provenance.get("source_type", "unknown")
                                     })
                             
                             if emp_facts:
@@ -1571,12 +1646,20 @@ def handle_strategic_query(query: str, intent: Dict[str, Any], result: Dict[str,
                                     is_operational = any('operational_insights' in str(src).lower() for src, _ in sources)
                                     
                                     if not is_operational:  # Only document_agent facts
+                                        # Get complete provenance
+                                        from knowledge import get_fact_provenance
+                                        provenance = get_fact_provenance(subject, predicate, obj)
+                                        
                                         emp_facts.append({
                                             "fact_text": f"{subject} {predicate} {obj}",
                                             "subject": subject,
                                             "predicate": predicate,
                                             "object": obj,
-                                            "source": "document_agent"
+                                            "source": "document_agent",
+                                            "source_document": provenance.get("source_document", "unknown"),
+                                            "timestamp": provenance.get("timestamp"),
+                                            "agent_id": provenance.get("agent_id"),
+                                            "source_type": provenance.get("source_type", "document_agent")
                                         })
                             
                             # Add up to 5 facts per employee
@@ -1754,12 +1837,20 @@ def handle_correlation_query(query: str, intent: Dict[str, Any], result: Dict[st
                         is_operational = any('operational_insights' in str(src).lower() for src, _ in sources)
                         
                         if not is_operational:  # Only document_agent facts
+                            # Get complete provenance
+                            from knowledge import get_fact_provenance
+                            provenance = get_fact_provenance(subject, predicate, obj)
+                            
                             dept_facts.append({
                                 "fact_text": f"{subject} {predicate} {obj}",
                                 "subject": subject,
                                 "predicate": predicate,
                                 "object": obj,
-                                "source": "document_agent"
+                                "source": "document_agent",
+                                "source_document": provenance.get("source_document", "unknown"),
+                                "timestamp": provenance.get("timestamp"),
+                                "agent_id": provenance.get("agent_id"),
+                                "source_type": provenance.get("source_type", "document_agent")
                             })
                 
                 # Add up to 3 facts per department

@@ -1,0 +1,241 @@
+/opt/anaconda3/lib/python3.9/site-packages/pandas/core/computation/expressions.py:21: UserWarning: Pandas requires version '2.8.4' or newer of 'numexpr' (version '2.8.1' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/opt/anaconda3/lib/python3.9/site-packages/pandas/core/arrays/masked.py:61: UserWarning: Pandas requires version '1.3.6' or newer of 'bottleneck' (version '1.3.4' currently installed).
+  from pandas.core import (
+📋 Loaded 24 test queries
+🔍 Running architectural property validation...
+================================================================================
+
+1️⃣  VALIDATING EVIDENCE-BOUNDEDNESS...
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+   Total queries: 24
+   Responses with evidence: 9 (37.5%)
+   Responses without evidence: 15 (62.5%)
+   Answers with evidence: 9 (37.5%)
+   ⚠️  Answers without evidence: 15 (PROBLEM!)
+
+   Examples:
+   - evidence_exists_answer_produced:
+     Query: What is the average salary by department?
+     Answer: Average salary by department:
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software E...
+     Evidence facts: 28
+   - evidence_exists_answer_produced:
+     Query: What is the average salary by recruitment source?
+     Answer: Average salary by recruitment:
+  • Other: 83263.00
+  • Employee Referral: 77862.00
+  • Indeed: 75495...
+     Evidence facts: 10
+
+2️⃣  VALIDATING CONSERVATIVE FAILURE BEHAVIOR...
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+
+   Category Distribution:
+   Category                  Count      Full Answer     Partial         No Answer      
+   ---------------------------------------------------------------------------
+   fully_supported           9          9               0               0              
+   partially_supported       0          0               0               0              
+   unsupported               15         13              2               0              
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+
+   Note: 5 queries use direct CSV computation (evidence-bounded but not KG facts)
+
+3️⃣  VALIDATING TRACEABILITY & PROVENANCE...
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+   Total facts in responses: 264
+   Facts with source document: 225 (85.2%)
+   Facts with timestamp: 225 (85.2%)
+   Facts with pathway: 225 (85.2%)
+   Facts with complete provenance: 225 (85.2%)
+
+   Example Provenance Chain:
+   Query: What is the average salary by department?
+   Fact: Average salary for department Admin Offices → is → 71791
+   Source Document: operational_insights|2025-12-13T20:57:59.928783
+   Timestamp: 2025-12-13T20:57:59.928783
+   Processing Pathway: operational_query_agent
+
+4️⃣  VALIDATING DETERMINISM & REPRODUCIBILITY...
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+   Queries tested: 24
+   Runs per query: 3
+   Consistent queries: 24 (100.0%)
+   Inconsistent queries: 0
+
+================================================================================
+✅ Validation complete!
+📊 Results saved to: hr_validation_results.json
+================================================================================

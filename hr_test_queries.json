@@ -1,0 +1,28 @@
+{
+  "queries": [
+    "What is the average salary by department?",
+    "What is the average salary by manager?",
+    "What is the average salary by recruitment source?",
+    "What is the average salary by department?",
+    "What is the performance distribution by recruitment source?",
+    "Which positions are included in the dataset?",
+    "Which department has the highest average salary?",
+    "What is the employee name of the employee with the maximum salary?",
+    "How many employees are in Production?",
+    "What is the average performance score by manager?",
+    "Which manager has the highest average engagement?",
+    "Retrieve five names of employees?",
+    "Retrieve names of employees in the Sales department?",
+    "Retrieve names of managers.",
+    "What is the department of Barbossa, Hector?",
+    "Who is the manager of Barbossa, Hector?",
+    "What is the position of Andreola, Colby?",
+    "What is the salary of Brown, Mia?",
+    "Retrieve facts related to employee Becker, Scott.",
+    "What is the salary of Brown, Mia?",
+    "What is the position of Bacong, Alejandro?",
+    "Which departments have high salaries but low performance?",
+    "Retrieve facts about the employee who has the highest salary.",
+    "Retrieve facts about the employee who has the lowest performance score."
+  ]
+}

@@ -1,0 +1,242 @@
+/opt/anaconda3/lib/python3.9/site-packages/pandas/core/computation/expressions.py:21: UserWarning: Pandas requires version '2.8.4' or newer of 'numexpr' (version '2.8.1' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/opt/anaconda3/lib/python3.9/site-packages/pandas/core/arrays/masked.py:61: UserWarning: Pandas requires version '1.3.6' or newer of 'bottleneck' (version '1.3.4' currently installed).
+  from pandas.core import (
+================================================================================
+QUERY ANSWERS
+================================================================================
+
+1. Query: What is the average salary by department?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: operational_insights_api
+Facts used: 28
+Answer: Average salary by department:
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
+
+2. Query: What is the average salary by manager?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: knowledge_graph_search
+Facts used: 0
+Answer: No relevant facts found in knowledge graph.
+
+3. Query: What is the average salary by recruitment source?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: average_listing
+Facts used: 10
+Answer: Average salary by recruitment:
+  • Other: 83263.00
+  • Employee Referral: 77862.00
+  • Indeed: 75495.00
+  • Diversity Job Fair: 72251.00
+  • Linkedin: 64903.00
+  • Careerbuilder: 63482.00
+  • Website: 61537.00
+  • Google Search: 60744.00
+  • On-Line Web Application: 52505.00
+
+4. Query: What is the average salary by department?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: operational_insights_api
+Facts used: 28
+Answer: Average salary by department:
+  • Executive Office: $250,000.00
+  • IT/IS: $97,064.64
+  • Software Engineering: $94,989.45
+  • Admin Offices: $71,791.89
+  • Sales: $69,061.26
+  • Production       : $59,953.55
+
+5. Query: What is the performance distribution by recruitment source?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: operational_insights_api
+Facts used: 10
+Answer: Distribution of performance by recruitment:
+  • Employee Referral: 3.10
+  • On-line Web application: 3.00
+  • LinkedIn: 3.00
+  • Other: 3.00
+  • Diversity Job Fair: 3.00
+  • Indeed: 2.98
+  • Google Search: 2.94
+  • CareerBuilder: 2.91
+  • Website: 2.77
+
+6. Query: Which positions are included in the dataset?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=None
+
+7. Query: Which department has the highest average salary?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: operational_insights_api
+Facts used: 28
+Answer: Executive Office has the highest average salary of $250,000.00
+
+8. Query: What is the employee name of the employee with the maximum salary?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=salary, group_by=None
+
+9. Query: How many employees are in Production?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=None
+
+10. Query: What is the average performance score by manager?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: average_listing
+Facts used: 10
+Answer: Average performance by manager:
+  • Leblanc: 3.00
+  • Alex Sweetwater: 3.00
+  • Board Of Directors: 3.00
+  • Brian Champaigne: 3.00
+  • David Stanley: 3.00
+  • Elijiah Gray: 3.00
+  • Eric Dougall: 3.00
+  • Janet King: 3.00
+  • Jennifer Zamora: 3.00
+  • Kelley Spirea: 3.00
+  • Ketsia Liebig: 3.00
+  • Lynn Daneault: 3.00
+  • Simon Roup: 3.00
+  • Webster Butler: 3.00
+  • Amy Dunn: 2.00
+
+11. Query: Which manager has the highest average engagement?
+--------------------------------------------------------------------------------
+✅ Found CSV from document agents: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+📊 Loading CSV: /Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv
+✅ Loaded 311 rows, 36 columns
+Method: operational_insights_api
+Facts used: 50
+Answer: Eric Dougall has the highest average engagement of 4.58
+
+12. Query: Retrieve five names of employees?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=None
+
+13. Query: Retrieve names of employees in the Sales department?
+--------------------------------------------------------------------------------
+Method: department_fact_retrieval
+Facts used: 50
+Answer: Facts about employees in Sales department (156 facts):
+  1. HRDataset v14.csv Row 32 has Department Sales
+  2. HRDataset v14.csv Row 258 has Department Sales
+  3. Employee Strong, Caitrin has Department Sales
+  4. HRDataset v14.csv Row 104 has Department Sales
+  5. department is Sales is 2.84
+  6. average salary in department Sales is 69061
+  7. HRDataset v14.csv Row 282 has Position Area Sales Manager
+  8. Employee Houlihan, Debra has Department Sales
+  9. HRDataset v14.csv Row 202 has Position...
+
+14. Query: Retrieve names of managers.
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=manager
+
+15. Query: What is the department of Barbossa, Hector?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=department
+
+16. Query: Who is the manager of Barbossa, Hector?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=manager
+
+17. Query: What is the position of Andreola, Colby?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=None
+
+18. Query: What is the salary of Brown, Mia?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=salary, group_by=None
+
+19. Query: Retrieve facts related to employee Becker, Scott.
+--------------------------------------------------------------------------------
+📊 Extracted facts for Becker, Scott: 33 attributes from 155 triples (skipped 122 metadata)
+Method: employee_fact_retrieval
+Facts used: 50
+Answer: 
+Related facts (67):
+  1. Employee Becker, Scott has DaysLateLast30 0
+  2. Employee Becker, Scott has State MA
+  3. Becker, Scott has LastPerformanceReview Date 1/11/2019
+  4. Employee Becker, Scott has RecruitmentSource LinkedIn
+  5. Employee Becker, Scott has CitizenDesc US Citizen
+  6. Becker, Scott has EmpID 10277
+  7. Becker, Scott has PerformanceScore Fully Meets
+  8. Becker, Scott has PositionID 19
+  9. Employee Becker, Scott has Termd 0
+  10. Becker, Scott has DaysLateLast30 0
+  11. Beck...
+
+20. Query: What is the salary of Brown, Mia?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=salary, group_by=None
+
+21. Query: What is the position of Bacong, Alejandro?
+--------------------------------------------------------------------------------
+Method: None
+Facts used: 0
+Answer: Could not parse query. Detected: metric=None, group_by=None
+
+22. Query: Which departments have high salaries but low performance?
+--------------------------------------------------------------------------------
+Method: correlation_analysis
+Facts used: 0
+Answer: No departments found with high salaries but low performance.
+
+23. Query: Retrieve facts about the employee who has the highest salary.
+--------------------------------------------------------------------------------
+Method: highest_salary_facts
+Facts used: 0
+Answer: Could not determine employee with highest salary.
+
+24. Query: Retrieve facts about the employee who has the lowest performance score.
+--------------------------------------------------------------------------------
+Method: lowest_performance_facts
+Facts used: 0
+Answer: Could not determine employee with lowest performance.

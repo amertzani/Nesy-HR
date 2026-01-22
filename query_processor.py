@@ -286,11 +286,19 @@ def extract_employee_facts() -> List[Dict[str, Any]]:
                 employees[employee_name]["attributes"][attr_name] = object_val
             # Otherwise, keep the first (original) value
             
+            # Get complete provenance metadata
+            from knowledge import get_fact_provenance
+            provenance = get_fact_provenance(subject, predicate, object_val)
+            
             employees[employee_name]["facts"].append({
                 "subject": subject,
                 "predicate": predicate,
                 "object": object_val,
-                "source": get_fact_source_document(subject, predicate, object_val)
+                "source": get_fact_source_document(subject, predicate, object_val),
+                "source_document": provenance.get("source_document", "unknown"),
+                "timestamp": provenance.get("timestamp"),
+                "agent_id": provenance.get("agent_id"),
+                "source_type": provenance.get("source_type", "unknown")
             })
         
         # Also check for facts where we can infer employee relationships
@@ -507,11 +515,19 @@ def extract_single_employee_facts(employee_name: str) -> List[Dict[str, Any]]:
             employees[employee_normalized]["attributes"][attr_name] = object_val
         # Otherwise, keep the first (original) value
         
+        # Get complete provenance metadata
+        from knowledge import get_fact_provenance
+        provenance = get_fact_provenance(subject, predicate, object_val)
+        
         employees[employee_normalized]["facts"].append({
             "subject": subject,
             "predicate": predicate,
             "object": object_val,
-            "source": []  # Skip expensive source lookup for filter queries
+            "source": get_fact_source_document(subject, predicate, object_val),
+            "source_document": provenance.get("source_document", "unknown"),
+            "timestamp": provenance.get("timestamp"),
+            "agent_id": provenance.get("agent_id"),
+            "source_type": provenance.get("source_type", "unknown")
         })
     
     print(f"📊 Extracted facts for {employee_normalized}: {len(employees.get(employee_normalized, {}).get('attributes', {}))} attributes from {len(matching_triples)} triples (skipped {skipped_metadata} metadata)")

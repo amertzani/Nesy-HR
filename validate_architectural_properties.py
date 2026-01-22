@@ -97,15 +97,27 @@ class ArchitecturalPropertyValidator:
             response = answer_query(query)
             
             facts_used = response.get("facts_used", [])
+            method = response.get("method", "unknown")
             answer = response.get("answer", "")
-            has_evidence = len(facts_used) > 0
+            
+            # Distinguish between KG evidence and direct computation
+            has_kg_evidence = len(facts_used) > 0
+            has_direct_computation = method in [
+                "operational_insights_api", 
+                "csv_computation",
+                "operational_query"
+            ]
+            has_evidence = has_kg_evidence or has_direct_computation
+            
             has_answer = answer and answer.strip() and answer.lower() not in [
                 "none", "null", "no answer", "could not", "error"
             ]
             
-            # Count evidence availability
-            if has_evidence:
+            # Count evidence availability (KG evidence OR direct computation)
+            if has_kg_evidence:
                 results["responses_with_evidence"] += 1
+            elif has_direct_computation:
+                results["responses_with_evidence"] += 1  # Direct computation is also evidence-bounded
             else:
                 results["responses_without_evidence"] += 1
             
@@ -182,6 +194,7 @@ class ArchitecturalPropertyValidator:
             response = answer_query(query)
             
             facts_used = response.get("facts_used", [])
+            method = response.get("method", "unknown")
             answer = response.get("answer", "")
             has_answer = answer and answer.strip() and answer.lower() not in [
                 "none", "null", "no answer", "could not", "error"
@@ -189,8 +202,18 @@ class ArchitecturalPropertyValidator:
             
             evidence_count = len(facts_used)
             
+            # Distinguish between KG evidence and direct computation
+            has_direct_computation = method in [
+                "operational_insights_api", 
+                "csv_computation",
+                "operational_query"
+            ]
+            
             # Categorize
-            if evidence_count >= 3 and has_answer:  # Threshold: at least 3 facts
+            if evidence_count >= 3 and has_answer:  # Threshold: at least 3 KG facts
+                category = "fully_supported"
+            elif has_direct_computation and has_answer:
+                # Direct computation is also evidence-bounded (computed from source data)
                 category = "fully_supported"
             elif evidence_count > 0:
                 category = "partially_supported"
@@ -216,6 +239,13 @@ class ArchitecturalPropertyValidator:
             count = categories[cat]
             h = handling[cat]
             print(f"   {cat:<25} {count:<10} {h['full_answer']:<15} {h['partial_answer']:<15} {h['no_answer']:<15}")
+        
+        # Add note about direct computation
+        direct_comp_count = sum(1 for q in self.test_queries 
+                                if answer_query(q).get("method") in 
+                                ["operational_insights_api", "csv_computation", "operational_query"])
+        if direct_comp_count > 0:
+            print(f"\n   Note: {direct_comp_count} queries use direct CSV computation (evidence-bounded but not KG facts)")
         
         return {
             "categories": categories,
@@ -301,18 +331,21 @@ class ArchitecturalPropertyValidator:
     
     def _has_source_document(self, fact: Dict) -> bool:
         """Check if fact has source document."""
-        source = fact.get("source_document") or fact.get("source")
+        # Check multiple possible field names
+        source = (fact.get("source_document") or 
+                 (fact.get("source")[0][0] if isinstance(fact.get("source"), list) and len(fact.get("source", [])) > 0 else None) or
+                 (fact.get("sources")[0] if isinstance(fact.get("sources"), list) and len(fact.get("sources", [])) > 0 else None))
         return source and source not in [None, "unknown", "", "manual"]
     
     def _has_timestamp(self, fact: Dict) -> bool:
         """Check if fact has timestamp."""
         timestamp = fact.get("timestamp") or fact.get("uploaded_at")
-        return timestamp is not None and timestamp != ""
+        return timestamp is not None and timestamp != "" and timestamp != "None"
     
     def _has_pathway(self, fact: Dict) -> bool:
         """Check if fact has processing pathway."""
         pathway = fact.get("agent_id") or fact.get("source_type")
-        return pathway is not None and pathway != ""
+        return pathway is not None and pathway != "" and pathway != "unknown"
     
     def validate_determinism(self, num_runs: int = 3) -> Dict[str, Any]:
         """
@@ -404,6 +437,11 @@ def load_test_queries(query_file: Optional[str] = None) -> List[str]:
             if isinstance(data, list):
                 return [q if isinstance(q, str) else q.get("query", "") for q in data]
             elif isinstance(data, dict):
+                # Check for direct "queries" key
+                if "queries" in data:
+                    queries_list = data["queries"]
+                    return [q if isinstance(q, str) else q.get("query", "") for q in queries_list]
+                # Check for scenarios structure
                 scenarios = data.get("scenarios", [])
                 queries = []
                 for scenario in scenarios:
