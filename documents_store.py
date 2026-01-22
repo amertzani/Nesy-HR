@@ -146,3 +146,24 @@ def delete_document(name: str = None, document_id: str = None) -> bool:
     
     return True
 
+
+def clear_all_documents() -> None:
+    """
+    Clear all documents from the documents store.
+    This is called on server startup to reset the uploads.
+    """
+    store_file = "documents_store.json"
+    
+    # Reset to empty state
+    data = {
+        "documents": [],
+        "last_updated": None,
+        "total_documents": 0
+    }
+    
+    # Save empty store
+    with open(store_file, 'w') as f:
+        json.dump(data, f, indent=2)
+    
+    print("🧹 Cleared all uploaded documents on server startup")
+

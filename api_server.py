@@ -15,10 +15,12 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Path
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import Path as PathParam
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from pathlib import Path
 
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import system modules
 try:
     from knowledge import graph, load_knowledge_graph
-    from documents_store import add_document, get_all_documents, delete_document
+    from documents_store import add_document, get_all_documents, delete_document, clear_all_documents
     from operational_queries import compute_operational_insights
     from strategic_queries import find_csv_file_path, load_csv_data
     
@@ -44,18 +46,54 @@ try:
         return None
     
     def add_to_graph(text: str, source_document: str = "manual", agent_id: str = None):
+        """Add a fact to the knowledge graph with proper metadata"""
         from urllib.parse import quote
-        from rdflib import URIRef, Literal
-        # Simple fact extraction
+        from rdflib import URIRef, Literal, Namespace
+        from datetime import datetime
+        
+        if graph is None:
+            return
+        
+        # Parse fact: "subject predicate object" or "subject has attribute value"
         parts = text.split()
         if len(parts) >= 3:
-            subject = " ".join(parts[:-2])
-            predicate = parts[-2]
-            obj = parts[-1]
-            s = URIRef(f"urn:{quote(subject, safe='')}")
-            p = URIRef(f"urn:{quote(predicate, safe='')}")
-            graph.add((s, p, Literal(obj)))
+            # Try to find "has" as separator (e.g., "John has department Sales")
+            if "has" in parts:
+                has_idx = parts.index("has")
+                subject = " ".join(parts[:has_idx])
+                predicate = " ".join(parts[has_idx:has_idx+2]) if has_idx+1 < len(parts) else parts[has_idx]
+                obj = " ".join(parts[has_idx+2:]) if has_idx+2 < len(parts) else parts[-1]
+            else:
+                # Fallback: last two words are predicate and object
+                subject = " ".join(parts[:-2])
+                predicate = parts[-2]
+                obj = parts[-1]
+            
+            # Create URIs
+            subject_uri = URIRef(f"urn:entity:{quote(subject.replace(' ', '_'), safe='')}")
+            predicate_uri = URIRef(f"urn:predicate:{quote(predicate.replace(' ', '_'), safe='')}")
+            obj_literal = Literal(obj)
+            
+            # Add main fact triple
+            graph.add((subject_uri, predicate_uri, obj_literal))
+            
+            # Add metadata: source document
+            source_uri = URIRef(f"urn:metadata:source_document")
+            source_literal = Literal(source_document)
+            graph.add((subject_uri, source_uri, source_literal))
+            
+            # Add metadata: uploaded_at
+            if source_document != "manual":
+                timestamp_uri = URIRef(f"urn:metadata:uploaded_at")
+                timestamp_literal = Literal(datetime.now().isoformat())
+                graph.add((subject_uri, timestamp_uri, timestamp_literal))
+            
+            # Save graph
             save_knowledge_graph()
+            
+            # Reload graph to ensure it's up to date
+            if KG_AVAILABLE:
+                load_knowledge_graph()
     
     KG_AVAILABLE = True
     
@@ -99,7 +137,8 @@ app.add_middleware(
 # Load knowledge graph on startup
 @app.on_event("startup")
 async def startup_event():
-    """Load knowledge graph when server starts"""
+    """Load knowledge graph on server startup"""
+    # Load knowledge graph
     if KG_AVAILABLE:
         try:
             load_result = load_knowledge_graph()
@@ -158,15 +197,28 @@ async def upload_documents(files: List[UploadFile] = File(...)):
     
     for file in files:
         try:
-            # Save uploaded file to temp directory
+            # Save uploaded file to persistent uploads directory
             file_ext = Path(file.filename).suffix.lower()
-            temp_dir = tempfile.gettempdir()
-            temp_path = os.path.join(temp_dir, file.filename)
+            uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+            os.makedirs(uploads_dir, exist_ok=True)
             
-            # Write file
-            with open(temp_path, "wb") as f:
-                content = await file.read()
-                f.write(content)
+            # Use a safe filename (handle duplicates)
+            safe_filename = file.filename
+            file_path = os.path.join(uploads_dir, safe_filename)
+            counter = 1
+            while os.path.exists(file_path):
+                name, ext = os.path.splitext(file.filename)
+                safe_filename = f"{name}_{counter}{ext}"
+                file_path = os.path.join(uploads_dir, safe_filename)
+                counter += 1
+            
+            # Read file content (already async)
+            content = await file.read()
+            
+            # Write file in executor to avoid blocking event loop
+            import asyncio
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: open(file_path, "wb").write(content))
             
             print(f"📄 Processing uploaded file: {file.filename} ({len(content)} bytes)")
             
@@ -180,27 +232,81 @@ async def upload_documents(files: List[UploadFile] = File(...)):
                     document_id=document_id,
                     document_name=file.filename,
                     document_type=file_ext,
-                    file_path=temp_path
+                    file_path=file_path
                 )
                 facts_count = result.get("facts_count", 0) if isinstance(result, dict) else 0
             else:
-                # Lightweight path: do NOT generate per-cell facts when the full
-                # agent system is unavailable. This avoids huge slowdowns and
-                # keeps the UI responsive. Statistics and operational insights
-                # are computed directly from the CSV using pandas, so they
-                # remain fully functional.
-                print(
-                    f"ℹ️  Skipping heavy per-cell fact extraction for {file.filename} "
-                    "(agent_system not available). Operational insights and statistics "
-                    "will still be computed from the CSV."
-                )
-                result = {"facts_count": 0, "status": "processed_light"}
+                # Basic CSV processing when agent system is unavailable
+                # Extract basic facts from CSV files to update knowledge graph
+                facts_count = 0
+                if file_ext == '.csv':
+                    try:
+                        import pandas as pd
+                        # Try to auto-detect separator (comma, semicolon, tab)
+                        df = None
+                        for sep in [',', ';', '\t']:
+                            try:
+                                df = pd.read_csv(file_path, sep=sep, encoding='utf-8')
+                                if len(df.columns) > 1:  # Valid CSV with multiple columns
+                                    break
+                            except:
+                                continue
+                        if df is None or len(df.columns) <= 1:
+                            df = pd.read_csv(file_path)  # Fallback to default
+                        
+                        # Extract basic facts: employee names, departments, etc.
+                        # Limit to first 100 rows to avoid performance issues
+                        max_rows = min(100, len(df))
+                        df_sample = df.head(max_rows)
+                        
+                        # Get column names
+                        columns = df_sample.columns.tolist()
+                        
+                        # Extract facts for each row
+                        for idx, row in df_sample.iterrows():
+                            # Try to identify employee name column
+                            name_cols = [c for c in columns if 'name' in c.lower() or 'employee' in c.lower()]
+                            if name_cols:
+                                employee_name = str(row[name_cols[0]]).strip()
+                                if employee_name and employee_name != 'nan':
+                                    # Add employee facts
+                                    for col in columns:
+                                        if col not in name_cols:
+                                            value = str(row[col]).strip()
+                                            if value and value != 'nan' and len(value) < 200:  # Skip very long values
+                                                fact_text = f"{employee_name} has {col} {value}"
+                                                add_to_graph(
+                                                    text=fact_text,
+                                                    source_document=file.filename,
+                                                    agent_id="csv_processor"
+                                                )
+                                                facts_count += 1
+                        
+                        print(f"✅ Extracted {facts_count} basic facts from {file.filename}")
+                        # Reload graph to ensure it's up to date
+                        if KG_AVAILABLE:
+                            load_knowledge_graph()
+                        result = {"facts_count": facts_count, "status": "processed_basic"}
+                    except Exception as e:
+                        print(f"⚠️  Error processing CSV {file.filename}: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        result = {"facts_count": 0, "status": "error", "error": str(e)}
+                else:
+                    # For non-CSV files, skip fact extraction when agent system unavailable
+                    print(
+                        f"ℹ️  Skipping fact extraction for {file.filename} "
+                        "(agent_system not available, non-CSV file)."
+                    )
+                    result = {"facts_count": 0, "status": "processed_light"}
+                
+                facts_count = result.get("facts_count", 0) if isinstance(result, dict) else 0
             
             # Add to documents store with facts count
             add_document(
-                name=file.filename,
+                name=safe_filename,  # Use the actual saved filename
                 file_type=file_ext,
-                file_path=temp_path,
+                file_path=file_path,  # Use persistent path
                 size=len(content)
             )
             
@@ -385,23 +491,52 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
 
 
-# Operational Insights
+# Operational Insights (with caching)
+_insights_cache = {}
+_insights_cache_time = {}
+
 @app.get("/api/insights/operational")
 async def get_operational_insights():
     """
     Get operational insights computed from CSV data.
     Returns manager, department, and recruitment source analytics.
+    Cached for 30 seconds to improve performance.
     """
     if not KG_AVAILABLE:
         raise HTTPException(status_code=500, detail="Knowledge graph not available")
     
     try:
-        # Find CSV file
-        csv_path = find_csv_file_path()
+        import time
+        cache_key = "operational_insights"
+        current_time = time.time()
         
-        # Try direct path if not found
+        # Check cache (30 second TTL)
+        if cache_key in _insights_cache and cache_key in _insights_cache_time:
+            if current_time - _insights_cache_time[cache_key] < 30:
+                return {
+                    "success": True,
+                    "data": {
+                        "insights": _insights_cache[cache_key],
+                        "processing_status": "completed",
+                        "cached": True
+                    }
+                }
+        
+        # Find CSV file from documents store first, then fallback
+        csv_path = None
+        documents = get_all_documents()
+        csv_docs = [d for d in documents if d.get("type", "").lower() in [".csv", "csv"]]
+        
+        if csv_docs:
+            # Use most recently uploaded CSV
+            csv_docs.sort(key=lambda x: x.get("uploaded_at", ""), reverse=True)
+            csv_path = csv_docs[0].get("file_path")
+            if csv_path and not os.path.exists(csv_path):
+                csv_path = None
+        
+        # Fallback to find_csv_file_path if no uploaded CSV found
         if not csv_path:
-            csv_path = "/Users/s20/Desktop/Gnoses/HR Data/HR_S.csv"
+            csv_path = find_csv_file_path()
         
         if not csv_path or not os.path.exists(csv_path):
             return {
@@ -412,9 +547,19 @@ async def get_operational_insights():
                 }
             }
         
-        # Load and compute insights
-        df = load_csv_data(csv_path)
-        if df is None or len(df) == 0:
+        # Load and compute insights in executor to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        
+        def compute_insights():
+            df = load_csv_data(csv_path)
+            if df is None or len(df) == 0:
+                return None
+            return compute_operational_insights(df=df)
+        
+        insights = await loop.run_in_executor(None, compute_insights)
+        
+        if insights is None:
             return {
                 "success": True,
                 "data": {
@@ -423,7 +568,9 @@ async def get_operational_insights():
                 }
             }
         
-        insights = compute_operational_insights(df=df)
+        # Cache results
+        _insights_cache[cache_key] = insights
+        _insights_cache_time[cache_key] = current_time
         
         return {
             "success": True,
@@ -675,22 +822,48 @@ def _compute_document_statistics(csv_path: str) -> Dict[str, Any]:
 
 
 @app.get("/api/documents/{document_id}/statistics")
-async def get_document_statistics(document_id: str = Path(...)):
+async def get_document_statistics(document_id: str = PathParam(...)):
     """
     Get statistics for a specific document (CSV).
+    If document_id is "first" or not found, uses first available CSV.
     """
+    # Handle "first" or missing document - use first CSV
+    if document_id == "first" or not document_id:
+        documents = get_all_documents()
+        csv_docs = [d for d in documents if d.get("type", "").lower() in [".csv", "csv"]]
+        if csv_docs:
+            document_id = csv_docs[0].get("id") or csv_docs[0].get("name")
+    
     csv_path = _resolve_document_path(document_id)
     if not csv_path or not os.path.exists(csv_path):
-        return {
-            "success": True,
-            "data": {
-                "statistics": None,
-                "message": f"No CSV file found for document {document_id}",
-            },
-        }
+        # Try to find any CSV file (fallback to default location)
+        csv_path = find_csv_file_path()
+        if not csv_path or not os.path.exists(csv_path):
+            # Try default path
+            default_paths = [
+                "/Users/s20/Desktop/Gnoses/HR Data/HR_S.csv",
+                "/Users/s20/Desktop/Gnoses/HR Data/HRDataset_v14.csv",
+                "HR_S.csv"
+            ]
+            for path in default_paths:
+                if os.path.exists(path):
+                    csv_path = path
+                    break
+        
+        if not csv_path or not os.path.exists(csv_path):
+            return {
+                "success": True,
+                "data": {
+                    "statistics": None,
+                    "message": "No CSV file found. Please upload a CSV file first.",
+                },
+            }
 
     try:
-        statistics = _compute_document_statistics(csv_path)
+        # Compute statistics in executor to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        statistics = await loop.run_in_executor(None, _compute_document_statistics, csv_path)
         return {
             "success": True,
             "data": {
@@ -699,7 +872,6 @@ async def get_document_statistics(document_id: str = Path(...)):
         }
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         return {
             "success": False,
@@ -708,7 +880,7 @@ async def get_document_statistics(document_id: str = Path(...)):
 
 
 @app.get("/api/documents/{document_id}/visualizations")
-async def get_document_visualizations(document_id: str = Path(...)):
+async def get_document_visualizations(document_id: str = PathParam(...)):
     """
     Get simple visualization-ready data for a document.
     Currently returns an empty structure; the statistics endpoint
@@ -723,7 +895,7 @@ async def get_document_visualizations(document_id: str = Path(...)):
 
 
 @app.get("/api/documents/{document_id}/statistics/export")
-async def export_document_statistics(document_id: str = Path(...)):
+async def export_document_statistics(document_id: str = PathParam(...)):
     """
     Export statistics as JSON structure.
     The frontend will download this as a file.
@@ -752,7 +924,7 @@ async def export_document_statistics(document_id: str = Path(...)):
 
 
 @app.get("/api/documents/{document_id}/summary")
-async def get_document_summary(document_id: str = Path(...)):
+async def get_document_summary(document_id: str = PathParam(...)):
     """
     Get a short text summary of the document.
     For now, returns a simple summary based on rows/columns.
@@ -789,6 +961,107 @@ async def get_document_summary(document_id: str = Path(...)):
         return {
             "success": False,
             "error": f"Error generating summary: {str(e)}",
+        }
+
+
+# Agents Architecture
+@app.get("/api/agents/architecture")
+async def get_agent_architecture():
+    """
+    Get agent architecture information.
+    Returns orchestrator, statistics, visualization, KG, LLM, and document agents.
+    """
+    try:
+        import json
+        agents_file = "agents_store.json"
+        
+        if os.path.exists(agents_file):
+            with open(agents_file, 'r') as f:
+                data = json.load(f)
+                agents = data.get("agents", {})
+        else:
+            # Return default structure if file doesn't exist
+            agents = {}
+        
+        # Format for frontend
+        architecture = {
+            "orchestrator_agents": [agents.get("orchestrator_agent", {})] if "orchestrator_agent" in agents else [],
+            "statistics_agents": [agents.get("statistics_agent", {})] if "statistics_agent" in agents else [],
+            "visualization_agents": [agents.get("visualization_agent", {})] if "visualization_agent" in agents else [],
+            "kg_agents": [agents.get("kg_agent", {})] if "kg_agent" in agents else [],
+            "llm_agents": [agents.get("llm_agent", {})] if "llm_agent" in agents else [],
+            "operational_query_agents": [agents.get("operational_query_agent", {})] if "operational_query_agent" in agents else [],
+            "document_agents": [agents.get("document_agent", {})] if "document_agent" in agents else [],
+        }
+        
+        return {
+            "success": True,
+            "data": {
+                "architecture": architecture
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": f"Error loading agent architecture: {str(e)}"
+        }
+
+
+# Statistics endpoint without document_id (uses first CSV document)
+@app.get("/api/statistics")
+async def get_statistics():
+    """
+    Get statistics for the first available CSV document.
+    This is a convenience endpoint for the statistics page.
+    """
+    try:
+        documents = get_all_documents()
+        csv_docs = [d for d in documents if d.get("type", "").lower() in [".csv", "csv"]]
+        
+        if not csv_docs:
+            return {
+                "success": True,
+                "data": {
+                    "statistics": None,
+                    "message": "No CSV documents found. Please upload a CSV file first.",
+                },
+            }
+        
+        # Use first CSV document (most recent)
+        csv_docs.sort(key=lambda x: x.get("uploaded_at", ""), reverse=True)
+        doc = csv_docs[0]
+        csv_path = doc.get("file_path") or _resolve_document_path(doc.get("id") or doc.get("name"))
+        
+        if not csv_path or not os.path.exists(csv_path):
+            # Try fallback
+            csv_path = find_csv_file_path()
+            if not csv_path or not os.path.exists(csv_path):
+                return {
+                    "success": True,
+                    "data": {
+                        "statistics": None,
+                        "message": f"CSV file not found for document {doc.get('name')}",
+                    },
+                }
+        
+        # Compute statistics in executor to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+        statistics = await loop.run_in_executor(None, _compute_document_statistics, csv_path)
+        return {
+            "success": True,
+            "data": {
+                "statistics": statistics,
+            },
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": f"Error computing statistics: {str(e)}",
         }
 
 

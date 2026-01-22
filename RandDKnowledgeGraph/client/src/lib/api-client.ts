@@ -191,7 +191,22 @@ class HuggingFaceApiClient {
 
       const data = await response.json();
       console.log(`✅ API Success: ${url}`, data);
-      // FastAPI returns data directly, wrap it if needed
+      
+      // FastAPI returns {success: true, facts: [...]} or {success: true, data: {...}} format
+      // The frontend expects {success: true, data: {...}} format
+      // So we need to normalize the response
+      if (data && typeof data === 'object' && 'success' in data) {
+        // If it already has 'data' field, return as-is
+        if ('data' in data) {
+          return data as ApiResponse<T>;
+        }
+        // If it has 'facts' or other direct fields, wrap them in 'data'
+        // This handles endpoints like /api/knowledge/facts which return {success: true, facts: [...]}
+        const success = data.success;
+        const rest = { ...data };
+        delete rest.success;
+        return { success, data: rest } as ApiResponse<T>;
+      }
       return { success: true, data };
     } catch (error) {
       console.error(`❌ API request failed: ${endpoint}`, error);
